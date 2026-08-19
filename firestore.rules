@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/config/admins)
+        && request.auth.token.email != null
+        && request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails;
+    }
+
+    // Admin email list — readable by authenticated users; writable only via Firebase Console initially
+    match /config/admins {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Public product catalog — anyone can read inventory; admins can update stock
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['id', 'name', 'inStock', 'price', 'category', 'updatedAt'])
+        && request.resource.data.inStock is bool;
+      allow delete: if false;
+    }
+
+    // User profiles — each user can only read/write their own document
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Reviews — public read; authenticated users can create their own
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.text is string
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+      allow update, delete: if isSignedIn()
+                              && resource.data.userId == request.auth.uid;
+    }
+  }
+}
