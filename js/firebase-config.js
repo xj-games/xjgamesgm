@@ -15,17 +15,31 @@
  *
  * Do NOT put Admin SDK or service-account keys here — client config only.
  */
-const XJ_FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDzRWlT_CjinX4N3GZPpNcajPModyGjyqY",
+  authDomain: "xj-games.firebaseapp.com",
+  projectId: "xj-games",
+  storageBucket: "xj-games.firebasestorage.app",
+  messagingSenderId: "986208671056",
+  appId: "1:986208671056:web:196f2b5823c93c8176c855",
+  measurementId: "G-Q4JNDR8H0P"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 };
 
 /** Emails allowed to manage product inventory (also set in Firestore config/admins) */
-const XJ_ADMIN_EMAILS = [];
+const XJ_ADMIN_EMAILS = [ifeadia21@gmail.com];
 
 /** Returns true when Firebase config has been filled in */
 function xjIsFirebaseConfigured() {
