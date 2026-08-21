@@ -43,7 +43,8 @@ service cloud.firestore {
                     && request.resource.data.text is string
                     && request.resource.data.rating is int
                     && request.resource.data.rating >= 1
-                    && request.resource.data.rating <= 5;
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.keys().hasOnly(['userId', 'name', 'rating', 'text', 'avatar', 'createdAt']);
       allow update, delete: if isSignedIn()
                               && resource.data.userId == request.auth.uid;
     }
