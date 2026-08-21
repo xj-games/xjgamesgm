@@ -19,35 +19,21 @@ const XJ_DEFAULT_REVIEWS = [
 
 var xjReviewsUnsubscribe = null;
 
+function xjEscapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function xjInitReviews() {
   if (!xjDb || !xjIsFirebaseConfigured()) {
     renderReviewsFromLocal();
     return;
   }
 
-  xjSeedDefaultReviewsIfNeeded().catch(function(error) {
-    console.warn("Could not seed default reviews:", error);
-  });
   xjSubscribeToReviews();
-}
-
-async function xjSeedDefaultReviewsIfNeeded() {
-  const snap = await xjDb.collection("reviews").limit(1).get();
-  if (!snap.empty) return;
-
-  const batch = xjDb.batch();
-  XJ_DEFAULT_REVIEWS.forEach(function(review, index) {
-    const ref = xjDb.collection("reviews").doc("seed-" + index);
-    batch.set(ref, {
-      name: review.name,
-      rating: review.rating,
-      text: review.text,
-      avatar: review.avatar,
-      isSeed: true,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  });
-  await batch.commit();
 }
 
 function xjSubscribeToReviews() {
@@ -60,9 +46,12 @@ function xjSubscribeToReviews() {
     .onSnapshot(function(snapshot) {
       const reviews = [];
       snapshot.forEach(function(doc) {
-        reviews.push(doc.data());
+        const data = doc.data();
+        if (data && !data.isSeed) {
+          reviews.push(data);
+        }
       });
-      xjRenderReviews(reviews.length ? reviews : XJ_DEFAULT_REVIEWS);
+      xjRenderReviews(reviews.concat(XJ_DEFAULT_REVIEWS));
     }, function(error) {
       console.error("Reviews listener error:", error);
       renderReviewsFromLocal();
@@ -70,8 +59,8 @@ function xjSubscribeToReviews() {
 }
 
 function renderReviewsFromLocal() {
-  const reviews = JSON.parse(localStorage.getItem("xj_reviews")) || XJ_DEFAULT_REVIEWS;
-  xjRenderReviews(reviews);
+  const stored = JSON.parse(localStorage.getItem("xj_reviews") || "[]");
+  xjRenderReviews(stored.concat(XJ_DEFAULT_REVIEWS));
 }
 
 function renderReviews() {
@@ -80,20 +69,24 @@ function renderReviews() {
 
 function xjRenderReviews(reviews) {
   const grid = document.getElementById("reviewGrid");
+  if (!grid) return;
   let html = "";
 
   reviews.forEach(function(rev) {
     const stars = "⭐".repeat(rev.rating || 5);
+    const name = xjEscapeHtml(rev.name || "Customer");
+    const text = xjEscapeHtml(rev.text || "");
+    const avatar = xjEscapeHtml(rev.avatar || "https://www.svgrepo.com/show/498369/profile-circle.svg");
     html +=
       '<div class="review">' +
         '<div>' +
           '<div style="color:#ffcc00; font-size:14px; margin-bottom:8px;">' + stars + '</div>' +
-          '<p>' + rev.text + '</p>' +
+          '<p>' + text + '</p>' +
         '</div>' +
         '<div class="review-author-info">' +
-          '<img src="' + (rev.avatar || "https://www.svgrepo.com/show/498369/profile-circle.svg") + '" alt="' + rev.name + '">' +
+          '<img src="' + avatar + '" alt="' + name + '">' +
           '<div>' +
-            '<h4>' + rev.name + '</h4>' +
+            '<h4>' + name + '</h4>' +
             '<span style="font-size:11px; color:#888;">Verified Customer</span>' +
           '</div>' +
         '</div>' +
@@ -104,7 +97,7 @@ function xjRenderReviews(reviews) {
 }
 
 async function submitReview() {
-  if (!xjRequireAuth("Error: Please sign in to leave a comment.")) {
+  if (!xjRequireAuth("Please sign in to leave a review.")) {
     return;
   }
 
@@ -117,6 +110,14 @@ async function submitReview() {
   }
 
   const user = xjGetCurrentUserDisplay();
+  const review = {
+    userId: user.uid,
+    name: user.name,
+    rating: rating,
+    text: text,
+    avatar: user.avatar,
+    createdAt: Date.now()
+  };
 
   if (xjDb && xjIsFirebaseConfigured()) {
     try {
@@ -134,8 +135,13 @@ async function submitReview() {
       console.error("Review submit error:", error);
       showToast("Error", "Could not publish review. Please try again.", "error");
     }
-  } else {
-    console.error("Review submit blocked: Firebase is not configured.");
-    showToast("Error", "Reviews require Firebase authentication. Please try again after sign-in is configured.", "error");
+    return;
   }
+
+  const stored = JSON.parse(localStorage.getItem("xj_reviews") || "[]");
+  stored.unshift(review);
+  localStorage.setItem("xj_reviews", JSON.stringify(stored));
+  document.getElementById("reviewText").value = "";
+  renderReviewsFromLocal();
+  showToast("Review saved", "Your review is saved on this device. Connect Firebase so every visitor can see it.");
 }

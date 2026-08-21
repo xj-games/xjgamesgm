@@ -702,9 +702,10 @@ transform:scale(1.2);
 box-shadow:0 0 6px rgba(0,191,255,0.7);
 }
 
-/* XJ Automatic Stock System */
+/* XJ Automatic Stock System — red badge when HTML says Out of Stock */
 .stock.out-of-stock{
 background:#ff3040;
+color:#fff;
 }
 
 .card h3{
@@ -743,6 +744,7 @@ padding:6px 12px;
 border-radius:30px;
 font-size:12px;
 font-weight:bold;
+color:#fff;
 z-index:12;
 pointer-events:none;
 white-space:nowrap;
@@ -764,7 +766,11 @@ transition:.3s;
 .card > button:hover{ transform:scale(1.05); }
 
 .card > button.xj-notify-btn{
-background:linear-gradient(90deg,#ff3040,#ff6b35);
+background:linear-gradient(90deg,#ff3040,#c62828);
+white-space:normal;
+line-height:1.35;
+font-size:13px;
+padding:12px 10px;
 }
 
 /* FEATURES, REVIEWS, CONTACT */
@@ -1303,6 +1309,7 @@ max-width:calc(100vw - 24px);
 <!-- ================= PRODUCTS ================= -->
 <section id="products" class="products">
 <h2 class="section-title">Featured Products</h2>
+<!-- Stock: change the span text to "● Out of Stock" or add class "out-of-stock". The page turns the badge red and switches the button to WhatsApp notify. -->
 <div class="product-grid" id="productGrid">
 <div id="searchNoResults" class="search-no-results">
   <strong>No products found</strong>
@@ -1586,7 +1593,7 @@ max-width:calc(100vw - 24px);
     <div id="authFormError" class="auth-form-error"></div>
     <div id="authStepEmail" style="text-align: left;">
       <h3 id="emailFormTitle" style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Sign In with Email</h3>
-      <p id="emailFormSubtitle" style="font-size:12px; color:#aaa; margin-bottom:20px;">Enter your email and password. A real Firebase account is required.</p>
+      <p id="emailFormSubtitle" style="font-size:12px; color:#aaa; margin-bottom:20px;">Enter your email and password to sign in or create an account.</p>
       
       <div id="registerExtraFields" style="display:none;">
         <div style="display:flex; gap:10px; margin-bottom:12px;">
@@ -1677,12 +1684,12 @@ max-width:calc(100vw - 24px);
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js?v=20260821"></script>
-<script src="js/xj-catalog.js?v=20260821"></script>
-<script src="js/xj-search.js?v=20260821"></script>
-<script src="js/xj-auth.js?v=20260821"></script>
-<script src="js/xj-inventory.js?v=20260821"></script>
-<script src="js/xj-reviews.js?v=20260821"></script>
+<script src="js/firebase-config.js?v=20260821c"></script>
+<script src="js/xj-catalog.js?v=20260821c"></script>
+<script src="js/xj-search.js?v=20260821c"></script>
+<script src="js/xj-auth.js?v=20260821c"></script>
+<script src="js/xj-inventory.js?v=20260821c"></script>
+<script src="js/xj-reviews.js?v=20260821c"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];

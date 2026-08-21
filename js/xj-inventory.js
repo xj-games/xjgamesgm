@@ -1,93 +1,122 @@
 /**
- * XJ Games — Firestore-backed inventory with real-time updates
+ * XJ Games — HTML-driven stock system
+ *
+ * Edit the product badge in index.html:
+ *   <span class="stock">● In Stock</span>
+ *   <span class="stock">● Out of Stock</span>
+ * or add the class "out-of-stock" (example: class="stock out-of-stock").
+ * The live page turns the badge red, blocks Add to Cart, and shows a WhatsApp notify button.
  */
 var xjInventoryUnsubscribe = null;
+var xjStockObserver = null;
+var xjApplyingStock = false;
+var XJ_WHATSAPP_NOTIFY_NUMBER = "2202164491";
+var XJ_NOTIFY_BUTTON_LABEL = "Notify me when it's in stock";
 
-async function xjInitInventory() {
+function xjInitInventory() {
+  xjSyncStockFromHtml();
   xjApplyAllStockStates();
-
-  if (!xjDb || !xjIsFirebaseConfigured()) {
-    return;
-  }
-
-  try {
-    await xjSeedProductsIfNeeded();
-  } catch (error) {
-    console.warn("Could not seed product inventory:", error);
-  }
-  xjSubscribeToInventory();
+  xjWatchStockHtmlChanges();
 }
 
-async function xjSeedProductsIfNeeded() {
-  const batch = xjDb.batch();
-  let hasWrites = false;
-
-  for (const productId of xjGetAllProductIds()) {
-    const ref = xjDb.collection("products").doc(productId);
-    const snap = await ref.get();
-    if (!snap.exists) {
-      const product = XJ_PRODUCT_CATALOG[productId];
-      batch.set(ref, {
-        id: productId,
-        name: product.name,
-        inStock: product.inStock,
-        price: product.price,
-        category: product.category,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      hasWrites = true;
-    }
-  }
-
-  if (hasWrites) {
-    await batch.commit();
-  }
+function xjInitStockSystem() {
+  xjInitInventory();
 }
 
-function xjSubscribeToInventory() {
-  if (xjInventoryUnsubscribe) {
-    xjInventoryUnsubscribe();
+function xjWatchStockHtmlChanges() {
+  var grid = document.getElementById("productGrid");
+  if (!grid || xjStockObserver) return;
+
+  var timer = null;
+  xjStockObserver = new MutationObserver(function() {
+    if (xjApplyingStock) return;
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      xjSyncStockFromHtml();
+      xjApplyAllStockStates();
+    }, 40);
+  });
+
+  xjStockObserver.observe(grid, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["class"]
+  });
+}
+
+function xjGetStockBadge(card) {
+  if (!card) return null;
+  return card.querySelector(".stock, .out-of-stock");
+}
+
+function xjIsOutOfStockBadge(badge) {
+  if (!badge) return false;
+
+  var className = (badge.className || "").toLowerCase();
+  if (className.indexOf("out-of-stock") !== -1 || className.indexOf("outofstock") !== -1) {
+    return true;
   }
 
-  xjInventoryUnsubscribe = xjDb.collection("products").onSnapshot(function(snapshot) {
-    snapshot.forEach(function(doc) {
-      const data = doc.data();
-      if (typeof data.inStock === "boolean") {
-        xjSetProductStock(doc.id, data.inStock);
-      }
-    });
-    xjApplyAllStockStates();
-    xjRenderAdminInventoryPanel();
-  }, function(error) {
-    console.error("Inventory listener error:", error);
+  var classes = className.split(/\s+/);
+  if (classes.indexOf("out") !== -1 && classes.indexOf("of") !== -1 && classes.indexOf("stock") !== -1) {
+    return true;
+  }
+
+  var text = (badge.textContent || "").toLowerCase().replace(/●/g, " ").replace(/\s+/g, " ").trim();
+  return /out\s*of\s*stock/.test(text);
+}
+
+function xjSyncStockFromHtml() {
+  document.querySelectorAll("#productGrid .card").forEach(function(card) {
+    var productId = card.getAttribute("data-product-id");
+    if (!productId) return;
+    var inStock = !xjIsOutOfStockBadge(xjGetStockBadge(card));
+    xjSetProductStock(productId, inStock);
   });
 }
 
 function xjApplyAllStockStates() {
-  document.querySelectorAll("#productGrid .card").forEach(function(card) {
-    xjApplyStockState(card);
-  });
+  xjApplyingStock = true;
+  try {
+    document.querySelectorAll("#productGrid .card").forEach(function(card) {
+      xjApplyStockState(card);
+    });
+  } finally {
+    setTimeout(function() {
+      xjApplyingStock = false;
+    }, 80);
+  }
 }
 
 function xjApplyStockState(card) {
-  const productId = card.getAttribute("data-product-id");
-  const stockBadge = card.querySelector(".stock");
-  const button = card.querySelector("button");
+  var productId = card.getAttribute("data-product-id");
+  var stockBadge = xjGetStockBadge(card);
+  var button = card.querySelector("button");
   if (!stockBadge || !button || !productId) return;
 
+  if (!stockBadge.classList.contains("stock")) {
+    stockBadge.classList.add("stock");
+  }
+
   if (!button.hasAttribute("data-xj-original-onclick")) {
-    const originalOnclick = button.getAttribute("onclick");
+    var originalOnclick = button.getAttribute("onclick");
     if (originalOnclick) {
       button.setAttribute("data-xj-original-onclick", originalOnclick);
     }
   }
+  if (!button.hasAttribute("data-xj-original-text")) {
+    button.setAttribute("data-xj-original-text", button.textContent.trim() || "Add to Cart");
+  }
 
-  const inStock = xjGetProductStock(productId);
+  var inStock = xjGetProductStock(productId);
 
   if (!inStock) {
     stockBadge.textContent = "● Out of Stock";
     stockBadge.classList.add("out-of-stock");
-    button.textContent = "Notify Me";
+    card.classList.add("xj-out-of-stock");
+    button.textContent = XJ_NOTIFY_BUTTON_LABEL;
     button.classList.add("xj-notify-btn");
     button.disabled = false;
     button.removeAttribute("onclick");
@@ -97,11 +126,12 @@ function xjApplyStockState(card) {
   } else {
     stockBadge.textContent = "● In Stock";
     stockBadge.classList.remove("out-of-stock");
-    button.textContent = "Add to Cart";
+    card.classList.remove("xj-out-of-stock");
+    button.textContent = button.getAttribute("data-xj-original-text") || "Add to Cart";
     button.classList.remove("xj-notify-btn");
     button.disabled = false;
     button.onclick = null;
-    const savedOnclick = button.getAttribute("data-xj-original-onclick");
+    var savedOnclick = button.getAttribute("data-xj-original-onclick");
     if (savedOnclick) {
       button.setAttribute("onclick", savedOnclick);
     } else {
@@ -115,7 +145,7 @@ function xjIsProductInStock(productId) {
 }
 
 function xjGetProductIdByName(name) {
-  for (const id of xjGetAllProductIds()) {
+  for (var id of xjGetAllProductIds()) {
     if (XJ_PRODUCT_CATALOG[id].name === name) {
       return id;
     }
@@ -132,12 +162,10 @@ function xjGuardInStock(productId, productName) {
 }
 
 function xjOpenStockNotifyWhatsApp(card) {
-  const productName = card.querySelector("h3").textContent.trim();
-  const message = "Hi, I would like to be notified when " + productName + " is back in stock.";
+  var productName = card.querySelector("h3").textContent.trim();
+  var message = "Hi, I would like to be notified when " + productName + " is back in stock.";
   window.open("https://wa.me/" + XJ_WHATSAPP_NOTIFY_NUMBER + "?text=" + encodeURIComponent(message), "_blank");
 }
-
-/* ---- Admin inventory panel ---- */
 
 function openAdminPanel() {
   if (!xjRequireAuth("Please log in to access admin features.")) return;
@@ -154,13 +182,13 @@ function closeAdminPanel() {
 }
 
 function xjRenderAdminInventoryPanel() {
-  const container = document.getElementById("adminInventoryList");
+  var container = document.getElementById("adminInventoryList");
   if (!container) return;
 
-  let html = "";
+  var html = "";
   xjGetAllProductIds().forEach(function(productId) {
-    const product = XJ_PRODUCT_CATALOG[productId];
-    const inStock = xjGetProductStock(productId);
+    var product = XJ_PRODUCT_CATALOG[productId];
+    var inStock = xjGetProductStock(productId);
     html +=
       '<div class="admin-inventory-row">' +
         '<div class="admin-inventory-info">' +
@@ -179,23 +207,15 @@ function xjRenderAdminInventoryPanel() {
   container.innerHTML = html;
 }
 
-async function xjAdminToggleStock(productId, inStock) {
-  if (!xjIsAdmin() || !xjDb) return;
-
-  try {
-    await xjDb.collection("products").doc(productId).set({
-      inStock: inStock,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    showToast("Inventory Updated", XJ_PRODUCT_CATALOG[productId].name + " is now " + (inStock ? "IN STOCK" : "OUT OF STOCK") + ".");
-  } catch (error) {
-    console.error("Failed to update stock:", error);
-    showToast("Error", "Could not update inventory. Please try again.", "error");
+function xjAdminToggleStock(productId, inStock) {
+  var card = document.querySelector('#productGrid .card[data-product-id="' + productId + '"]');
+  var badge = xjGetStockBadge(card);
+  if (badge) {
+    badge.textContent = inStock ? "● In Stock" : "● Out of Stock";
+    badge.classList.toggle("out-of-stock", !inStock);
   }
-}
-
-var XJ_WHATSAPP_NOTIFY_NUMBER = "2202164491";
-
-function xjInitStockSystem() {
-  xjInitInventory();
+  xjSetProductStock(productId, inStock);
+  if (card) xjApplyStockState(card);
+  xjRenderAdminInventoryPanel();
+  showToast("Inventory Updated", XJ_PRODUCT_CATALOG[productId].name + " is now " + (inStock ? "IN STOCK" : "OUT OF STOCK") + ".");
 }

@@ -185,30 +185,32 @@ async function xjLoadAdminEmailsFromFirestore() {
 
 function xjAuthErrorMessage(error) {
   const code = error && error.code ? error.code : "";
+  const loginRetry = "Please check your login details and try again.";
   const messages = {
-    "auth/invalid-email": "Please enter a valid email address.",
-    "auth/user-disabled": "This account has been disabled.",
-    "auth/user-not-found": "No account found with this email. Try creating an account.",
-    "auth/wrong-password": "Incorrect password. Please try again.",
+    "auth/invalid-email": loginRetry,
+    "auth/user-disabled": "This account has been disabled. Please contact support.",
+    "auth/user-not-found": loginRetry,
+    "auth/wrong-password": loginRetry,
     "auth/email-already-in-use": "An account with this email already exists. Try signing in.",
-    "auth/weak-password": "Password must be at least 6 characters.",
-    "auth/too-many-requests": "Too many attempts. Please wait and try again.",
+    "auth/weak-password": "Please choose a password with at least 6 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
     "auth/popup-closed-by-user": "Google sign-in was cancelled.",
-    "auth/popup-blocked": "Pop-up was blocked. Please allow pop-ups and try again.",
-    "auth/network-request-failed": "Network error. Check your connection and try again.",
-    "auth/invalid-credential": "Invalid email or password. Please try again.",
-    "auth/operation-not-allowed": "This sign-in method is not enabled in Firebase. Enable it in Authentication → Sign-in method.",
-    "auth/unauthorized-domain": "This website domain is not authorized in Firebase. Add it under Authentication → Settings → Authorized domains.",
+    "auth/popup-blocked": "Your browser blocked the sign-in window. Please allow pop-ups and try again.",
+    "auth/network-request-failed": "We could not connect right now. Please check your internet and try again.",
+    "auth/invalid-credential": loginRetry,
+    "auth/invalid-login-credentials": loginRetry,
+    "auth/operation-not-allowed": loginRetry,
+    "auth/unauthorized-domain": loginRetry,
     "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method."
   };
-  return messages[code] || (error && error.message) || "Authentication failed. Please try again.";
+  return messages[code] || loginRetry;
 }
 
 async function handleGoogleLogin() {
   xjClearAuthFormError();
   if (!xjAuth) {
     console.error("Google sign-in blocked: Firebase Auth is not initialized.");
-    xjShowAuthFormError("Google sign-in is not connected. Add your Firebase project settings in js/firebase-config.js. You are not signed in.");
+    xjShowAuthFormError("Please check your login details and try again.");
     return;
   }
 
@@ -261,7 +263,7 @@ async function handleEmailSubmit() {
   xjClearAuthFormError();
   if (!xjAuth) {
     console.error("Email sign-in blocked: Firebase Auth is not initialized.");
-    xjShowAuthFormError("Email sign-in is not connected to Firebase. Random emails and passwords will not log you in. Add your Firebase project settings in js/firebase-config.js.");
+    xjShowAuthFormError("Please check your login details and try again.");
     return;
   }
 
@@ -354,7 +356,7 @@ async function logoutUser() {
 async function handleForgotPassword(e) {
   e.preventDefault();
   if (!xjAuth) {
-    showToast("Setup Required", "Firebase is not configured yet.", "error");
+    showToast("Unable to reset password", "Please check the email address and try again.", "error");
     return;
   }
 

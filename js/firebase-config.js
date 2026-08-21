@@ -1,8 +1,17 @@
 /**
  * XJ Games — Firebase client configuration
  *
- * Replace the placeholder values below with your Firebase project settings
- * (Firebase Console → Project settings → Your apps → Web app).
+ * A Google account is required to create this project. I cannot finish
+ * that step from this computer (no Firebase/Google login here).
+ *
+ * 1. Open https://console.firebase.google.com
+ * 2. Add project (example name: xj-games-website)
+ * 3. Authentication → Sign-in method → enable Email/Password and Google
+ * 4. Authentication → Settings → Authorized domains
+ *    Add localhost and your GitHub Pages domain (example: yourname.github.io)
+ * 5. Firestore Database → Create database (start in production mode)
+ *    Then use the rules from firestore.rules in this folder
+ * 6. Project settings → Your apps → Web app (</>) → copy the config below
  *
  * Do NOT put Admin SDK or service-account keys here — client config only.
  */
