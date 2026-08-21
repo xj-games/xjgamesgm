@@ -129,6 +129,7 @@ padding:6px 12px;
 display:inline-flex;
 align-items:center;
 border:1px solid rgba(255,255,255,0.08);
+position:relative;
 }
 
 .search input{
@@ -136,8 +137,231 @@ background:none;
 border:none;
 outline:none;
 color:white;
-width:100px;
+width:140px;
 font-size:12px;
+}
+
+.search-clear-btn{
+background:none;
+border:none;
+color:#888;
+cursor:pointer;
+font-size:14px;
+padding:0 4px;
+display:none;
+align-items:center;
+justify-content:center;
+line-height:1;
+transition:color 0.2s;
+}
+
+.search-clear-btn:hover{
+color:#ff3040;
+}
+
+.search-suggestions{
+position:fixed;
+top:0;
+left:0;
+background:#111827;
+border:1px solid rgba(255,255,255,0.14);
+border-radius:14px;
+z-index:20000;
+max-height:min(70vh, 420px);
+overflow:hidden;
+box-shadow:0 18px 48px rgba(0,0,0,0.55);
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transform:translateY(-10px);
+transition:opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+}
+
+.search-suggestions.active{
+opacity:1;
+visibility:visible;
+pointer-events:auto;
+transform:translateY(0);
+}
+
+.search-dropdown-body{
+max-height:340px;
+overflow-y:auto;
+}
+
+.search-dropdown-table{
+width:100%;
+border-collapse:collapse;
+}
+
+.search-dropdown-table td{
+padding:0;
+}
+
+.search-suggestion-item{
+width:100%;
+display:flex;
+align-items:center;
+gap:12px;
+background:transparent;
+border:none;
+border-bottom:1px solid rgba(255,255,255,0.06);
+color:white;
+text-align:left;
+padding:11px 14px;
+cursor:pointer;
+}
+
+.search-suggestion-item:last-child{
+border-bottom:none;
+}
+
+.search-suggestion-item:hover,
+.search-suggestion-item:focus{
+background:rgba(0,191,255,0.12);
+outline:none;
+}
+
+.search-suggestion-item img,
+.search-suggestion-fallback{
+width:42px;
+height:42px;
+object-fit:contain;
+flex-shrink:0;
+background:#070B16;
+border-radius:8px;
+}
+
+.search-suggestion-fallback{
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px;
+}
+
+.search-suggestion-text{
+display:flex;
+flex-direction:column;
+gap:2px;
+min-width:0;
+}
+
+.search-suggestion-text strong{
+font-size:13px;
+font-weight:600;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+.search-suggestion-text small{
+font-size:11px;
+color:#00bfff;
+}
+
+.search-suggestion-empty{
+padding:18px 14px;
+text-align:center;
+color:#aaa;
+font-size:13px;
+}
+
+.auth-form-error{
+display:none;
+background:rgba(255,48,64,0.12);
+border:1px solid rgba(255,48,64,0.45);
+color:#ff8a94;
+border-radius:12px;
+padding:10px 12px;
+font-size:13px;
+line-height:1.45;
+margin:0 0 16px 0;
+}
+
+.card.xj-search-highlight{
+box-shadow:0 0 0 2px #00bfff, 0 0 28px rgba(0,191,255,0.45);
+}
+
+.search-no-results{
+display:none;
+text-align:center;
+padding:40px 20px;
+color:#888;
+font-size:15px;
+grid-column:1 / -1;
+}
+
+.search-no-results strong{
+color:#00bfff;
+display:block;
+margin-bottom:8px;
+font-family:Orbitron;
+}
+
+/* Admin inventory panel */
+.admin-toggle-btn{
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.12);
+color:#aaa;
+padding:6px 10px;
+border-radius:30px;
+font-size:11px;
+cursor:pointer;
+display:none;
+align-items:center;
+gap:4px;
+white-space:nowrap;
+transition:0.3s;
+}
+
+.admin-toggle-btn:hover{
+color:#00bfff;
+border-color:#00bfff;
+}
+
+.admin-inventory-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:14px;
+background:#070B16;
+border-radius:12px;
+margin-bottom:10px;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+.admin-inventory-info{
+display:flex;
+flex-direction:column;
+gap:4px;
+}
+
+.admin-inventory-info strong{
+font-size:14px;
+}
+
+.admin-inventory-status{
+font-size:11px;
+font-weight:bold;
+}
+
+.admin-inventory-status.in-stock-label{color:#00c853;}
+.admin-inventory-status.out-stock-label{color:#ff3040;}
+
+.admin-toggle{
+display:flex;
+align-items:center;
+gap:8px;
+font-size:12px;
+color:#aaa;
+cursor:pointer;
+}
+
+.admin-toggle input{
+accent-color:#00bfff;
+width:16px;
+height:16px;
+cursor:pointer;
 }
 
 .nav-links-list{
@@ -389,11 +613,11 @@ gap:35px;
 background:#111827;
 border:1px solid rgba(255,255,255,.08);
 border-radius:20px;
-padding:25px;
+padding:28px 25px 25px 25px;
 text-align:center;
 transition:.4s;
 position:relative;
-overflow:hidden;
+overflow:visible;
 display: flex;
 flex-direction: column;
 }
@@ -408,6 +632,8 @@ width:100%;
 height:220px;
 object-fit:contain;
 margin-bottom:20px;
+position:relative;
+z-index:1;
 }
 
 /* XJ Product Image Carousel */
@@ -416,6 +642,8 @@ position:relative;
 width:100%;
 height:220px;
 margin-bottom:20px;
+overflow:hidden;
+z-index:1;
 }
 
 .xj-product-carousel .xj-carousel-track{
@@ -449,7 +677,7 @@ width:100%;
 display:flex;
 justify-content:center;
 gap:8px;
-z-index:2;
+z-index:3;
 }
 
 .xj-product-carousel .xj-carousel-dot{
@@ -507,13 +735,18 @@ margin-top: auto;
 
 .stock{
 position:absolute;
-top:15px;
-left:15px;
+top:0;
+left:18px;
+transform:translateY(-50%);
 background:#00c853;
 padding:6px 12px;
 border-radius:30px;
-font-size:13px;
+font-size:12px;
 font-weight:bold;
+z-index:12;
+pointer-events:none;
+white-space:nowrap;
+box-shadow:0 6px 16px rgba(0,0,0,0.35);
 }
 
 .card > button{
@@ -976,6 +1209,9 @@ padding-top:140px;
 .stats{ justify-content:center; flex-wrap:wrap; }
 .cart-panel{ width:100%; right:-100%; }
 #toastContainer{ right: 5%; width: 90%; }
+.search-suggestions{
+max-width:calc(100vw - 24px);
+}
 }
 
 </style>
@@ -1000,7 +1236,8 @@ padding-top:140px;
   <div class="scrollable-nav-container">
     <div class="scrollable-nav-inner">
       <div class="search">
-        <input type="text" placeholder="Search" id="searchInput" oninput="filterProducts()">
+        <input type="text" placeholder="Search products..." id="searchInput" oninput="filterProducts()" aria-label="Search products" autocomplete="off">
+        <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="xjClearSearch()" title="Clear search">&times;</button>
       </div>
 
       <ul class="nav-links-list">
@@ -1017,6 +1254,8 @@ padding-top:140px;
         </button>
       </div>
 
+      <button type="button" class="admin-toggle-btn" id="adminToggleBtn" onclick="openAdminPanel()" title="Manage Inventory">⚙ Admin</button>
+
       <div class="cart" id="cartButton">
         🛒
         <span id="cartCount">0</span>
@@ -1024,6 +1263,8 @@ padding-top:140px;
     </div>
   </div>
 </nav>
+
+<div id="searchSuggestions" class="search-suggestions" aria-hidden="true"></div>
 
 <section class="hero">
 <div class="left">
@@ -1063,9 +1304,13 @@ padding-top:140px;
 <section id="products" class="products">
 <h2 class="section-title">Featured Products</h2>
 <div class="product-grid" id="productGrid">
+<div id="searchNoResults" class="search-no-results">
+  <strong>No products found</strong>
+  Try searching for PS4, controllers, Nintendo Switch, or Switch Lite.
+</div>
 
-<div class="card" data-name="playstation 4 slim">
-  <span class="stock">● In Stock</span>
+<div class="card" data-product-id="ps4-slim" data-name="playstation 4 slim" data-category="ps4,consoles">
+  <span class="stock">● Out of Stock</span>
   <div class="xj-product-carousel" data-xj-images="ps4-slim-1.png,ps4-slim-2.png,ps4-slim-3.png" data-xj-alt="PS4 Slim"></div>
   <h3>PlayStation 4 Slim</h3>
   <p class="desc">Experience sleek, compact gaming power with HDR visuals and an expansive library of incredible blockbuster titles.</p>
@@ -1073,7 +1318,7 @@ padding-top:140px;
   <button onclick="openCustomizationModal('PlayStation 4 Slim', 9000, 'ps4')">Add to Cart</button>
 </div>
 
-<div class="card" data-name="playstation 4 fat">
+<div class="card" data-product-id="ps4-fat" data-name="playstation 4 fat" data-category="ps4,consoles">
   <span class="stock">● In Stock</span>
   <div class="xj-product-carousel" data-xj-images="ps4-fat-1.png,ps4-fat-2.png,ps4-fat-3.png,ps4-fat-4.png" data-xj-alt="PS4 Fat"></div>
   <h3>PlayStation 4 Fat</h3>
@@ -1082,7 +1327,34 @@ padding-top:140px;
   <button onclick="openCustomizationModal('PlayStation 4 Fat', 8500, 'ps4')">Add to Cart</button>
 </div>
 
-<div class="card" data-name="nintendo switch">
+<div class="card" data-product-id="ps5" data-name="playstation 5" data-category="ps5,consoles">
+  <span class="stock">● In Stock</span>
+  <img src="ps5.png" alt="PlayStation 5">
+  <h3>PlayStation 5</h3>
+  <p class="desc">Next-generation 4K gaming with ultra-fast loading, stunning graphics, and DualSense immersive gameplay.</p>
+  <p class="price">18,000 GMD</p>
+  <button onclick="openCustomizationModal('PlayStation 5', 18000, 'ps4')">Add to Cart</button>
+</div>
+
+<div class="card" data-product-id="ps3" data-name="playstation 3" data-category="ps3,consoles">
+  <span class="stock">● In Stock</span>
+  <img src="ps3.png" alt="PlayStation 3">
+  <h3>PlayStation 3</h3>
+  <p class="desc">A classic PlayStation 3 console packed with exclusive titles, Blu-ray playback, and reliable performance.</p>
+  <p class="price">4,500 GMD</p>
+  <button onclick="openCustomizationModal('PlayStation 3', 4500, 'ps4')">Add to Cart</button>
+</div>
+
+<div class="card" data-product-id="ps2" data-name="playstation 2" data-category="ps2,consoles">
+  <span class="stock">● In Stock</span>
+  <img src="ps2.png" alt="PlayStation 2">
+  <h3>PlayStation 2</h3>
+  <p class="desc">The legendary PlayStation 2 — the best-selling console of all time, ready for retro classics and family favorites.</p>
+  <p class="price">2,500 GMD</p>
+  <button onclick="openCustomizationModal('PlayStation 2', 2500, 'ps4')">Add to Cart</button>
+</div>
+
+<div class="card" data-product-id="nintendo-switch" data-name="nintendo switch" data-category="nintendo,consoles,switch">
   <span class="stock">● In Stock</span>
   <img src="nintendo-switch.png" alt="Nintendo Switch">
   <h3>Nintendo Switch</h3>
@@ -1092,7 +1364,7 @@ padding-top:140px;
 </div>
 
 <!-- Switch Lite skips modal and adds directly -->
-<div class="card" data-name="nintendo switch lite">
+<div class="card" data-product-id="nintendo-switch-lite" data-name="nintendo switch lite" data-category="nintendo,consoles,switch-lite">
   <span class="stock">● In Stock</span>
   <img src="nintendo-switch-lite.png" alt="Nintendo Switch Lite">
   <h3>Nintendo Switch Lite</h3>
@@ -1102,7 +1374,7 @@ padding-top:140px;
 </div>
 
 <!-- PS4 Controller Added Product -->
-<div class="card" data-name="ps4 controller">
+<div class="card" data-product-id="ps4-controller" data-name="ps4 controller" data-category="controllers,ps4,accessories">
   <span class="stock">● In Stock</span>
   <img src="Ps4-controller.png" alt="PS4 Controller">
   <h3>PS4 Controller</h3>
@@ -1112,7 +1384,7 @@ padding-top:140px;
 </div>
 
 <!-- PS5 Controller Added Product -->
-<div class="card" data-name="ps5 controller">
+<div class="card" data-product-id="ps5-controller" data-name="ps5 controller" data-category="controllers,ps5,accessories">
   <span class="stock">● In Stock</span>
   <img src="ps5-controller.png" alt="PS5 Controller">
   <h3>PS5 Controller</h3>
@@ -1230,7 +1502,7 @@ padding-top:140px;
         <label style="font-size:13px; font-weight:600; color:white; display:block; margin-bottom:8px;">How many controllers do you want? *</label>
         <div style="display:flex; gap:10px;">
           <button type="button" class="option-pill ps-controller-btn" data-val="1" onclick="selectPSControllerOption(this, 1)">1 Controller</button>
-          <button type="button" class="option-pill ps-controller-btn" data-val="2" onclick="selectPSControllerOption(this, 2)">2 Controllers (+1,500)</button>
+          <button type="button" class="option-pill ps-controller-btn" data-val="2" id="psExtraControllerBtn" onclick="selectPSControllerOption(this, 2)">2 Controllers (+1,500)</button>
         </div>
       </div>
       
@@ -1293,36 +1565,28 @@ padding-top:140px;
   </div>
 </div>
 
+<!-- ================= AUTH REQUIRED NOTICE ================= -->
+<div id="authRequiredModal" class="modal-overlay">
+  <div class="modal-card" style="text-align:left; max-width:420px;">
+    <span onclick="closeAuthRequiredModal()" style="position:absolute; top:12px; right:18px; font-size:24px; cursor:pointer; color:#aaa;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
+    <h3 style="color:#ff3040; font-family:Orbitron; margin-bottom:10px; font-size:20px;">Error</h3>
+    <p id="authRequiredMessage" style="font-size:14px; color:#ddd; line-height:1.6; margin-bottom:22px;">Please sign in to continue.</p>
+    <div style="display:flex; gap:10px;">
+      <button type="button" onclick="closeAuthRequiredModal()" class="checkout-btn" style="background:rgba(255,255,255,0.1); flex:1; margin-top:0;">Close</button>
+      <button type="button" onclick="closeAuthRequiredModal(); openAuthModal();" class="checkout-btn" style="flex:1; margin-top:0;">Sign In</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= AUTHENTICATION MODAL ================= -->
 <div id="authModal" class="modal-overlay">
   <div class="modal-card">
     <span onclick="closeAuthModal()" style="position:absolute; top:12px; right:18px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
     
-    <div id="authStepSelection">
-      <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:22px;">Welcome to XJ Games</h3>
-      <p style="font-size:13px; color:#aaa; margin-bottom:25px;">Sign in to your customer account to place orders and leave reviews.</p>
-      
-      <button onclick="handleGoogleLogin()" class="checkout-btn" style="width:100%; border:none; background:#ffffff; color:#000; margin-top:0; display:flex; align-items:center; justify-content:center; gap:12px; font-weight:600;">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:20px;">
-        Continue with Google
-      </button>
-
-      <div style="margin: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.08); position: relative;">
-        <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #111827; padding: 0 12px; font-size: 11px; color: #888; font-weight:500;">OR</span>
-      </div>
-
-      <button onclick="showEmailForm()" class="checkout-btn" style="width:100%; border:none; background:linear-gradient(90deg,#00aaff,#0055ff); margin-top:0; display:flex; align-items:center; justify-content:center; gap:10px;">
-        <span>✉️</span> Continue with Email
-      </button>
-    </div>
-
-    <div id="authStepEmail" style="display:none; text-align: left;">
-      <div style="display:flex; align-items:center; margin-bottom:15px;">
-        <button onclick="backToSelection()" style="background:none; border:none; color:#00bfff; cursor:pointer; font-size:14px; font-weight:600; display:flex; align-items:center; gap:5px;">← Back</button>
-      </div>
-      
+    <div id="authFormError" class="auth-form-error"></div>
+    <div id="authStepEmail" style="text-align: left;">
       <h3 id="emailFormTitle" style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Sign In with Email</h3>
-      <p id="emailFormSubtitle" style="font-size:12px; color:#aaa; margin-bottom:20px;">Enter your credentials below.</p>
+      <p id="emailFormSubtitle" style="font-size:12px; color:#aaa; margin-bottom:20px;">Enter your email and password. A real Firebase account is required.</p>
       
       <div id="registerExtraFields" style="display:none;">
         <div style="display:flex; gap:10px; margin-bottom:12px;">
@@ -1381,6 +1645,16 @@ padding-top:140px;
   </div>
 </div>
 
+<!-- ================= ADMIN INVENTORY PANEL ================= -->
+<div id="adminModal" class="modal-overlay">
+  <div class="modal-card" style="text-align:left; max-width:480px;">
+    <span onclick="closeAdminPanel()" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
+    <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Inventory Management</h3>
+    <p style="font-size:12px; color:#888; margin-bottom:20px;">Toggle product availability. Changes apply instantly across the website.</p>
+    <div id="adminInventoryList"></div>
+  </div>
+</div>
+
 <!-- ================= FOOTER ================= -->
 <footer id="footer-socials">
 <h2>XJ GAMES</h2>
@@ -1400,9 +1674,18 @@ padding-top:140px;
 <p style="font-size:12px; color:#666; margin-top:20px;">&copy; 2026 XJ Games. All rights reserved.</p>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js?v=20260821"></script>
+<script src="js/xj-catalog.js?v=20260821"></script>
+<script src="js/xj-search.js?v=20260821"></script>
+<script src="js/xj-auth.js?v=20260821"></script>
+<script src="js/xj-inventory.js?v=20260821"></script>
+<script src="js/xj-reviews.js?v=20260821"></script>
+
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
-let currentUser = JSON.parse(localStorage.getItem('xj_user')) || null;
 
 // Product customization state
 let currentCustomProduct = { 
@@ -1429,11 +1712,13 @@ let currentCustomProduct = {
 let isRegisterMode = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  Promise.resolve(xjInitFirebase()).finally(() => {
+    xjInitStockSystem();
+    xjInitReviews();
+  });
   updateCartUI();
-  updateAuthUI();
-  renderReviews();
   xjInitProductCarousels();
-  xjInitStockSystem();
+  xjInitSearchSuggestions();
   
   document.getElementById('cartButton').addEventListener('click', () => {
     document.getElementById('cartPanel').classList.add('active');
@@ -1505,57 +1790,6 @@ function xjBuildProductCarousel(container) {
   xjStartCarousel();
 }
 
-// ================= XJ AUTOMATIC STOCK / NOTIFY SYSTEM =================
-var XJ_WHATSAPP_NOTIFY_NUMBER = '2202164491';
-
-function xjInitStockSystem() {
-  document.querySelectorAll('#productGrid .card').forEach(function(card) {
-    xjApplyStockState(card);
-  });
-}
-
-function xjApplyStockState(card) {
-  var stockBadge = card.querySelector('.stock');
-  var button = card.querySelector('button');
-  if (!stockBadge || !button) return;
-
-  if (!button.hasAttribute('data-xj-original-onclick')) {
-    var originalOnclick = button.getAttribute('onclick');
-    if (originalOnclick) {
-      button.setAttribute('data-xj-original-onclick', originalOnclick);
-    }
-  }
-
-  var isOutOfStock = /out\s+of\s+stock/i.test(stockBadge.textContent);
-
-  if (isOutOfStock) {
-    stockBadge.textContent = '● Out of Stock';
-    stockBadge.classList.add('out-of-stock');
-    button.textContent = 'Notify Me';
-    button.classList.add('xj-notify-btn');
-    button.removeAttribute('onclick');
-    button.onclick = function() { xjOpenStockNotifyWhatsApp(card); };
-  } else {
-    stockBadge.textContent = '● In Stock';
-    stockBadge.classList.remove('out-of-stock');
-    button.textContent = 'Add to Cart';
-    button.classList.remove('xj-notify-btn');
-    button.onclick = null;
-    var savedOnclick = button.getAttribute('data-xj-original-onclick');
-    if (savedOnclick) {
-      button.setAttribute('onclick', savedOnclick);
-    } else {
-      button.removeAttribute('onclick');
-    }
-  }
-}
-
-function xjOpenStockNotifyWhatsApp(card) {
-  var productName = card.querySelector('h3').textContent.trim();
-  var message = 'Hi, I would like to be notified when ' + productName + ' is back in stock.';
-  window.open('https://wa.me/' + XJ_WHATSAPP_NOTIFY_NUMBER + '?text=' + encodeURIComponent(message), '_blank');
-}
-
 function showToast(title, body, type = 'success') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
@@ -1576,8 +1810,14 @@ function showToast(title, body, type = 'success') {
 
 // ================= DIRECT ADD TO CART (Switch Lite, PS4 Controller) =================
 function directAddToCart(name, price) {
+  if (!xjRequireAuth('Error: Please sign in to add items to your cart.')) return;
+
+  const productId = xjGetProductIdByName(name);
+  if (productId && !xjGuardInStock(productId, name)) return;
+
   cart.push({
     name: name,
+    productId: productId,
     type: 'standalone',
     basePrice: price,
     finalPrice: price,
@@ -1603,8 +1843,8 @@ function updateModalPrice() {
 
   // Type specific calculation
   if (currentCustomProduct.type === 'ps4') {
-    // PS4 controllers (extra controller adds 1,500 GMD)
-    if (currentCustomProduct.psControllers === 2) finalPrice += 1500;
+    const extraControllerPrice = currentCustomProduct.extraControllerPrice || 1500;
+    if (currentCustomProduct.psControllers === 2) finalPrice += extraControllerPrice;
     
     // PS4 games
     const gamesText = document.getElementById('customGamesInput').value.trim();
@@ -1627,10 +1867,17 @@ function updateModalPrice() {
 
 // ================= MODAL INTERACTIONS =================
 function openCustomizationModal(name, basePrice, type) {
+  if (!xjRequireAuth('Error: Please sign in to add items to your cart.')) return;
+
+  const productId = xjGetProductIdByName(name);
+  if (productId && !xjGuardInStock(productId, name)) return;
+
   currentCustomProduct = { 
     name, 
+    productId: productId,
     basePrice, 
     type,
+    extraControllerPrice: (productId && XJ_PRODUCT_CATALOG[productId] && XJ_PRODUCT_CATALOG[productId].extraControllerPrice) || 1500,
     consoleType: 'Console Only', 
     delivery: 'No', 
     address: '', 
@@ -1647,12 +1894,23 @@ function openCustomizationModal(name, basePrice, type) {
   document.getElementById('customAddressInput').value = '';
   document.getElementById('addressFieldContainer').style.display = 'none';
 
+  const extraBtn = document.getElementById('psExtraControllerBtn');
+  if (extraBtn) {
+    extraBtn.textContent = '2 Controllers (+' + currentCustomProduct.extraControllerPrice.toLocaleString() + ')';
+  }
+
   // Set description for "Full Set" based on console type
   const descElement = document.getElementById('fullSetDescription');
   if (type === 'ps4') {
     document.getElementById('ps4Options').style.display = 'block';
     document.getElementById('switchOptions').style.display = 'none';
-    descElement.innerHTML = 'Full Set includes:<br>• HDMI cable<br>• Power cable<br>• Clean packaging';
+    if (productId === 'ps5') {
+      descElement.innerHTML = 'Full Set includes:<br>• HDMI cable<br>• Power cable<br>• Clean packaging';
+    } else if (productId === 'ps3' || productId === 'ps2') {
+      descElement.innerHTML = 'Full Set includes:<br>• AV / video cable<br>• Power cable<br>• Clean packaging';
+    } else {
+      descElement.innerHTML = 'Full Set includes:<br>• HDMI cable<br>• Power cable<br>• Clean packaging';
+    }
   } else {
     document.getElementById('ps4Options').style.display = 'none';
     document.getElementById('switchOptions').style.display = 'block';
@@ -1734,6 +1992,12 @@ function togglePillState(activeBtn) {
 }
 
 function confirmCustomizedAddToCart() {
+  if (!xjRequireAuth('Error: Please sign in to add items to your cart.')) return;
+
+  if (currentCustomProduct.productId && !xjGuardInStock(currentCustomProduct.productId, currentCustomProduct.name)) {
+    return;
+  }
+
   if (currentCustomProduct.type === 'ps4') {
     currentCustomProduct.games = document.getElementById('customGamesInput').value.trim();
   }
@@ -1819,6 +2083,17 @@ function checkoutCart() {
     showToast('Empty Cart', 'Add items to your cart before checking out.', 'error');
     return;
   }
+
+  // Block checkout if any cart item is now out of stock
+  for (let i = 0; i < cart.length; i++) {
+    const item = cart[i];
+    const pid = item.productId || xjGetProductIdByName(item.name);
+    if (pid && !xjIsProductInStock(pid)) {
+      showToast('Out of Stock', item.name + ' is no longer available. Please remove it from your cart.', 'error');
+      return;
+    }
+  }
+
   let total = cart.reduce((sum, item) => sum + item.finalPrice, 0);
   let msg = "Hello XJ Games, I want to place an order:%0A";
   
@@ -1840,202 +2115,7 @@ function checkoutCart() {
   msg += `%0ATotal Amount: ${total} GMD`;
   window.open(`https://wa.me/2202164491?text=${msg}`, '_blank');
 }
-
-// ================= AUTHENTICATION FUNCTIONS =================
-function openAuthModal() {
-  document.getElementById('authModal').classList.add('active');
-}
-function closeAuthModal() {
-  document.getElementById('authModal').classList.remove('active');
-}
-function showEmailForm() {
-  document.getElementById('authStepSelection').style.display = 'none';
-  document.getElementById('authStepEmail').style.display = 'block';
-  isRegisterMode = false;
-  setupEmailModeView();
-}
-function backToSelection() {
-  document.getElementById('authStepEmail').style.display = 'none';
-  document.getElementById('authStepSelection').style.display = 'block';
-}
-function toggleEmailMode(e) {
-  e.preventDefault();
-  isRegisterMode = !isRegisterMode;
-  setupEmailModeView();
-}
-function setupEmailModeView() {
-  const title = document.getElementById('emailFormTitle');
-  const btn = document.getElementById('emailSubmitBtn');
-  const toggleText = document.getElementById('emailToggleText');
-  const extraFields = document.getElementById('registerExtraFields');
-  
-  if (isRegisterMode) {
-    title.innerText = 'Create Account';
-    btn.innerText = 'Register';
-    extraFields.style.display = 'block';
-    toggleText.innerHTML = `Already have an account? <a href="#" onclick="toggleEmailMode(event)" style="color:#00bfff; text-decoration:none; font-weight:600;">Sign In</a>`;
-  } else {
-    title.innerText = 'Sign In with Email';
-    btn.innerText = 'Sign In';
-    extraFields.style.display = 'none';
-    toggleText.innerHTML = `Don't have an account? <a href="#" onclick="toggleEmailMode(event)" style="color:#00bfff; text-decoration:none; font-weight:600;">Create Account</a>`;
-  }
-}
-
-function handleEmailSubmit() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
-  if (!email || !password) {
-    showToast('Error', 'Please fill in all required fields.', 'error');
-    return;
-  }
-  
-  if (isRegisterMode) {
-    const firstName = document.getElementById('regFirstName').value.trim();
-    const lastName = document.getElementById('regLastName').value.trim();
-    const age = document.getElementById('regAge').value.trim();
-    const gender = document.getElementById('regGender').value;
-    if (!firstName || !lastName || !age || !gender) {
-      showToast('Error', 'Please fill in all personal registration fields.', 'error');
-      return;
-    }
-    currentUser = { name: `${firstName} ${lastName}`, email, avatar: 'https://www.svgrepo.com/show/498369/profile-circle.svg' };
-  } else {
-    currentUser = { name: email.split('@')[0], email, avatar: 'https://www.svgrepo.com/show/498369/profile-circle.svg' };
-  }
-  
-  localStorage.setItem('xj_user', JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  showToast('Success', isRegisterMode ? 'Account created successfully!' : 'Signed in successfully!');
-}
-
-function handleGoogleLogin() {
-  currentUser = { name: 'Google User', email: 'user@gmail.com', avatar: 'https://www.svgrepo.com/show/475656/google-color.svg' };
-  localStorage.setItem('xj_user', JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  showToast('Success', 'Signed in with Google successfully!');
-}
-
-function logoutUser() {
-  currentUser = null;
-  localStorage.removeItem('xj_user');
-  updateAuthUI();
-  showToast('Logged Out', 'You have been signed out.');
-}
-
-function updateAuthUI() {
-  const container = document.getElementById('authContainer');
-  if (currentUser) {
-    container.innerHTML = `
-      <div class="user-profile">
-        <img src="${currentUser.avatar}" alt="User">
-        <span>${currentUser.name.split(' ')[0]}</span>
-        <button class="logout-btn" onclick="logoutUser()" title="Sign Out">✕</button>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <button class="auth-btn" onclick="openAuthModal()">
-        <span>👤</span> Sign In
-      </button>
-    `;
-  }
-}
-
-function handleForgotPassword(e) {
-  e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
-  if (!email) {
-    showToast('Error', 'Please enter your email address first.', 'error');
-    return;
-  }
-  showToast('Password Reset', `Reset instructions sent to ${email}`);
-}
-
-function filterProducts() {
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  const cards = document.querySelectorAll('#productGrid .card');
-  cards.forEach(card => {
-    const name = card.getAttribute('data-name');
-    card.style.display = name.includes(query) ? 'block' : 'none';
-  });
-}
-
-function renderReviews() {
-  let reviews = JSON.parse(localStorage.getItem('xj_reviews')) || [
-    { name: 'Ousman Jallow', rating: 5, text: 'Amazing service! Received my PS4 Slim in Banjul within hours. Fully tested and works perfectly.', avatar: 'https://www.svgrepo.com/show/498369/profile-circle.svg' },
-    { name: 'Fatou Njie', rating: 5, text: 'Very reliable store. Bought a Nintendo Switch Lite for my brother and he loves it.', avatar: 'https://www.svgrepo.com/show/498369/profile-circle.svg' }
-  ];
-  
-  const grid = document.getElementById('reviewGrid');
-  let html = '';
-  reviews.forEach(rev => {
-    let stars = '⭐'.repeat(rev.rating);
-    html += `
-      <div class="review">
-        <div>
-          <div style="color:#ffcc00; font-size:14px; margin-bottom:8px;">${stars}</div>
-          <p>${rev.text}</p>
-        </div>
-        <div class="review-author-info">
-          <img src="${rev.avatar}" alt="${rev.name}">
-          <div>
-            <h4>${rev.name}</h4>
-            <span style="font-size:11px; color:#888;">Verified Customer</span>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-  grid.innerHTML = html;
-}
-
-function submitReview() {
-  if (!currentUser) {
-    showToast('Authentication Required', 'Please sign in to publish a review.', 'error');
-    openAuthModal();
-    return;
-  }
-  
-  const rating = parseInt(document.getElementById('reviewRating').value);
-  const text = document.getElementById('reviewText').value.trim();
-  
-  if (!text) {
-    showToast('Error', 'Please write your feedback before publishing.', 'error');
-    return;
-  }
-  
-  let reviews = JSON.parse(localStorage.getItem('xj_reviews')) || [];
-  reviews.unshift({ name: currentUser.name, rating, text, avatar: currentUser.avatar });
-  localStorage.setItem('xj_reviews', JSON.stringify(reviews));
-  
-  document.getElementById('reviewText').value = '';
-  renderReviews();
-  showToast('Success', 'Your review has been published!');
-}
 </script>
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDzRWlT_CjinX4N3GZPpNcajPModyGjyqY",
-  authDomain: "xj-games.firebaseapp.com",
-  projectId: "xj-games",
-  storageBucket: "xj-games.firebasestorage.app",
-  messagingSenderId: "986208671056",
-  appId: "1:986208671056:web:196f2b5823c93c8176c855",
-  measurementId: "G-Q4JNDR8H0P"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 </body>
 </html>
