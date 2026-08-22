@@ -412,6 +412,9 @@ padding:3px 8px 3px 3px;
 border-radius:30px;
 border:1px solid rgba(255,255,255,0.1);
 white-space:nowrap;
+cursor:pointer;
+font:inherit;
+color:inherit;
 }
 
 .user-profile img {
@@ -436,6 +439,173 @@ cursor:pointer;
 font-size:10px;
 font-weight:bold;
 margin-left:2px;
+}
+
+.xj-account-menu{
+position:relative;
+display:inline-block;
+}
+
+.xj-account-caret{
+font-size:10px;
+color:#888;
+margin-left:2px;
+}
+
+.xj-account-dropdown{
+display:none;
+position:absolute;
+top:calc(100% + 8px);
+right:0;
+width:240px;
+background:#111827;
+border:1px solid rgba(255,255,255,0.12);
+border-radius:14px;
+box-shadow:0 16px 40px rgba(0,0,0,0.45);
+z-index:80;
+overflow:hidden;
+}
+
+.xj-account-dropdown.open{ display:block; }
+
+.xj-account-dropdown-head{
+display:flex;
+gap:10px;
+align-items:center;
+padding:12px;
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.xj-account-dropdown-head img{
+width:36px;
+height:36px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.xj-account-dropdown-head strong{
+display:block;
+font-size:13px;
+color:#fff;
+}
+
+.xj-account-dropdown-head small{
+display:block;
+font-size:11px;
+color:#888;
+word-break:break-all;
+}
+
+.xj-account-dropdown button{
+width:100%;
+background:none;
+border:none;
+color:#ddd;
+text-align:left;
+padding:11px 14px;
+font-size:13px;
+cursor:pointer;
+}
+
+.xj-account-dropdown button:hover{ background:rgba(255,255,255,0.05); color:#00bfff; }
+.xj-account-dropdown .xj-signout-item{ color:#ff8a94; }
+
+.account-settings-modal{ max-width:560px; width:calc(100% - 24px); max-height:88vh; overflow:auto; }
+.account-hero{
+display:flex;
+gap:14px;
+align-items:center;
+margin-bottom:18px;
+}
+.account-hero img{
+width:64px;
+height:64px;
+border-radius:50%;
+object-fit:cover;
+border:2px solid #00bfff;
+}
+.account-hero h3{ font-family:Orbitron; font-size:18px; color:#00bfff; margin-bottom:4px; }
+.account-hero p{ font-size:12px; color:#888; }
+.account-section{
+background:#070B16;
+border:1px solid rgba(255,255,255,0.08);
+border-radius:14px;
+padding:14px;
+margin-bottom:12px;
+}
+.account-section h4{
+font-size:13px;
+color:#fff;
+margin-bottom:8px;
+}
+.account-section label{
+font-size:12px;
+color:#aaa;
+display:block;
+margin:8px 0 4px;
+}
+.account-section input, .account-section textarea, .account-section select{
+width:100%;
+padding:10px 12px;
+background:#0b1220;
+border:1px solid rgba(255,255,255,0.15);
+border-radius:10px;
+color:white;
+outline:none;
+font-size:13px;
+}
+.account-section input:disabled{
+opacity:0.7;
+cursor:not-allowed;
+}
+.account-hint{
+font-size:11px;
+color:#888;
+line-height:1.45;
+margin-top:6px;
+}
+.account-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.account-actions button, .account-photo-actions button{
+border:none;
+border-radius:10px;
+padding:8px 12px;
+font-size:12px;
+font-weight:600;
+cursor:pointer;
+}
+.account-save{ background:linear-gradient(90deg,#00aaff,#0055ff); color:#fff; }
+.account-secondary{ background:rgba(255,255,255,0.08); color:#ddd; }
+.account-danger{ background:rgba(255,48,64,0.15); color:#ff8a94; }
+
+.admin-toolbar{ margin-bottom:12px; }
+.admin-action-btn, .admin-remove-btn{
+border:none;
+border-radius:10px;
+padding:8px 12px;
+font-size:12px;
+font-weight:600;
+cursor:pointer;
+}
+.admin-action-btn{ background:linear-gradient(90deg,#00aaff,#0055ff); color:#fff; }
+.admin-remove-btn{ background:rgba(255,48,64,0.12); color:#ff8a94; margin-left:8px; }
+.admin-row-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.admin-add-form label{ display:block; font-size:12px; color:#aaa; margin:10px 0 4px; }
+.admin-add-form input, .admin-add-form textarea, .admin-add-form select{
+width:100%;
+padding:10px 12px;
+background:#0b1220;
+border:1px solid rgba(255,255,255,0.15);
+border-radius:10px;
+color:white;
+font-size:13px;
+}
+.admin-help{ font-size:11px; color:#888; margin:6px 0 0; line-height:1.4; }
+
+@media (max-width: 700px) {
+  .xj-account-dropdown{ right:auto; left:0; }
+  .account-hero{ flex-direction:column; align-items:flex-start; }
+  .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
+  .admin-row-actions{ width:100%; justify-content:space-between; }
 }
 
 .cart{
@@ -1514,7 +1684,7 @@ max-width:calc(100vw - 24px);
       </div>
       
       <!-- 2. Games -->
-      <div style="margin-bottom:20px;">
+      <div id="psGamesOption" style="margin-bottom:20px;">
         <label style="font-size:13px; font-weight:600; color:white; display:block; margin-bottom:4px;">Games (Optional)</label>
         <p style="font-size:11px; color:#00ff88; margin-bottom:6px;">Each game added costs 1,500 GMD. Separate with commas.</p>
         <textarea id="customGamesInput" rows="2" placeholder="e.g. FIFA 24, GTA V, Mortal Kombat" oninput="updateModalPrice()" style="width:100%; background:#070B16; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px; color:white; outline:none; font-size:13px;"></textarea>
@@ -1610,7 +1780,7 @@ max-width:calc(100vw - 24px);
         <div style="display:flex; gap:10px; margin-bottom:12px;">
           <div style="flex:1;">
             <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">Age *</label>
-            <input type="number" id="regAge" placeholder="Age" min="10" max="120" style="width:100%; padding:10px 12px; background:#070B16; border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:white; outline:none; font-size:13px;">
+            <input type="number" id="regAge" placeholder="Age" min="13" max="90" style="width:100%; padding:10px 12px; background:#070B16; border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:white; outline:none; font-size:13px;">
           </div>
           <div style="flex:1;">
             <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">Gender *</label>
@@ -1654,11 +1824,75 @@ max-width:calc(100vw - 24px);
 
 <!-- ================= ADMIN INVENTORY PANEL ================= -->
 <div id="adminModal" class="modal-overlay">
-  <div class="modal-card" style="text-align:left; max-width:480px;">
+  <div class="modal-card" style="text-align:left; max-width:560px; max-height:88vh; overflow:auto;">
     <span onclick="closeAdminPanel()" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
-    <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Inventory Management</h3>
-    <p style="font-size:12px; color:#888; margin-bottom:20px;">Toggle product availability. Changes apply instantly across the website.</p>
+    <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
+    <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
     <div id="adminInventoryList"></div>
+  </div>
+</div>
+
+<div id="accountSettingsModal" class="modal-overlay">
+  <div class="modal-card account-settings-modal">
+    <span onclick="closeAccountSettings()" style="position:absolute; top:12px; right:18px; font-size:24px; cursor:pointer; color:#aaa;">&times;</span>
+    <div class="account-hero">
+      <img id="accountSettingsAvatarPreview" alt="Profile">
+      <div>
+        <h3 id="accountSettingsNamePreview">Your account</h3>
+        <p id="accountSettingsEmailPreview"></p>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h4>Profile picture</h4>
+      <p class="account-hint">Optional. If you do not upload one, we use the first letter of your name.</p>
+      <div class="account-photo-actions account-actions">
+        <label class="account-save" style="display:inline-flex; align-items:center;">
+          Upload photo
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onchange="xjOnProfilePhotoSelected(event)">
+        </label>
+        <button type="button" id="settingsRemovePhotoBtn" class="account-danger" onclick="xjRemoveProfilePhoto()">Remove photo</button>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h4>Name</h4>
+      <label>Full name</label>
+      <input id="settingsFullName" type="text" maxlength="60" placeholder="First and last name">
+      <p class="account-hint" id="settingsNameHint">You can set your name once. After saving, it cannot be changed.</p>
+      <div class="account-actions">
+        <button type="button" id="settingsSaveNameBtn" class="account-save" onclick="xjSaveSettingsName()">Save name</button>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h4>Age</h4>
+      <label>Age</label>
+      <input id="settingsAge" type="number" min="13" max="90" placeholder="e.g. 24">
+      <p class="account-hint" id="settingsAgeHint">You can set your age once. After saving, it cannot be changed.</p>
+      <div class="account-actions">
+        <button type="button" id="settingsSaveAgeBtn" class="account-save" onclick="xjSaveSettingsAge()">Save age</button>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h4>Phone number</h4>
+      <label>Phone (optional)</label>
+      <input id="settingsPhone" type="tel" maxlength="20" placeholder="e.g. +220 2164491">
+      <p class="account-hint">You can add or change this whenever you need to.</p>
+      <div class="account-actions">
+        <button type="button" class="account-save" onclick="xjSaveSettingsPhone()">Save phone</button>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <h4>Security</h4>
+      <p class="account-hint">Email sign-in accounts can receive a password reset link. Google accounts use Google to sign in.</p>
+      <div class="account-actions">
+        <button type="button" class="account-secondary" onclick="xjSendPasswordResetFromSettings()">Send password reset email</button>
+        <button type="button" class="account-danger" onclick="xjConfirmSignOut()">Sign out</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1684,12 +1918,13 @@ max-width:calc(100vw - 24px);
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js?v=20260822"></script>
-<script src="js/xj-catalog.js?v=20260822"></script>
-<script src="js/xj-search.js?v=20260822"></script>
-<script src="js/xj-auth.js?v=20260822"></script>
-<script src="js/xj-inventory.js?v=20260822"></script>
-<script src="js/xj-reviews.js?v=20260822"></script>
+<script src="js/firebase-config.js?v=20260822d"></script>
+<script src="js/xj-catalog.js?v=20260822d"></script>
+<script src="js/xj-search.js?v=20260822d"></script>
+<script src="js/xj-auth.js?v=20260822d"></script>
+<script src="js/xj-profile.js?v=20260822d"></script>
+<script src="js/xj-inventory.js?v=20260822d"></script>
+<script src="js/xj-reviews.js?v=20260822d"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
@@ -1853,11 +2088,13 @@ function updateModalPrice() {
     const extraControllerPrice = currentCustomProduct.extraControllerPrice || 1500;
     if (currentCustomProduct.psControllers === 2) finalPrice += extraControllerPrice;
     
-    // PS4 games
-    const gamesText = document.getElementById('customGamesInput').value.trim();
-    if (gamesText) {
-      const gamesList = gamesText.split(',').map(g => g.trim()).filter(g => g.length > 0);
-      finalPrice += gamesList.length * 1500;
+    // PS4 games (not available for PS5)
+    if (currentCustomProduct.productId !== 'ps5') {
+      const gamesText = document.getElementById('customGamesInput').value.trim();
+      if (gamesText) {
+        const gamesList = gamesText.split(',').map(g => g.trim()).filter(g => g.length > 0);
+        finalPrice += gamesList.length * 1500;
+      }
     }
   } else if (currentCustomProduct.type === 'switch') {
     // Nintendo Controller
@@ -1901,9 +2138,17 @@ function openCustomizationModal(name, basePrice, type) {
   document.getElementById('customAddressInput').value = '';
   document.getElementById('addressFieldContainer').style.display = 'none';
 
-  const extraBtn = document.getElementById('psExtraControllerBtn');
+    const extraBtn = document.getElementById('psExtraControllerBtn');
   if (extraBtn) {
     extraBtn.textContent = '2 Controllers (+' + currentCustomProduct.extraControllerPrice.toLocaleString() + ')';
+  }
+
+  const gamesOption = document.getElementById('psGamesOption');
+  if (gamesOption) {
+    gamesOption.style.display = productId === 'ps5' ? 'none' : 'block';
+  }
+  if (productId === 'ps5') {
+    document.getElementById('customGamesInput').value = '';
   }
 
   // Set description for "Full Set" based on console type
@@ -2006,7 +2251,9 @@ function confirmCustomizedAddToCart() {
   }
 
   if (currentCustomProduct.type === 'ps4') {
-    currentCustomProduct.games = document.getElementById('customGamesInput').value.trim();
+    currentCustomProduct.games = currentCustomProduct.productId === 'ps5'
+      ? ''
+      : document.getElementById('customGamesInput').value.trim();
   }
   
   if (currentCustomProduct.delivery === 'Yes') {

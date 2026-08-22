@@ -14,27 +14,29 @@ service cloud.firestore {
         && request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails;
     }
 
-    // Admin email list — readable by authenticated users; writable only via Firebase Console initially
     match /config/admins {
       allow read: if isSignedIn();
       allow write: if false;
     }
 
-    // Public product catalog — anyone can read inventory; admins can update stock
     match /products/{productId} {
       allow read: if true;
-      allow create, update: if isAdmin()
-        && request.resource.data.keys().hasOnly(['id', 'name', 'inStock', 'price', 'category', 'updatedAt'])
-        && request.resource.data.inStock is bool;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && (resource.data.get('nameLocked', false) != true
+            || (request.resource.data.get('firstName', '') == resource.data.get('firstName', '')
+                && request.resource.data.get('lastName', '') == resource.data.get('lastName', '')
+                && request.resource.data.get('nameLocked', false) == true))
+        && (resource.data.get('ageLocked', false) != true
+            || request.resource.data.get('age', 0) == resource.data.get('age', 0));
       allow delete: if false;
     }
 
-    // User profiles — each user can only read/write their own document
-    match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Reviews — public read; authenticated users can create their own
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn()

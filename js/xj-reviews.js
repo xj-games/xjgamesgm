@@ -19,14 +19,6 @@ const XJ_DEFAULT_REVIEWS = [
 
 var xjReviewsUnsubscribe = null;
 
-function xjEscapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function xjInitReviews() {
   if (!xjDb || !xjIsFirebaseConfigured()) {
     renderReviewsFromLocal();

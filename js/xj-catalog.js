@@ -164,6 +164,15 @@ const XJ_PRODUCT_CATALOG = {
 
 /** Live inventory overrides from Firestore (productId → boolean) */
 const xjInventoryState = {};
+const xjHiddenProducts = {};
+
+function xjEscapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function xjGetProductStock(productId) {
   if (Object.prototype.hasOwnProperty.call(xjInventoryState, productId)) {
@@ -175,12 +184,51 @@ function xjGetProductStock(productId) {
 
 function xjSetProductStock(productId, inStock) {
   xjInventoryState[productId] = inStock;
+  if (XJ_PRODUCT_CATALOG[productId]) {
+    XJ_PRODUCT_CATALOG[productId].inStock = !!inStock;
+  }
 }
 
 function xjGetProductById(productId) {
   return XJ_PRODUCT_CATALOG[productId] || null;
 }
 
+function xjIsProductHidden(productId) {
+  return !!xjHiddenProducts[productId];
+}
+
+function xjHideProduct(productId) {
+  xjHiddenProducts[productId] = true;
+}
+
+function xjUnhideProduct(productId) {
+  delete xjHiddenProducts[productId];
+}
+
+function xjRegisterProduct(product) {
+  if (!product || !product.id) return;
+  XJ_PRODUCT_CATALOG[product.id] = product;
+  xjUnhideProduct(product.id);
+}
+
 function xjGetAllProductIds() {
-  return Object.keys(XJ_PRODUCT_CATALOG);
+  return Object.keys(XJ_PRODUCT_CATALOG).filter(function(id) {
+    return !xjIsProductHidden(id);
+  });
+}
+
+function xjSlugifyProductName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "product";
+}
+
+function xjSanitizeImageFileName(name) {
+  var base = String(name || "").trim().replace(/\\/g, "/").split("/").pop();
+  if (!base || !/^[A-Za-z0-9._-]+\.(png|jpe?g|webp|gif|svg)$/i.test(base)) {
+    return "";
+  }
+  return base;
 }

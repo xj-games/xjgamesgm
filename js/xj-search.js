@@ -159,7 +159,9 @@ function xjComputeSearchScore(productId, query) {
  */
 function xjSearchProducts(query) {
   const normalized = xjNormalizeSearchQuery(query);
-  const allIds = xjGetAllProductIds();
+  const allIds = xjGetAllProductIds().filter(function(id) {
+    return !xjIsProductHidden(id);
+  });
 
   if (!normalized) {
     return allIds;
@@ -184,7 +186,8 @@ function xjSearchProducts(query) {
 
 function xjShowAllProductCards() {
   document.querySelectorAll("#productGrid .card").forEach(function(card) {
-    card.style.display = "block";
+    var productId = card.getAttribute("data-product-id");
+    card.style.display = productId && xjIsProductHidden(productId) ? "none" : "block";
   });
   const noResults = document.getElementById("searchNoResults");
   if (noResults) {

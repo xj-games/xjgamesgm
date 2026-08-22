@@ -52,10 +52,7 @@ async function xjInitFirebase() {
 
     xjAuth.getRedirectResult().then(function(result) {
       if (result && result.user) {
-        return xjSaveUserProfile(result.user, {
-          firstName: result.user.displayName ? result.user.displayName.split(" ")[0] : "",
-          lastName: result.user.displayName ? result.user.displayName.split(" ").slice(1).join(" ") : ""
-        }).catch(function(profileError) {
+        return xjSaveUserProfile(result.user, {}).catch(function(profileError) {
           console.error("Signed in, but profile save failed:", profileError);
         });
       }
@@ -66,12 +63,16 @@ async function xjInitFirebase() {
 
     xjAuth.onAuthStateChanged(function(user) {
       xjFirebaseUser = user || null;
-      xjUpdateAuthUI();
       if (user) {
-        xjLoadAdminEmailsFromFirestore().then(function() {
-          xjUpdateAdminVisibility();
+        Promise.resolve(xjLoadUserProfile(user)).finally(function() {
+          xjUpdateAuthUI();
+          xjLoadAdminEmailsFromFirestore().then(function() {
+            xjUpdateAdminVisibility();
+          });
         });
       } else {
+        xjProfileCache = null;
+        xjUpdateAuthUI();
         xjUpdateAdminVisibility();
       }
       xjNotifyAuthReady(user);
@@ -228,10 +229,7 @@ async function handleGoogleLogin() {
     }
 
     try {
-      await xjSaveUserProfile(result.user, {
-        firstName: result.user.displayName ? result.user.displayName.split(" ")[0] : "",
-        lastName: result.user.displayName ? result.user.displayName.split(" ").slice(1).join(" ") : ""
-      });
+      await xjSaveUserProfile(result.user, {});
     } catch (profileError) {
       console.error("Signed in, but profile save failed:", profileError);
     }
@@ -283,23 +281,45 @@ async function handleEmailSubmit() {
       const gender = document.getElementById("regGender").value;
       const phone = document.getElementById("regPhone").value.trim();
 
-      if (!firstName || !lastName || !age || !gender) {
+      if (!firstName || !lastName) {
+        showToast("Error", "Please enter your first and last name.", "error");
+        return;
+      }
+      const nameCheck = xjValidateName(firstName + " " + lastName);
+      if (!nameCheck.ok) {
+        showToast("Error", nameCheck.message, "error");
+        return;
+      }
+      const ageCheck = xjValidateAge(age);
+      if (!ageCheck.ok) {
+        showToast("Error", ageCheck.message, "error");
+        return;
+      }
+      if (!gender) {
         showToast("Error", "Please fill in all personal registration fields.", "error");
+        return;
+      }
+      const phoneCheck = xjValidatePhone(phone);
+      if (!phoneCheck.ok) {
+        showToast("Error", phoneCheck.message, "error");
         return;
       }
 
       const credential = await xjAuth.createUserWithEmailAndPassword(email, password);
       await credential.user.updateProfile({
-        displayName: firstName + " " + lastName
+        displayName: nameCheck.name
       });
       try {
         await xjSaveUserProfile(credential.user, {
           firstName: firstName,
           lastName: lastName,
-          age: parseInt(age, 10),
+          age: ageCheck.age,
           gender: gender,
-          phone: phone
+          phone: phoneCheck.phone,
+          lockName: true,
+          lockAge: true
         });
+        await xjLoadUserProfile(credential.user);
       } catch (profileError) {
         console.error("Account created, but profile save failed:", profileError);
       }
@@ -324,20 +344,49 @@ async function handleEmailSubmit() {
 
 async function xjSaveUserProfile(user, extra) {
   if (!xjDb || !user) return;
+  extra = extra || {};
+  const ref = xjDb.collection("users").doc(user.uid);
+  const snap = await ref.get();
+  const existing = snap.exists ? snap.data() : {};
   const profile = {
     uid: user.uid,
-    email: user.email || "",
-    displayName: user.displayName || ((extra.firstName || "") + " " + (extra.lastName || "")).trim(),
-    photoURL: user.photoURL || "",
+    email: user.email || existing.email || "",
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  if (extra.firstName) profile.firstName = extra.firstName;
-  if (extra.lastName) profile.lastName = extra.lastName;
-  if (extra.age) profile.age = extra.age;
-  if (extra.gender) profile.gender = extra.gender;
-  if (extra.phone) profile.phone = extra.phone;
 
-  await xjDb.collection("users").doc(user.uid).set(profile, { merge: true });
+  if (existing.nameLocked) {
+    if (existing.firstName !== undefined) profile.firstName = existing.firstName;
+    if (existing.lastName !== undefined) profile.lastName = existing.lastName;
+    if (existing.displayName !== undefined) profile.displayName = existing.displayName;
+    profile.nameLocked = true;
+  } else if (extra.firstName) {
+    profile.firstName = extra.firstName;
+    profile.lastName = extra.lastName || "";
+    profile.displayName = (extra.firstName + " " + (extra.lastName || "")).trim();
+    if (extra.lockName) profile.nameLocked = true;
+  }
+
+  if (existing.ageLocked) {
+    profile.age = existing.age;
+    profile.ageLocked = true;
+  } else if (extra.age) {
+    profile.age = extra.age;
+    if (extra.lockAge) profile.ageLocked = true;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(extra, "phone")) {
+    profile.phone = extra.phone || "";
+  }
+  if (extra.gender) profile.gender = extra.gender;
+  if (Object.prototype.hasOwnProperty.call(extra, "photoDataUrl")) {
+    profile.photoDataUrl = extra.photoDataUrl || "";
+  }
+  if (Object.prototype.hasOwnProperty.call(extra, "photoRemoved")) {
+    profile.photoRemoved = !!extra.photoRemoved;
+  }
+
+  await ref.set(profile, { merge: true });
+  xjProfileCache = Object.assign({}, existing, profile, { updatedAt: existing.updatedAt || null });
 }
 
 async function logoutUser() {
@@ -378,30 +427,42 @@ function xjGetCurrentUserDisplay() {
   const user = (xjAuth && xjAuth.currentUser) || null;
   xjFirebaseUser = user;
   if (!user) return null;
+  const profile = xjProfileCache || {};
   return {
     uid: user.uid,
-    name: user.displayName || (user.email ? user.email.split("@")[0] : "User"),
-    email: user.email || "",
-    avatar: user.photoURL || "https://www.svgrepo.com/show/498369/profile-circle.svg"
+    name: typeof xjProfileFullName === "function" ? xjProfileFullName(profile, user) : (user.displayName || (user.email ? user.email.split("@")[0] : "User")),
+    email: user.email || profile.email || "",
+    avatar: typeof xjProfileAvatar === "function" ? xjProfileAvatar(profile, user) : xjLetterAvatarDataUrl(user.displayName || user.email || "U")
   };
 }
 
 function xjUpdateAuthUI() {
   const container = document.getElementById("authContainer");
+  if (!container) return;
   const user = xjGetCurrentUserDisplay();
 
   if (user) {
     container.innerHTML =
-      '<div class="user-profile">' +
-        '<img src="' + user.avatar + '" alt="User">' +
-        '<span>' + user.name.split(" ")[0] + '</span>' +
-        '<button class="logout-btn" onclick="logoutUser()" title="Sign Out">✕</button>' +
-      '</div>';
+      '<div class="xj-account-menu" id="xjAccountMenuWrap">' +
+        '<button type="button" class="user-profile" onclick="xjToggleAccountMenu(event)" title="Account settings">' +
+          '<img src="' + user.avatar + '" alt="Account">' +
+          "<span>" + xjEscapeHtml(user.name.split(" ")[0]) + "</span>" +
+          '<span class="xj-account-caret">▾</span>' +
+        "</button>" +
+        '<div class="xj-account-dropdown" id="xjAccountDropdown">' +
+          '<div class="xj-account-dropdown-head">' +
+            '<img src="' + user.avatar + '" alt="">' +
+            "<div><strong>" + xjEscapeHtml(user.name) + "</strong><small>" + xjEscapeHtml(user.email) + "</small></div>" +
+          "</div>" +
+          '<button type="button" onclick="openAccountSettings()">Account settings</button>' +
+          '<button type="button" class="xj-signout-item" onclick="xjConfirmSignOut()">Sign out</button>' +
+        "</div>" +
+      "</div>";
   } else {
     container.innerHTML =
       '<button class="auth-btn" onclick="openAuthModal()">' +
-        '<span>👤</span> Sign In' +
-      '</button>';
+        "<span>👤</span> Sign In" +
+      "</button>";
   }
 }
 
