@@ -122,14 +122,46 @@ function xjToggleAccountMenu(event) {
   if (event) event.stopPropagation();
   var menu = document.getElementById("xjAccountDropdown");
   if (!menu) return;
-  xjAccountMenuOpen = !xjAccountMenuOpen;
-  menu.classList.toggle("open", xjAccountMenuOpen);
+  if (xjAccountMenuOpen) {
+    xjCloseAccountMenu();
+    return;
+  }
+  if (menu.parentElement !== document.body) {
+    document.body.appendChild(menu);
+  }
+  xjAccountMenuOpen = true;
+  menu.classList.add("open");
+  xjPositionAccountDropdown();
+}
+
+function xjPositionAccountDropdown() {
+  var menu = document.getElementById("xjAccountDropdown");
+  var btn = document.querySelector("#xjAccountMenuWrap .user-profile");
+  if (!menu || !btn || !menu.classList.contains("open")) return;
+
+  var rect = btn.getBoundingClientRect();
+  var width = Math.min(280, window.innerWidth - 24);
+  var left = rect.right - width;
+  if (left < 12) left = 12;
+  if (left + width > window.innerWidth - 12) {
+    left = Math.max(12, window.innerWidth - width - 12);
+  }
+
+  menu.style.top = (rect.bottom + 8) + "px";
+  menu.style.left = left + "px";
+  menu.style.width = width + "px";
+  menu.style.right = "auto";
 }
 
 function xjCloseAccountMenu() {
   xjAccountMenuOpen = false;
   var menu = document.getElementById("xjAccountDropdown");
-  if (menu) menu.classList.remove("open");
+  var wrap = document.getElementById("xjAccountMenuWrap");
+  if (!menu) return;
+  menu.classList.remove("open");
+  if (wrap && menu.parentElement === document.body) {
+    wrap.appendChild(menu);
+  }
 }
 
 function openAccountSettings() {
@@ -337,8 +369,12 @@ function xjConfirmSignOut() {
 
 document.addEventListener("click", function(event) {
   var wrap = document.getElementById("xjAccountMenuWrap");
-  if (!wrap) return;
-  if (!wrap.contains(event.target)) {
-    xjCloseAccountMenu();
-  }
+  var menu = document.getElementById("xjAccountDropdown");
+  if (!xjAccountMenuOpen) return;
+  if (wrap && wrap.contains(event.target)) return;
+  if (menu && menu.contains(event.target)) return;
+  xjCloseAccountMenu();
 });
+
+window.addEventListener("resize", xjPositionAccountDropdown);
+window.addEventListener("scroll", xjPositionAccountDropdown, true);

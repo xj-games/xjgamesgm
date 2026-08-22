@@ -454,15 +454,15 @@ margin-left:2px;
 
 .xj-account-dropdown{
 display:none;
-position:absolute;
-top:calc(100% + 8px);
-right:0;
-width:240px;
+position:fixed;
+top:0;
+left:0;
+width:260px;
 background:#111827;
-border:1px solid rgba(255,255,255,0.12);
+border:1px solid rgba(0,191,255,0.35);
 border-radius:14px;
-box-shadow:0 16px 40px rgba(0,0,0,0.45);
-z-index:80;
+box-shadow:0 24px 60px rgba(0,0,0,0.75), 0 0 28px rgba(0,170,255,0.25);
+z-index:40000;
 overflow:hidden;
 }
 
@@ -602,7 +602,6 @@ font-size:13px;
 .admin-help{ font-size:11px; color:#888; margin:6px 0 0; line-height:1.4; }
 
 @media (max-width: 700px) {
-  .xj-account-dropdown{ right:auto; left:0; }
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
@@ -1232,7 +1231,7 @@ width: 100%;
 height: 100%;
 background: rgba(0,0,0,0.75);
 backdrop-filter: blur(8px);
-z-index: 10000;
+z-index: 40000;
 justify-content: center;
 align-items: center;
 opacity: 0;
@@ -1921,8 +1920,8 @@ max-width:calc(100vw - 24px);
 <script src="js/firebase-config.js?v=20260822d"></script>
 <script src="js/xj-catalog.js?v=20260822d"></script>
 <script src="js/xj-search.js?v=20260822d"></script>
-<script src="js/xj-auth.js?v=20260822d"></script>
-<script src="js/xj-profile.js?v=20260822d"></script>
+<script src="js/xj-auth.js?v=20260822e"></script>
+<script src="js/xj-profile.js?v=20260822e"></script>
 <script src="js/xj-inventory.js?v=20260822d"></script>
 <script src="js/xj-reviews.js?v=20260822d"></script>
 

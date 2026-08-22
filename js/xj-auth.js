@@ -437,6 +437,13 @@ function xjGetCurrentUserDisplay() {
 }
 
 function xjUpdateAuthUI() {
+  const floatingMenu = document.getElementById("xjAccountDropdown");
+  if (floatingMenu && floatingMenu.parentElement === document.body) {
+    floatingMenu.remove();
+  }
+  if (typeof xjCloseAccountMenu === "function") {
+    xjAccountMenuOpen = false;
+  }
   const container = document.getElementById("authContainer");
   if (!container) return;
   const user = xjGetCurrentUserDisplay();
