@@ -1,15 +1,14 @@
 /**
- * XJ Games — Firebase client configuration
+ * XJ Games — Firebase client configuration (project: xj-games)
  */
-
 const XJ_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDzRWlT_CjinX4N3GZPpNcajPModyGjyqY",
+  apiKey: "AIzaSyD5Bo-lxWxmNomkneOw-08Ba3ASf_Om-NE",
   authDomain: "xj-games.firebaseapp.com",
   projectId: "xj-games",
   storageBucket: "xj-games.firebasestorage.app",
   messagingSenderId: "986208671056",
-  appId: "1:986208671056:web:196f2b5823c93c8176c855",
-  measurementId: "G-Q4JNDR8H0P"
+  appId: "1:986208671056:web:adac016adedf8c5976c855",
+  measurementId: "G-PCTDDKFCTJ"
 };
 
 /** Emails allowed to manage product inventory */
