@@ -1,0 +1,107 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/config/admins)
+        && request.auth.token.email != null
+        && request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails;
+    }
+
+    match /config/admins {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /config/categoryOrder {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Storefront promotion and operational settings are public, but only admins
+    // can change them. This keeps client-side displays tamper-resistant.
+    match /config/{document} {
+      allow read: if document != 'admins';
+      allow write: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.get('accountStatus', resource.data.get('accountStatus', 'active')) == resource.data.get('accountStatus', 'active')
+        && request.resource.data.get('statusUpdatedBy', resource.data.get('statusUpdatedBy', null)) == resource.data.get('statusUpdatedBy', null)
+        && (resource.data.get('nameLocked', false) != true
+            || (request.resource.data.get('firstName', '') == resource.data.get('firstName', '')
+                && request.resource.data.get('lastName', '') == resource.data.get('lastName', '')
+                && request.resource.data.get('nameLocked', false) == true))
+        && (resource.data.get('ageLocked', false) != true
+            || request.resource.data.get('age', 0) == resource.data.get('age', 0));
+      allow delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.text is string
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.keys().hasOnly(['userId', 'name', 'rating', 'text', 'avatar', 'createdAt']);
+      allow update, delete: if isSignedIn()
+                              && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId}/orders/{orderId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update, delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /adminActivity/{activityId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /backups/{backupId} {
+      allow read: if isAdmin();
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/activity/{activityId} {
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.action is string
+        && request.resource.data.keys().hasOnly(['action','data','createdAt']);
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow update, delete: if false;
+    }
+
+    match /promos/{promoId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /flashSales/{saleId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
