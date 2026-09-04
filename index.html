@@ -1160,7 +1160,7 @@ margin-bottom: 6px;
 font-weight: 500;
 }
 
-.add-review-box select, .add-review-box textarea {
+.add-review-box input, .add-review-box select, .add-review-box textarea {
 width: 100%;
 background: #070B16;
 border: 1px solid rgba(255,255,255,0.15);
@@ -1592,6 +1592,7 @@ to { transform: translateX(120%); opacity: 0; }
       <img src="xj-games-logo.png" alt="XJ Games Logo">
       XJ Games
     </a>
+    <div id="authContainer" style="display:inline-block;"></div>
     <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">☰</button>
   </div>
   <div class="redeem-strip">
@@ -1615,12 +1616,6 @@ to { transform: translateX(120%); opacity: 0; }
         <li><a href="#contact">Contact</a></li>
       </ul>
 
-      <div id="authContainer" style="display:inline-block;">
-        <button class="auth-btn" onclick="openAuthModal()">
-          <span>👤</span> Sign In
-        </button>
-      </div>
-
       <button type="button" class="admin-toggle-btn" id="adminToggleBtn" onclick="openAdminPanel()" title="Manage Inventory">⚙ Admin</button>
       <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('wishlistPanel')">♥ Wishlist</button>
       <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('ordersPanel')">📦 Orders</button>
@@ -1638,6 +1633,8 @@ to { transform: translateX(120%); opacity: 0; }
   <a href="#about" onclick="closeMobileMenu()">About</a>
   <a href="#reviews" onclick="closeMobileMenu()">Reviews</a>
   <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+  <a href="#" onclick="closeMobileMenu(); openAuthModal();">Account / Sign in</a>
+  <a href="#" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
 </div>
 
 <div id="searchSuggestions" class="search-suggestions" aria-hidden="true"></div>
@@ -1695,14 +1692,14 @@ to { transform: translateX(120%); opacity: 0; }
   <div class="xj-product-carousel" data-xj-images="ps4-slim-1.PNG,ps4-slim-2.png,ps4-slim-3.png" data-xj-alt="PS4 Slim"></div>
   <h3>PlayStation 4 Slim</h3>
   <p class="desc">Experience sleek, compact gaming power with HDR visuals and an expansive library of incredible blockbuster titles.</p>
-  <p class="price">9,000 GMD</p>
+  <p class="price">9,500 GMD</p>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 4 Slim', 9000, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Slim', 9500, 'ps4')">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps4-slim')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('ps4-slim')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('ps4-slim')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1713,14 +1710,14 @@ to { transform: translateX(120%); opacity: 0; }
   <div class="xj-product-carousel" data-xj-images="ps4-fat-1.png,ps4-fat-2.png,ps4-fat-3.png,ps4-fat-4.png" data-xj-alt="PS4 Fat"></div>
   <h3>PlayStation 4 Fat</h3>
   <p class="desc">The original powerhouse that started a generation. Robust, extremely reliable, and ready for all your favorite games.</p>
-  <p class="price">8,500 GMD</p>
+  <p class="price">9,000 GMD</p>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 4 Fat', 8500, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Fat', 9000, 'ps4')">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps4-fat')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('ps4-fat')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('ps4-fat')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1738,7 +1735,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps5')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('ps5')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('ps5')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1756,7 +1753,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps3')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('ps3')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('ps3')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1774,7 +1771,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps2')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('ps2')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('ps2')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1792,7 +1789,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('nintendo-switch')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('nintendo-switch')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('nintendo-switch')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1810,7 +1807,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('nintendo-switch-lite')">View Description</button>
-        <button type="button" onclick="xjOpenReducePrice('nintendo-switch-lite')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>
+        <button type="button" onclick="xjOpenReducePrice('nintendo-switch-lite')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -1905,6 +1902,18 @@ to { transform: translateX(120%); opacity: 0; }
   <textarea id="reviewText" rows="3" placeholder="Share your professional experience with XJ Games..."></textarea>
   <button onclick="submitReview()">Publish Review</button>
 </div>
+</section>
+
+<section id="recommendation-form" class="features">
+  <h2 class="section-title">Share Your Recommendation</h2>
+  <p style="text-align:center;color:#aaa;">Tell us what product, game, or feature you would like to see next.</p>
+  <div class="add-review-box">
+    <label for="recommendationName">Your name</label>
+    <input id="recommendationName" type="text" placeholder="Your name">
+    <label for="recommendationText">Your recommendation</label>
+    <textarea id="recommendationText" rows="4" placeholder="What should XJ Games add?"></textarea>
+    <button type="button" onclick="sendRecommendation()">Send Recommendation on WhatsApp</button>
+  </div>
 </section>
 
 <!-- ================= CONTACT ================= -->
@@ -2301,7 +2310,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function xjProductActionHtml(id, action, label) {
     const p = xjProductFromCard(id), eligible = xjEligibleForReduce(p), state = xjReduceStateFor(id);
     if (state.used && !state.unlocked) return '';
-    return '<div class="card-actions"><button onclick="' + action + '">' + label + '</button><div class="product-menu-wrap"><button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button><div class="product-menu"><button type="button" onclick="xjOpenDescription(\'' + id + '\')">View Description</button>' + (eligible && !state.used ? '<button type="button" onclick="xjOpenReducePrice(\'' + id + '\')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>' : '') + '</div></div></div>';
+    return '<div class="card-actions"><button onclick="' + action + '">' + label + '</button><div class="product-menu-wrap"><button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button><div class="product-menu"><button type="button" onclick="xjOpenDescription(\'' + id + '\')">View Description</button>' + (eligible && !state.used ? '<button type="button" onclick="xjOpenReducePrice(\'' + id + '\')">Reduce price</button>' : '') + '</div></div></div>';
   }
   function xjEnhanceStaticProductCards() {
     document.querySelectorAll('#productGrid .card[data-product-id]').forEach(function(card) {
@@ -2316,15 +2325,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     xjNormalizeProductCardActions();
   }
-  function xjNormalizeProductCardActions() {
-    document.querySelectorAll('#productGrid .card[data-product-id]').forEach(function(card) {
-      var actions = card.querySelector(':scope > .card-actions');
-      if (!actions) return;
-      card.querySelectorAll(':scope > button').forEach(function(button) { button.remove(); });
-      card.appendChild(actions);
-    });
+  var xjNormalizingProductActions = false;
+  function xjNormalizeProductCardActions(cards) {
+    if (xjNormalizingProductActions) return;
+    xjNormalizingProductActions = true;
+    try {
+      (cards || document.querySelectorAll('#productGrid .card[data-product-id]')).forEach(function(card) {
+        var actions = card.querySelector(':scope > .card-actions');
+        if (!actions) return;
+        card.querySelectorAll(':scope > button').forEach(function(button) { button.remove(); });
+        if (card.lastElementChild !== actions) {
+          card.appendChild(actions);
+        }
+      });
+    } finally {
+      xjNormalizingProductActions = false;
+    }
   }
-  new MutationObserver(function() { xjNormalizeProductCardActions(); }).observe(document.getElementById('productGrid'), {childList:true, subtree:true});
+  var xjProductGrid = document.getElementById('productGrid');
+  if (xjProductGrid) {
+    new MutationObserver(function(records) {
+      var cards = [];
+      records.forEach(function(record) {
+        var targetCard = record.target.closest && record.target.closest('.card[data-product-id]');
+        if (targetCard) cards.push(targetCard);
+        Array.prototype.forEach.call(record.addedNodes, function(node) {
+          if (node.nodeType !== 1) return;
+          if (node.matches('.card[data-product-id]')) cards.push(node);
+          node.querySelectorAll('.card[data-product-id]').forEach(function(card) { cards.push(card); });
+        });
+      });
+      if (cards.length) {
+        xjNormalizeProductCardActions(cards.filter(function(card, index) {
+          return cards.indexOf(card) === index;
+        }));
+      }
+    }).observe(xjProductGrid, {childList:true, subtree:true});
+  }
   function xjToggleProductMenu(button, event) {
     event.stopPropagation();
     const menu = button.nextElementSibling;
@@ -2466,6 +2503,7 @@ function showToast(title, body, type = 'success') {
 
 // ================= DIRECT ADD TO CART (Switch Lite, PS4 Controller) =================
 function directAddToCart(name, price) {
+  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
   const productId = xjGetProductIdByName(name);
   if (productId && !xjGuardInStock(productId, name)) return;
 
@@ -2523,6 +2561,7 @@ function updateModalPrice() {
 
 // ================= MODAL INTERACTIONS =================
 function openCustomizationModal(name, basePrice, type) {
+  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
   const productId = xjGetProductIdByName(name);
   if (productId && !xjGuardInStock(productId, name)) return;
 
@@ -2654,6 +2693,7 @@ function togglePillState(activeBtn) {
 }
 
 function confirmCustomizedAddToCart() {
+  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
   if (currentCustomProduct.productId && !xjGuardInStock(currentCustomProduct.productId, currentCustomProduct.name)) {
     return;
   }
@@ -2699,6 +2739,10 @@ function xjCartItemKey(item) {
 }
 
 function xjAddCartItem(item) {
+  if (!xjIsAuthenticated()) {
+    xjShowAuthRequiredModal("Please sign in to add products to your cart.");
+    return false;
+  }
   item.quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
   var key = xjCartItemKey(item);
   var existing = cart.find(function(entry) { return xjCartItemKey(entry) === key; });
@@ -2709,6 +2753,20 @@ function xjAddCartItem(item) {
   }
   saveCart();
   document.getElementById('cartPanel').classList.add('active');
+  return true;
+}
+
+function sendRecommendation() {
+  if (!xjRequireAuth("Please sign in to send a recommendation.")) return;
+  const name = (document.getElementById('recommendationName').value || '').trim();
+  const idea = (document.getElementById('recommendationText').value || '').trim();
+  if (!idea) {
+    showToast('Recommendation', 'Please enter your idea before sending.', 'error');
+    return;
+  }
+  const user = xjGetCurrentUserDisplay();
+  const message = 'XJ Games recommendation from ' + (name || user.name) + ':\n\n' + idea;
+  window.open('https://wa.me/2202164491?text=' + encodeURIComponent(message), '_blank');
 }
 
 function saveCart() {
