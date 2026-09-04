@@ -75,6 +75,9 @@ async function xjInitFirebase() {
         xjUpdateAuthUI();
         xjUpdateAdminVisibility();
       }
+      if (window.xjApplyWebsiteSettings && window.xjCurrentWebsiteSettings) {
+        window.xjApplyWebsiteSettings(window.xjCurrentWebsiteSettings);
+      }
       xjNotifyAuthReady(user);
     }, function(error) {
       console.error("Auth state error:", error);
@@ -309,6 +312,7 @@ async function handleEmailSubmit() {
       await credential.user.updateProfile({
         displayName: nameCheck.name
       });
+      await credential.user.sendEmailVerification();
       try {
         await xjSaveUserProfile(credential.user, {
           firstName: firstName,
@@ -323,13 +327,21 @@ async function handleEmailSubmit() {
       } catch (profileError) {
         console.error("Account created, but profile save failed:", profileError);
       }
+      await xjAuth.signOut();
       closeAuthModal();
-      showToast("Success", "Account created successfully!");
+      showToast("Verify your email", "We sent a verification link to " + email + ". Verify it before signing in.", "info");
     } else {
       const credential = await xjAuth.signInWithEmailAndPassword(email, password);
       if (!credential || !credential.user) {
         console.error("Email sign-in returned no Firebase user.");
         xjShowAuthFormError("Sign-in did not complete. You are not signed in.");
+        return;
+      }
+      if (!credential.user.emailVerified) {
+        await credential.user.sendEmailVerification();
+        await xjAuth.signOut();
+        xjShowAuthFormError("Please verify your email before signing in. A new verification link was sent.");
+        showToast("Email verification required", "Check your inbox and verify your email before signing in.", "error");
         return;
       }
       closeAuthModal();

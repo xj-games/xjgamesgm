@@ -164,7 +164,7 @@ function xjSearchProducts(query) {
   });
 
   if (!normalized) {
-    return allIds;
+    return xjGetPrioritySortedProductIds(allIds);
   }
 
   const MIN_SCORE = 15;
@@ -185,7 +185,16 @@ function xjSearchProducts(query) {
 }
 
 function xjShowAllProductCards() {
-  document.querySelectorAll("#productGrid .card").forEach(function(card) {
+  var grid = document.getElementById("productGrid");
+  if (!grid) return;
+  var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
+  xjGetPrioritySortedProductIds(cards.map(function(card) {
+    return card.getAttribute("data-product-id");
+  })).forEach(function(productId) {
+    var card = grid.querySelector('.card[data-product-id="' + productId + '"]');
+    if (card) grid.appendChild(card);
+  });
+  cards.forEach(function(card) {
     var productId = card.getAttribute("data-product-id");
     card.style.display = productId && xjIsProductHidden(productId) ? "none" : "block";
   });
@@ -209,9 +218,20 @@ function xjClearSearch() {
 }
 
 function filterProducts() {
-  xjShowAllProductCards();
   const input = document.getElementById("searchInput");
   const query = input ? input.value : "";
+  const matchingIds = xjSearchProducts(query);
+  const matches = {};
+  matchingIds.forEach(function(id) { matches[id] = true; });
+  xjShowAllProductCards();
+  if (xjNormalizeSearchQuery(query)) {
+    document.querySelectorAll("#productGrid .card").forEach(function(card) {
+      var productId = card.getAttribute("data-product-id");
+      card.style.display = matches[productId] ? "block" : "none";
+    });
+    const noResults = document.getElementById("searchNoResults");
+    if (noResults) noResults.style.display = matchingIds.length ? "none" : "block";
+  }
   xjUpdateSearchSuggestions(query);
   const clearBtn = document.getElementById("searchClearBtn");
   if (clearBtn) {

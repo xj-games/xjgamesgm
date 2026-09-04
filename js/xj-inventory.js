@@ -5,15 +5,31 @@ var xjInventoryUnsubscribe = null;
 var xjStockObserver = null;
 var xjApplyingStock = false;
 var xjAdminFormOpen = false;
+var xjCategoryOrderUnsubscribe = null;
 var XJ_WHATSAPP_NOTIFY_NUMBER = "2202164491";
 var XJ_NOTIFY_BUTTON_LABEL = "Notify Me";
 
 function xjInitInventory() {
   xjSyncStockFromHtml();
   xjApplyAllStockStates();
+  if (typeof xjShowAllProductCards === "function") xjShowAllProductCards();
   xjWatchStockHtmlChanges();
   if (xjDb && xjIsFirebaseConfigured()) {
     xjSubscribeToInventory();
+    xjSubscribeToCategoryOrder();
+  }
+
+  function xjSubscribeToCategoryOrder() {
+    if (!xjDb) return;
+    if (xjCategoryOrderUnsubscribe) xjCategoryOrderUnsubscribe();
+    xjCategoryOrderUnsubscribe = xjDb.collection("config").doc("categoryOrder").onSnapshot(function(snapshot) {
+      if (snapshot.exists && Array.isArray(snapshot.data().order)) {
+        xjSetCategoryOrder(snapshot.data().order);
+        xjShowAllProductCards();
+      }
+    }, function(error) {
+      console.error("Category order listener error:", error);
+    });
   }
 }
 
@@ -105,15 +121,17 @@ function xjProductFromRemote(productId, data) {
     name: name,
     slug: (data.slug || name).toLowerCase(),
     category: category,
+    displayCategory: data.displayCategory || (category === "games" ? "games" : null),
     categories: categories,
     price: Number(data.price) || 0,
     inStock: data.inStock !== false,
     type: type,
     extraControllerPrice: Number(data.extraControllerPrice) || 1500,
-    hasModal: type !== "standalone",
+    hasModal: type === "ps4" || type === "switch",
     image: data.image || "",
     description: data.description || "",
     aliases: Array.isArray(data.aliases) && data.aliases.length ? data.aliases : [name.toLowerCase()],
+    createdAt: data.createdAt && typeof data.createdAt.toMillis === "function" ? data.createdAt.toMillis() : Number(data.createdAt) || 0,
     isCustom: true
   };
 }
@@ -123,6 +141,7 @@ function xjInsertProductCard(product) {
   if (!grid || !product) return;
   xjApplyingStock = true;
   grid.insertAdjacentHTML("beforeend", xjBuildProductCardHtml(product));
+  if (typeof xjShowAllProductCards === "function") xjShowAllProductCards();
   setTimeout(function() {
     xjApplyingStock = false;
     var card = document.querySelector('#productGrid .card[data-product-id="' + product.id + '"]');
@@ -157,6 +176,7 @@ function xjBuildProductCardHtml(product) {
   var action = product.hasModal
     ? "openCustomizationModal('" + jsName + "', " + Number(product.price) + ", '" + (product.type === "switch" ? "switch" : "ps4") + "')"
     : "directAddToCart('" + jsName + "', " + Number(product.price) + ")";
+  var eligible = product.displayCategory === "playstation-consoles" || product.displayCategory === "nintendo-consoles";
 
   return (
     '<div class="card" data-product-id="' + xjEscapeHtml(product.id) + '" data-name="' + safeSlug + '" data-category="' + safeCats + '">' +
@@ -165,7 +185,11 @@ function xjBuildProductCardHtml(product) {
       "<h3>" + safeName + "</h3>" +
       '<p class="desc">' + safeDesc + "</p>" +
       '<p class="price">' + Number(product.price).toLocaleString() + " GMD</p>" +
-      '<button onclick="' + action + '">Add to Cart</button>' +
+      '<div class="card-actions"><button onclick="' + action + '">' + (inStock ? "Add to Cart" : "Notify Me") + '</button>' +
+      '<div class="product-menu-wrap"><button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>' +
+      '<div class="product-menu"><button type="button" onclick="xjOpenDescription(\'' + xjEscapeHtml(product.id) + '\')">View Description</button>' +
+      (eligible ? '<button type="button" onclick="xjOpenReducePrice(\'' + xjEscapeHtml(product.id) + '\')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>' : '') +
+      '</div></div></div>' +
     "</div>"
   );
 }
@@ -209,7 +233,7 @@ function xjApplyAllStockStates() {
 function xjApplyStockState(card) {
   var productId = card.getAttribute("data-product-id");
   var stockBadge = xjGetStockBadge(card);
-  var button = card.querySelector("button");
+  var button = card.querySelector(".card-actions > button:first-child") || card.querySelector(":scope > button");
   if (!stockBadge || !button || !productId) return;
   if (xjIsProductHidden(productId)) {
     card.style.display = "none";
@@ -323,7 +347,16 @@ function xjRenderAdminInventoryPanel() {
   var html =
     '<div class="admin-toolbar">' +
       '<button type="button" class="admin-action-btn" onclick="xjToggleAdminAddForm()">' + (xjAdminFormOpen ? "Close form" : "Add product") + "</button>" +
+      '<button type="button" class="admin-action-btn" onclick="xjSaveCategoryOrder()">Save category order</button>' +
     "</div>";
+  html += '<div class="admin-category-order"><label>Category priority (top to bottom)</label><div id="adminCategoryOrder">';
+  xjCategoryOrder.forEach(function(category, index) {
+    html += '<div class="admin-category-row">' +
+      '<span style="flex:1">' + xjCategoryLabel(category) + '</span>' +
+      '<button type="button" class="admin-action-btn" onclick="xjMoveCategory(' + index + ',-1)">Up</button>' +
+      '<button type="button" class="admin-action-btn" onclick="xjMoveCategory(' + index + ',1)">Down</button></div>';
+  });
+  html += '</div><p class="admin-help">New products are placed automatically using this category.</p></div>';
 
   if (xjAdminFormOpen) {
     html +=
@@ -339,7 +372,10 @@ function xjRenderAdminInventoryPanel() {
         '<p class="admin-help">Upload that image file to GitHub in the same folder as the website. Use the exact file name.</p>' +
         '<label>Product type</label>' +
         '<select id="adminProductType">' +
-          '<option value="standalone">Accessory / direct add to cart</option>' +
+          '<option value="controller">Controller</option>' +
+          '<option value="accessory">Other accessory</option>' +
+          '<option value="game">Game / game disc</option>' +
+          '<option value="standalone">Other accessory (direct add to cart)</option>' +
           '<option value="ps4">PlayStation console (customize order)</option>' +
           '<option value="switch">Nintendo Switch (customize order)</option>' +
         "</select>" +
@@ -429,26 +465,41 @@ async function xjAdminAddProduct(event) {
     productId += "-" + Date.now().toString().slice(-4);
   }
 
+  var displayCategory = type === "switch"
+    ? "nintendo-consoles"
+    : type === "ps4"
+      ? "playstation-consoles"
+      : type === "controller"
+        ? "controllers"
+        : type === "game"
+          ? "games"
+          : "accessories";
   var categories = type === "switch"
     ? ["nintendo", "consoles", "switch"]
     : type === "ps4"
       ? ["playstation", "consoles"]
-      : ["accessories"];
+      : type === "controller"
+        ? ["controllers", "accessories"]
+        : type === "game"
+          ? ["games"]
+          : ["accessories"];
 
   var product = {
     id: productId,
     name: name,
     slug: name.toLowerCase(),
-    category: type === "standalone" ? "accessories" : "consoles",
+    category: type === "game" ? "games" : (type === "standalone" || type === "controller" || type === "accessory" ? "accessories" : "consoles"),
+    displayCategory: displayCategory,
     categories: categories,
     price: price,
     inStock: inStock,
     type: type,
     extraControllerPrice: type === "ps4" ? 1500 : 0,
-    hasModal: type !== "standalone",
+    hasModal: type === "ps4" || type === "switch",
     image: image,
     description: description,
     aliases: [name.toLowerCase()],
+    createdAt: Date.now(),
     isCustom: true
   };
 
@@ -463,6 +514,7 @@ async function xjAdminAddProduct(event) {
         name: name,
         slug: product.slug,
         category: product.category,
+        displayCategory: displayCategory,
         categories: categories,
         price: price,
         inStock: inStock,
@@ -471,6 +523,7 @@ async function xjAdminAddProduct(event) {
         image: image,
         description: description,
         aliases: product.aliases,
+        createdAt: product.createdAt,
         isCustom: true,
         hidden: false,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -480,11 +533,47 @@ async function xjAdminAddProduct(event) {
       showToast("Error", "The product was added on this page, but it could not be saved for other visitors.", "error");
       return;
     }
+
   }
 
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
   showToast("Product added", name + " is now on the website. Upload " + image + " to GitHub if it is not there yet.");
+}
+
+function xjCategoryLabel(category) {
+  return {
+    "playstation-consoles": "PlayStation Consoles",
+    "nintendo-consoles": "Nintendo Switch Consoles",
+    controllers: "Controllers",
+    accessories: "Other Accessories",
+    games: "Games / Game Discs"
+  }[category] || category;
+}
+
+function xjMoveCategory(index, direction) {
+  var next = index + direction;
+  if (next < 0 || next >= xjCategoryOrder.length) return;
+  var order = xjCategoryOrder.slice();
+  var moved = order.splice(index, 1)[0];
+  order.splice(next, 0, moved);
+  xjSetCategoryOrder(order);
+  xjRenderAdminInventoryPanel();
+}
+
+async function xjSaveCategoryOrder() {
+  if (!xjIsAdmin() || !xjDb) return;
+  try {
+    await xjDb.collection("config").doc("categoryOrder").set({
+      order: xjCategoryOrder,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    xjShowAllProductCards();
+    showToast("Category order saved", "The storefront priority has been updated.");
+  } catch (error) {
+    console.error("Failed to save category order:", error);
+    showToast("Error", "Could not save the category order.", "error");
+  }
 }
 
 async function xjAdminRemoveProduct(productId) {

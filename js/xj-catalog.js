@@ -2,19 +2,29 @@
  * XJ Games — Single source of truth for product metadata, inventory defaults, and search aliases.
  * Add new products or aliases here; the UI reads from this catalog.
  */
+const XJ_DEFAULT_CATEGORY_ORDER = [
+  "playstation-consoles",
+  "nintendo-consoles",
+  "controllers",
+  "accessories",
+  "games"
+];
+var xjCategoryOrder = XJ_DEFAULT_CATEGORY_ORDER.slice();
+
 const XJ_PRODUCT_CATALOG = {
   "ps4-slim": {
     id: "ps4-slim",
     name: "PlayStation 4 Slim",
     slug: "playstation 4 slim",
     category: "consoles",
+    displayCategory: "playstation-consoles",
     categories: ["ps4", "consoles", "playstation"],
     price: 9000,
     inStock: false,
     type: "ps4",
     extraControllerPrice: 1500,
     hasModal: true,
-    images: ["ps4-slim-1.png", "ps4-slim-2.png", "ps4-slim-3.png"],
+    images: ["ps4-slim-1.PNG", "ps4-slim-2.png", "ps4-slim-3.png"],
     carouselAlt: "PS4 Slim",
     description: "Experience sleek, compact gaming power with HDR visuals and an expansive library of incredible blockbuster titles.",
     aliases: [
@@ -27,6 +37,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PlayStation 4 Fat",
     slug: "playstation 4 fat",
     category: "consoles",
+    displayCategory: "playstation-consoles",
     categories: ["ps4", "consoles", "playstation"],
     price: 8500,
     inStock: true,
@@ -46,6 +57,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PlayStation 5",
     slug: "playstation 5",
     category: "consoles",
+    displayCategory: "playstation-consoles",
     categories: ["ps5", "consoles", "playstation"],
     price: 35000,
     inStock: true,
@@ -64,6 +76,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PlayStation 3",
     slug: "playstation 3",
     category: "consoles",
+    displayCategory: "playstation-consoles",
     categories: ["ps3", "consoles", "playstation"],
     price: 6000,
     inStock: false,
@@ -81,6 +94,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PlayStation 2",
     slug: "playstation 2",
     category: "consoles",
+    displayCategory: "playstation-consoles",
     categories: ["ps2", "consoles", "playstation"],
     price: 3000,
     inStock: true,
@@ -99,6 +113,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "Nintendo Switch",
     slug: "nintendo switch",
     category: "consoles",
+    displayCategory: "nintendo-consoles",
     categories: ["nintendo", "consoles", "switch"],
     price: 8000,
     inStock: false,
@@ -115,6 +130,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "Nintendo Switch Lite",
     slug: "nintendo switch lite",
     category: "consoles",
+    displayCategory: "nintendo-consoles",
     categories: ["nintendo", "consoles", "switch", "switch-lite"],
     price: 7000,
     inStock: false,
@@ -131,6 +147,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PS4 Controller",
     slug: "ps4 controller",
     category: "accessories",
+    displayCategory: "controllers",
     categories: ["controllers", "ps4", "accessories"],
     price: 1500,
     inStock: true,
@@ -148,6 +165,7 @@ const XJ_PRODUCT_CATALOG = {
     name: "PS5 Controller",
     slug: "ps5 controller",
     category: "accessories",
+    displayCategory: "controllers",
     categories: ["controllers", "ps5", "accessories"],
     price: 4000,
     inStock: true,
@@ -209,6 +227,55 @@ function xjRegisterProduct(product) {
   if (!product || !product.id) return;
   XJ_PRODUCT_CATALOG[product.id] = product;
   xjUnhideProduct(product.id);
+}
+
+function xjSetCategoryOrder(order) {
+  if (!Array.isArray(order)) return;
+  var normalized = order.filter(function(category, index) {
+    return typeof category === "string" && order.indexOf(category) === index;
+  });
+  XJ_DEFAULT_CATEGORY_ORDER.forEach(function(category) {
+    if (normalized.indexOf(category) === -1) normalized.push(category);
+  });
+  xjCategoryOrder = normalized;
+}
+
+function xjGetProductDisplayCategory(product) {
+  if (!product) return "accessories";
+  if (product.displayCategory && xjCategoryOrder.indexOf(product.displayCategory) !== -1) {
+    return product.displayCategory;
+  }
+  var categories = product.categories || [];
+  if (categories.indexOf("controllers") !== -1) return "controllers";
+  if (categories.indexOf("playstation") !== -1 && categories.indexOf("consoles") !== -1) {
+    return "playstation-consoles";
+  }
+  if ((categories.indexOf("nintendo") !== -1 || categories.indexOf("switch") !== -1) && categories.indexOf("consoles") !== -1) {
+    return "nintendo-consoles";
+  }
+  if (product.category === "games" || categories.indexOf("games") !== -1) return "games";
+  return "accessories";
+}
+
+function xjGetProductPriority(product) {
+  var category = xjGetProductDisplayCategory(product);
+  var index = xjCategoryOrder.indexOf(category);
+  return index === -1 ? xjCategoryOrder.length : index;
+}
+
+function xjGetPrioritySortedProductIds(ids) {
+  return (ids || []).map(function(id, index) {
+    return { id: id, index: index, product: XJ_PRODUCT_CATALOG[id] };
+  }).sort(function(a, b) {
+    var priority = xjGetProductPriority(a.product) - xjGetProductPriority(b.product);
+    if (priority !== 0) return priority;
+    var aCreated = Number(a.product && a.product.createdAt) || 0;
+    var bCreated = Number(b.product && b.product.createdAt) || 0;
+    if (aCreated !== bCreated) return bCreated - aCreated;
+    return a.index - b.index;
+  }).map(function(entry) {
+    return entry.id;
+  });
 }
 
 function xjGetAllProductIds() {

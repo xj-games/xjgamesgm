@@ -19,6 +19,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /config/categoryOrder {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Storefront promotion and operational settings are public, but only admins
+    // can change them. This keeps client-side displays tamper-resistant.
+    match /config/{document} {
+      allow read: if document != 'admins';
+      allow write: if isAdmin();
+    }
+
     match /products/{productId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
@@ -28,6 +40,8 @@ service cloud.firestore {
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.get('accountStatus', resource.data.get('accountStatus', 'active')) == resource.data.get('accountStatus', 'active')
+        && request.resource.data.get('statusUpdatedBy', resource.data.get('statusUpdatedBy', null)) == resource.data.get('statusUpdatedBy', null)
         && (resource.data.get('nameLocked', false) != true
             || (request.resource.data.get('firstName', '') == resource.data.get('firstName', '')
                 && request.resource.data.get('lastName', '') == resource.data.get('lastName', '')
@@ -49,6 +63,45 @@ service cloud.firestore {
                     && request.resource.data.keys().hasOnly(['userId', 'name', 'rating', 'text', 'avatar', 'createdAt']);
       allow update, delete: if isSignedIn()
                               && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId}/orders/{orderId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update, delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /adminActivity/{activityId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /backups/{backupId} {
+      allow read: if isAdmin();
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/activity/{activityId} {
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.action is string
+        && request.resource.data.keys().hasOnly(['action','data','createdAt']);
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow update, delete: if false;
+    }
+
+    match /promos/{promoId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /flashSales/{saleId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
