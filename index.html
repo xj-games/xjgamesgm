@@ -1941,6 +1941,7 @@ to { transform: translateX(120%); opacity: 0; }
       <button type="button" class="admin-action-btn" onclick="xjRedeemPromo()">Apply</button>
     </div>
     <p id="cartPromoMessage" style="font-size:12px;color:#00ff88;margin:0 0 8px;"></p>
+    <button type="button" onclick="xjRemovePromo()" style="display:block;background:none;border:0;color:#aaa;font-size:12px;padding:0;margin:-2px 0 8px;cursor:pointer;">Remove promo code</button>
     <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:10px;">
       <span>Total:</span>
       <span id="cartTotalPrice">0 GMD</span>
@@ -2045,7 +2046,7 @@ to { transform: translateX(120%); opacity: 0; }
     <p id="authRequiredMessage" style="font-size:14px; color:#ddd; line-height:1.6; margin-bottom:22px;">Please sign in to continue.</p>
     <div style="display:flex; gap:10px;">
       <button type="button" onclick="closeAuthRequiredModal()" class="checkout-btn" style="background:rgba(255,255,255,0.1); flex:1; margin-top:0;">Close</button>
-      <button type="button" onclick="closeAuthRequiredModal(); openAuthModal();" class="checkout-btn" style="flex:1; margin-top:0;">Sign In</button>
+      <button type="button" onclick="closeAuthRequiredModal(); openAuthModal();" class="checkout-btn" style="flex:1; margin-top:0;">Sign In / Create Account</button>
     </div>
   </div>
 </div>
@@ -2124,7 +2125,8 @@ to { transform: translateX(120%); opacity: 0; }
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
     <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
     <details class="admin-add-form" style="margin-bottom:14px;"><summary>Promotions &amp; backup</summary>
-      <label>Promo code / discount %</label><div style="display:flex;gap:6px"><input id="promoCode" placeholder="WELCOME10"><input id="promoPercent" type="number" min="1" max="90" placeholder="10"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Save</button></div>
+      <label>Promo code / discount %</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="7" placeholder="Optional code"><input id="promoPercent" type="number" min="1" max="90" placeholder="10"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" placeholder="Uses (optional)"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Generate / Save</button></div>
+      <div id="adminPromoList" style="margin-top:8px;font-size:12px;color:#aaa;">Promo codes will appear here.</div>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
     </details>
@@ -2385,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('xjReduceModal').classList.add('active');
   }
   function xjShareReducePrice(id) {
-    const message = '🎮🔥 Check out XJ Games! 🇬🇲\\n\\nGet PlayStations, Nintendo Switch, controllers, games & more! 🎮\\n\\n🛒 Shop here: https://xj-games.github.io/xjgamesgm/\\n\\n📞 Contact: 2164491\\n\\n🔥 Share this with your friends and help us become the biggest online gaming store in The Gambia!';
+    const message = 'Check out XJ Games 🎮🔥\\nhttps://xj-games.github.io/xjgamesgm/\\n\\nNeed help? WhatsApp: 2164491\\n\\nIf you know anyone who loves or is need of games, please share this with them too, Allah will bless you🙏';
     window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
     const status = document.getElementById('xjReduceStatus');
     if (status) status.innerHTML = '<p style="margin:12px 0;color:#aaa;font-size:12px">After completing the share, confirm it below to update your progress.</p><button class="reduce-confirm-btn" onclick="xjConfirmReduceShare(\'' + id + '\')">I completed this share</button>';
@@ -2503,7 +2505,7 @@ function showToast(title, body, type = 'success') {
 
 // ================= DIRECT ADD TO CART (Switch Lite, PS4 Controller) =================
 function directAddToCart(name, price) {
-  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
+  if (!xjRequireAuth("You need to sign in or create an account to add products to your cart.")) return;
   const productId = xjGetProductIdByName(name);
   if (productId && !xjGuardInStock(productId, name)) return;
 
@@ -2561,7 +2563,7 @@ function updateModalPrice() {
 
 // ================= MODAL INTERACTIONS =================
 function openCustomizationModal(name, basePrice, type) {
-  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
+  if (!xjRequireAuth("You need to sign in or create an account to add products to your cart.")) return;
   const productId = xjGetProductIdByName(name);
   if (productId && !xjGuardInStock(productId, name)) return;
 
@@ -2693,7 +2695,7 @@ function togglePillState(activeBtn) {
 }
 
 function confirmCustomizedAddToCart() {
-  if (!xjRequireAuth("Please sign in to add products to your cart.")) return;
+  if (!xjRequireAuth("You need to sign in or create an account to add products to your cart.")) return;
   if (currentCustomProduct.productId && !xjGuardInStock(currentCustomProduct.productId, currentCustomProduct.name)) {
     return;
   }
@@ -2740,7 +2742,7 @@ function xjCartItemKey(item) {
 
 function xjAddCartItem(item) {
   if (!xjIsAuthenticated()) {
-    xjShowAuthRequiredModal("Please sign in to add products to your cart.");
+    xjShowAuthRequiredModal("You need to sign in or create an account to add products to your cart.");
     return false;
   }
   item.quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
@@ -2827,7 +2829,12 @@ function updateCartUI() {
   });
 
   cartItemsContainer.innerHTML = html;
-  cartTotalPrice.innerText = total.toLocaleString() + ' GMD';
+  const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  const discount = promo ? Math.round(total * Number(promo.percent) / 100) : 0;
+  const finalTotal = Math.max(0, total - discount);
+  cartTotalPrice.innerHTML = promo
+    ? '<s style="color:#888;font-size:12px;">' + total.toLocaleString() + ' GMD</s> <strong>' + finalTotal.toLocaleString() + ' GMD</strong><small style="display:block;color:#00ff88;">Discount: ' + discount.toLocaleString() + ' GMD</small>'
+    : total.toLocaleString() + ' GMD';
 }
 
 function removeFromCart(index) {
@@ -2888,7 +2895,7 @@ window.addEventListener('resize', xjUpdateHeaderLayout);
 document.addEventListener('DOMContentLoaded', xjUpdateHeaderLayout);
 xjUpdateHeaderLayout();
 
-function checkoutCart() {
+async function checkoutCart() {
   if (cart.length === 0) {
     showToast('Empty Cart', 'Add items to your cart before checking out.', 'error');
     return;
@@ -2902,28 +2909,57 @@ function checkoutCart() {
       return;
     }
   }
-  if (window.xjSaveOrder) xjSaveOrder();
+  if (!window.xjDb || !window.firebase || !firebase.functions) {
+    showToast('Checkout unavailable', 'Firebase checkout is not available. Please try again shortly.', 'error');
+    return;
+  }
 
-  let total = cart.reduce((sum, item) => sum + item.finalPrice * (item.quantity || 1), 0);
-  let msg = "Hello XJ Games, I want to place an order:%0A";
-  
-  cart.forEach((item, i) => {
-    msg += `${i+1}. ${item.name} (Quantity: ${item.quantity || 1}) `;
-    
-    if (item.type === 'standalone') {
-      msg += `(Standard Edition) - ${item.finalPrice} GMD%0A`;
-    } else if (item.type === 'ps4') {
-      msg += `(${item.consoleType}, ${item.psControllers} Controller) - ${item.finalPrice} GMD%0A`;
-      if(item.games) msg += `   Games: ${item.games}%0A`;
-    } else if (item.type === 'switch') {
-      msg += `(${item.consoleType}, Nintendo Controller: ${item.switchController}, Dock: ${item.switchDock}, Joy-Con Grip: ${item.switchGrip}) - ${item.finalPrice} GMD%0A`;
-    }
-    
-    if(item.delivery === 'Yes') msg += `   Delivery Address: ${item.address}%0A`;
+  const customer = xjGetCurrentUserDisplay();
+  const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  const checkoutItems = cart.map(function(item) {
+    const details = item.type === 'ps4'
+      ? [item.consoleType, (item.psControllers || 1) + ' Controller', item.games ? 'Games: ' + item.games : '', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ')
+      : item.type === 'switch'
+        ? [item.consoleType, 'Nintendo Controller: ' + item.switchController, 'Dock: ' + item.switchDock, 'Joy-Con Grip: ' + item.switchGrip, item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ')
+        : ['Standard Edition', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
+    return {
+      productId: item.productId || xjGetProductIdByName(item.name) || item.name,
+      name: item.name,
+      quantity: item.quantity || 1,
+      price: Number(item.finalPrice) || 0,
+      details: details
+    };
   });
-  
-  msg += `%0ATotal Amount: ${total} GMD`;
-  window.open(`https://wa.me/2202164491?text=${msg}`, '_blank');
+
+  try {
+    const result = await firebase.functions().httpsCallable('createOrder')({
+      customerName: customer ? customer.name : '',
+      items: checkoutItems,
+      promoCode: promo ? promo.code : '',
+      promoPercent: promo ? promo.percent : 0
+    });
+    const order = result.data;
+    const lines = [
+      'Hello XJ Games, I want to place an order:',
+      '',
+      'Order ID: ' + order.id,
+      'Customer: ' + (customer ? customer.name : 'Customer'),
+      ''
+    ];
+    checkoutItems.forEach(function(item, index) {
+      lines.push((index + 1) + '. ' + item.name + ' (Quantity: ' + item.quantity + ') - ' + item.price.toLocaleString() + ' GMD');
+      if (item.details) lines.push('   ' + item.details);
+    });
+    if (promo) {
+      lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + order.discount.toLocaleString() + ' GMD');
+    }
+    lines.push('', 'Final total: ' + order.total.toLocaleString() + ' GMD');
+    window.open('https://wa.me/2202164491?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+    showToast('Order created', 'Order ' + order.id + ' is ready to send on WhatsApp.');
+  } catch (error) {
+    console.error('Checkout order creation failed:', error);
+    showToast('Checkout failed', error.message || 'Could not create your order. Please try again.', 'error');
+  }
 }
 </script>
 
