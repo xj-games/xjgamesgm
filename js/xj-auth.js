@@ -205,7 +205,7 @@ function xjAuthErrorMessage(error) {
     "auth/invalid-login-credentials": loginRetry,
     "auth/operation-not-allowed": loginRetry,
     "auth/unauthorized-domain": loginRetry,
-    "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method."
+    "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method.",
   };
   return messages[code] || loginRetry;
 }
@@ -312,7 +312,6 @@ async function handleEmailSubmit() {
       await credential.user.updateProfile({
         displayName: nameCheck.name
       });
-      await credential.user.sendEmailVerification();
       try {
         await xjSaveUserProfile(credential.user, {
           firstName: firstName,
@@ -329,19 +328,12 @@ async function handleEmailSubmit() {
       }
       await xjAuth.signOut();
       closeAuthModal();
-      showToast("Verify your email", "We sent a verification link to " + email + ". Verify it before signing in.", "info");
+      showToast("Account Created", "Your account was created successfully. You can now sign in.", "success");
     } else {
       const credential = await xjAuth.signInWithEmailAndPassword(email, password);
       if (!credential || !credential.user) {
         console.error("Email sign-in returned no Firebase user.");
         xjShowAuthFormError("Sign-in did not complete. You are not signed in.");
-        return;
-      }
-      if (!credential.user.emailVerified) {
-        await credential.user.sendEmailVerification();
-        await xjAuth.signOut();
-        xjShowAuthFormError("Please verify your email before signing in. A new verification link was sent.");
-        showToast("Email verification required", "Check your inbox and verify your email before signing in.", "error");
         return;
       }
       closeAuthModal();
@@ -363,6 +355,9 @@ async function xjSaveUserProfile(user, extra) {
   const profile = {
     uid: user.uid,
     email: user.email || existing.email || "",
+    createdAt: existing.createdAt || firebase.firestore.FieldValue.serverTimestamp(),
+    accountStatus: existing.accountStatus || "active",
+    isAdmin: existing.isAdmin === true,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -518,7 +513,6 @@ function setupEmailModeView() {
   const btn = document.getElementById("emailSubmitBtn");
   const toggleText = document.getElementById("emailToggleText");
   const extraFields = document.getElementById("registerExtraFields");
-
   if (isRegisterMode) {
     title.innerText = "Create Account";
     btn.innerText = "Register";

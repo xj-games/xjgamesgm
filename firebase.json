@@ -4,14 +4,5 @@
   },
   "functions": {
     "source": "functions"
-  },
-  "hosting": {
-    "site": "xj-gamesgm",
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
   }
 }

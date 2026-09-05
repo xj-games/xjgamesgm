@@ -90,6 +90,22 @@ function xjApplyRemoteProduct(productId, data) {
 
   xjUnhideProduct(productId);
 
+  if (Object.prototype.hasOwnProperty.call(data, "price")) {
+    // Normalize the two built-in PS4 records if Firestore still has their old defaults.
+    var remotePrice = Number(data.price);
+    if (productId === "ps4-slim" && remotePrice === 9000) remotePrice = 9500;
+    if (productId === "ps4-fat" && remotePrice === 8500) remotePrice = 9000;
+    xjSetProductPrice(productId, remotePrice);
+    if (remotePrice !== Number(data.price) && xjIsAdmin()) {
+      xjDb.collection("products").doc(productId).set({
+        price: remotePrice,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(function(error) {
+        console.error("Failed to normalize the built-in PS4 price:", error);
+      });
+    }
+  }
+
   if (data.isCustom) {
     var customProduct = xjProductFromRemote(productId, data);
     xjRegisterProduct(customProduct);
@@ -108,6 +124,11 @@ function xjApplyRemoteProduct(productId, data) {
       badge.textContent = data.inStock ? "● In Stock" : "● Out of Stock";
       badge.classList.toggle("out-of-stock", !data.inStock);
     }
+
+  }
+  var currentProduct = XJ_PRODUCT_CATALOG[productId];
+  if (currentProduct && Object.prototype.hasOwnProperty.call(data, "price")) {
+    xjRefreshProductCard(currentProduct);
   }
 }
 
@@ -159,6 +180,13 @@ function xjRefreshProductCard(product) {
   if (title) title.textContent = product.name;
   if (desc) desc.textContent = product.description || "";
   if (price) price.textContent = Number(product.price).toLocaleString() + " GMD";
+  var actionButton = card.querySelector(".card-actions > button:first-child");
+  if (actionButton) {
+    var action = product.hasModal
+      ? "openCustomizationModal('" + String(product.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "', " + Number(product.price) + ", '" + (product.type === "switch" ? "switch" : "ps4") + "')"
+      : "directAddToCart('" + String(product.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "', " + Number(product.price) + ")";
+    actionButton.setAttribute("onclick", action);
+  }
   if (img && product.image) {
     img.src = product.image;
     img.alt = product.name;
@@ -392,6 +420,7 @@ function xjRenderAdminInventoryPanel() {
       '<div class="admin-inventory-row">' +
         '<div class="admin-inventory-info">' +
           "<strong>" + xjEscapeHtml(product.name) + "</strong>" +
+          '<label class="admin-price-editor">Price (GMD)<input type="number" min="1" step="1" value="' + Number(product.price) + '" onchange="xjAdminUpdatePrice(\'' + productId + '\', this.value)"></label>' +
           '<span class="admin-inventory-status ' + (inStock ? "in-stock-label" : "out-stock-label") + '">' +
             (inStock ? "IN STOCK" : "OUT OF STOCK") +
           "</span>" +
@@ -417,6 +446,7 @@ async function xjAdminToggleStock(productId, inStock) {
     badge.textContent = inStock ? "● In Stock" : "● Out of Stock";
     badge.classList.toggle("out-of-stock", !inStock);
   }
+
   xjSetProductStock(productId, inStock);
   if (card) xjApplyStockState(card);
   xjRenderAdminInventoryPanel();
@@ -434,6 +464,29 @@ async function xjAdminToggleStock(productId, inStock) {
     }
   }
   showToast("Inventory Updated", XJ_PRODUCT_CATALOG[productId].name + " is now " + (inStock ? "IN STOCK" : "OUT OF STOCK") + ".");
+}
+
+async function xjAdminUpdatePrice(productId, value) {
+  if (!xjIsAdmin() || !xjDb) return;
+  var price = Number(value);
+  var product = XJ_PRODUCT_CATALOG[productId];
+  if (!product || !Number.isFinite(price) || price < 1) {
+    showToast("Price update", "Enter a valid product price.", "error");
+    xjRenderAdminInventoryPanel();
+    return;
+  }
+  xjSetProductPrice(productId, price);
+  xjRefreshProductCard(XJ_PRODUCT_CATALOG[productId]);
+  try {
+    await xjDb.collection("products").doc(productId).set({
+      price: price,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast("Price updated", product.name + " is now " + price.toLocaleString() + " GMD.");
+  } catch (error) {
+    console.error("Failed to update price:", error);
+    showToast("Price update", "Could not save the price for other visitors.", "error");
+  }
 }
 
 async function xjAdminAddProduct(event) {

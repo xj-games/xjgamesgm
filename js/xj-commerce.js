@@ -112,13 +112,24 @@
   window.xjAdminAddPromo = async function () {
     if (!xjIsAdmin() || !window.xjDb || !firebase.functions) return showToast("Promo code", "Admin backend is not available.", "error");
     var code = (document.getElementById("promoCode").value || "").trim().toUpperCase(), percent = Number(document.getElementById("promoPercent").value);
-    if (!/^[A-Z0-9]{7}$/.test(code) || percent < 1 || percent > 90) return showToast("Promo code", "Enter exactly 7 letters/numbers and a 1–90% discount.", "error");
+    if (!code) {
+      code = Array.from({ length: 7 }, function () {
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.floor(Math.random() * 36));
+      }).join("");
+      document.getElementById("promoCode").value = code;
+    }
+    if (!/^[A-Z0-9]{7,}$/.test(code) || percent < 1 || percent > 90) return showToast("Promo code", "Enter at least 7 letters/numbers and a 1–90% discount.", "error");
     try {
-      await firebase.functions().httpsCallable("createPromoCode")({ code: code, percent: percent });
+      var usageLimit = document.getElementById("promoUsageLimit");
+      await firebase.functions().httpsCallable("createPromoCode")({
+        code: code,
+        percent: percent,
+        usageLimit: usageLimit && usageLimit.value ? Number(usageLimit.value) : null
+      });
       showToast("Promo saved", code + " is active.");
     } catch (error) {
       console.error("Promo creation failed:", error);
-      showToast("Promo code", error.message || "The promo code could not be saved.", "error");
+      showToast("Promo code", "The promo code could not be saved.", "error");
     }
   };
   window.xjAdminAddFlashSale = async function () {
@@ -184,13 +195,13 @@
     }
     try {
       var result = await firebase.functions().httpsCallable("redeemPromoCode")({ code: input.value });
-      redeemedPromo = { code: input.value.toUpperCase(), percent: Number(result.data.percent) };
+      redeemedPromo = { code: input.value.trim().toUpperCase(), percent: Number(result.data.percent) };
       if (message) message.textContent = redeemedPromo.percent + "% discount applied after order validation.";
       showToast("Promo applied", "Your promo code is reserved for this redemption.", "success");
     } catch (error) {
       console.error("Promo redemption failed:", error);
       if (message) message.textContent = "";
-      showToast("Promo code", error.message || "Promo code rejected.", "error");
+      showToast("Promo code", "Invalid code, please try again", "error");
     }
   };
   window.xjRedeemTopPromo = function () {
@@ -212,7 +223,7 @@
         flashSales = snapshot.docs.map(function (doc) { return Object.assign({ id: doc.id }, doc.data()); });
         renderFlashPrices();
       }, function (error) { console.error("Flash sale listener error:", error); });
-      xjDb.collection("config").doc("settings").onSnapshot(function (snapshot) {
+      xjDb.collection("websiteSettings").doc("main").onSnapshot(function (snapshot) {
         window.xjCurrentWebsiteSettings = snapshot.exists ? snapshot.data() : {};
         window.xjApplyWebsiteSettings(window.xjCurrentWebsiteSettings);
       }, function (error) { console.error("Website settings listener error:", error); });
