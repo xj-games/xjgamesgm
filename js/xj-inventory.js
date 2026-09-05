@@ -356,6 +356,8 @@ function openAdminPanel() {
   }
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
+  if (window.xjAdminLoadPromos) xjAdminLoadPromos();
+  xjEnsureCatalogProducts();
   document.getElementById("adminModal").classList.add("active");
 }
 
@@ -410,6 +412,33 @@ function xjRenderAdminInventoryPanel() {
         '<label class="admin-toggle"><input id="adminProductInStock" type="checkbox" checked><span>In stock</span></label>' +
         '<button type="submit" class="checkout-btn" style="width:100%;margin-top:8px;border:none;">Create product</button>' +
       "</form>";
+  }
+
+  async function xjEnsureCatalogProducts() {
+    if (!xjDb || !xjIsAdmin()) return;
+    try {
+      var writes = xjGetAllProductIds().map(function(productId) {
+        var product = XJ_PRODUCT_CATALOG[productId];
+        return xjDb.collection("products").doc(productId).set({
+          id: productId,
+          name: product.name,
+          price: Number(product.price),
+          inStock: xjGetProductStock(productId),
+          type: product.type || "standalone",
+          category: product.category || "accessories",
+          displayCategory: product.displayCategory || "",
+          categories: product.categories || [],
+          description: product.description || "",
+          image: product.image || (product.images && product.images[0]) || "",
+          extraControllerPrice: Number(product.extraControllerPrice) || 0,
+          isCustom: !!product.isCustom
+        }, { merge: true });
+      });
+      await Promise.all(writes);
+    } catch (error) {
+      console.error("Failed to initialize catalog products:", error);
+      showToast("Inventory", "The product catalog could not be synchronized.", "error");
+    }
   }
 
   xjGetAllProductIds().forEach(function(productId) {

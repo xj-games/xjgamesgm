@@ -124,12 +124,32 @@
       await firebase.functions().httpsCallable("createPromoCode")({
         code: code,
         percent: percent,
+        expiresAt: (document.getElementById("promoExpiresAt") || {}).value || null,
         usageLimit: usageLimit && usageLimit.value ? Number(usageLimit.value) : null
       });
+      window.xjAdminLoadPromos();
       showToast("Promo saved", code + " is active.");
     } catch (error) {
       console.error("Promo creation failed:", error);
       showToast("Promo code", "The promo code could not be saved.", "error");
+    }
+  };
+  window.xjAdminLoadPromos = async function () {
+    var list = document.getElementById("adminPromoList");
+    if (!list || !xjIsAdmin() || !firebase.functions) return;
+    try {
+      var result = await firebase.functions().httpsCallable("listPromoCodes")({});
+      var promos = result.data && Array.isArray(result.data.promos) ? result.data.promos : [];
+      list.innerHTML = promos.length ? promos.map(function (promo) {
+        var expiry = promo.expiresAt ? " · expires " + new Date(promo.expiresAt).toLocaleDateString() : "";
+        var limit = promo.usageLimit === null ? "unlimited" : promo.usageCount + "/" + promo.usageLimit;
+        return "<div style='padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08);'>" +
+          "<strong>" + xjEscapeHtml(promo.code) + "</strong> · " + promo.percent + "% · " +
+          (promo.active ? "active" : "inactive") + " · uses " + limit + expiry + "</div>";
+      }).join("") : "No promo codes saved.";
+    } catch (error) {
+      console.error("Promo list failed:", error);
+      list.textContent = "Promo codes could not be loaded.";
     }
   };
   window.xjAdminAddFlashSale = async function () {

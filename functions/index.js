@@ -52,6 +52,24 @@ exports.createPromoCode = onCall(async (request) => {
   return { code };
 });
 
+exports.listPromoCodes = onCall(async (request) => {
+  await requireAdmin(request);
+  const snapshot = await db.collection("promoCodes").orderBy("createdAt", "desc").limit(100).get();
+  return {
+    promos: snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        code: data.code || doc.id,
+        percent: Number(data.percent) || 0,
+        active: data.active === true,
+        usageLimit: data.usageLimit === null ? null : Number(data.usageLimit) || null,
+        usageCount: Number(data.usageCount) || 0,
+        expiresAt: data.expiresAt && data.expiresAt.toDate ? data.expiresAt.toDate().toISOString() : null
+      };
+    })
+  };
+});
+
 exports.redeemPromoCode = onCall(async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign-in required to redeem a promo code.");
   const code = cleanCode(request.data && request.data.code);
@@ -126,7 +144,20 @@ exports.createOrder = onCall(async (request) => {
       const product = snapshot.data();
       const quantity = Math.max(1, Math.min(99, Number(inputItems[index].quantity) || 1));
       if (product.inStock === false) throw new HttpsError("failed-precondition", `${product.name} is out of stock.`);
-      const price = Number(product.price) || 0;
+      const input = inputItems[index] || {};
+      let price = Number(product.price) || 0;
+      if (input.type === "ps4") {
+        if (input.consoleType === "Full Set") price += 500;
+        if (Number(input.psControllers) === 2) price += 1500;
+        if (input.games) {
+          price += String(input.games).split(",").map((game) => game.trim()).filter(Boolean).length * 1500;
+        }
+      } else if (input.type === "switch") {
+        if (input.switchController === "Yes") price += 1500;
+        if (input.switchDock === "Yes") price += 1000;
+        if (input.switchGrip === "Yes") price += 1000;
+      }
+      if (input.delivery === "Yes") price += 300;
       total += price * quantity;
       return { productId: snapshot.id, name: product.name, quantity, price };
     });
