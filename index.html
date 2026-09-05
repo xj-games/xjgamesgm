@@ -23,7 +23,12 @@ body{
 background:#070B16;
 color:white;
 overflow-x:hidden;
+overscroll-behavior-x:none;
+touch-action:pan-y;
 }
+html{overflow-x:hidden;overscroll-behavior-x:none}
+img,video,iframe{max-width:100%}
+button,input,select,textarea{max-width:100%}
 
 /* Background */
 body::before{
@@ -79,6 +84,7 @@ display:flex;
 align-items:center;
 gap:8px;
 padding:8px 4%;
+min-width:0;
 border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
@@ -86,6 +92,8 @@ border-bottom:1px solid rgba(255,255,255,0.05);
 display:flex;
 align-items:center;
 gap:8px;
+flex:1 1 auto;
+min-width:0;
 font-family:Orbitron;
 font-size:16px;
 font-weight:bold;
@@ -100,6 +108,9 @@ border-radius:50%;
 box-shadow:0 0 10px #00aaff;
 object-fit:cover;
 }
+.brand-bar #authContainer{min-width:0;max-width:35vw}
+.brand-bar #authContainer .user-profile{max-width:100%}
+.brand-bar #authContainer .user-profile span:not(.xj-account-caret){overflow:hidden;text-overflow:ellipsis}
 
 .mobile-menu-toggle{
 display:none;
@@ -112,6 +123,7 @@ font-size:20px;
 width:40px;
 height:36px;
 cursor:pointer;
+flex:0 0 40px;
 }
 .mobile-nav-menu{
 display:none;
@@ -130,8 +142,8 @@ display:none;
 
 .scrollable-nav-container{
 width:100%;
-overflow-x:auto;
-white-space:nowrap;
+overflow:hidden;
+white-space:normal;
 scrollbar-width:none;
 -ms-overflow-style:none;
 scroll-behavior:smooth;
@@ -143,10 +155,12 @@ background:rgba(5,7,14,0.6);
 .scrollable-nav-container::-webkit-scrollbar { display:none; }
 
 .scrollable-nav-inner{
-display:inline-flex;
+display:flex;
 align-items:center;
 gap:20px;
-width:max-content;
+width:100%;
+flex-wrap:wrap;
+min-width:0;
 }
 
 .search{
@@ -366,6 +380,8 @@ gap:4px;
 .admin-inventory-info strong{
 font-size:14px;
 }
+.admin-price-editor{display:flex;align-items:center;gap:6px;color:#aaa;font-size:11px}
+.admin-price-editor input{width:110px;padding:5px 7px;border-radius:7px;border:1px solid rgba(255,255,255,.16);background:#070b16;color:#fff}
 
 .admin-inventory-status{
 font-size:11px;
@@ -645,7 +661,7 @@ details.admin-add-form summary{cursor:pointer;color:#00bfff;font-weight:700;padd
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
-  .redeem-strip{justify-content:flex-start;overflow-x:auto}
+  .redeem-strip{justify-content:flex-start;overflow:hidden;flex-wrap:wrap}
   .redeem-strip input{width:125px}
 }
 
@@ -1561,7 +1577,7 @@ to { transform: translateX(120%); opacity: 0; }
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
-  .redeem-strip{justify-content:flex-start;overflow-x:auto}
+  .redeem-strip{justify-content:flex-start;overflow:hidden;flex-wrap:wrap}
   .redeem-strip input{width:125px}
   .card-actions > button:first-child{font-size:12px;padding:12px 10px}
   .product-menu{min-width:210px}
@@ -1597,7 +1613,7 @@ to { transform: translateX(120%); opacity: 0; }
   </div>
   <div class="redeem-strip">
     <strong>Have a promo code?</strong>
-    <input id="topPromoCode" type="text" maxlength="7" placeholder="XJ25OFF" aria-label="Promo code">
+    <input id="topPromoCode" type="text" maxlength="64" placeholder="XJ25OFF" aria-label="Promo code">
     <button type="button" class="admin-action-btn" onclick="xjRedeemTopPromo()">Redeem</button>
   </div>
 
@@ -1937,7 +1953,7 @@ to { transform: translateX(120%); opacity: 0; }
   </div>
   <div class="cart-footer">
     <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input id="cartPromoCode" type="text" maxlength="7" placeholder="7-character promo code" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
+      <input id="cartPromoCode" type="text" maxlength="64" placeholder="Promo code (7+ characters)" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
       <button type="button" class="admin-action-btn" onclick="xjRedeemPromo()">Apply</button>
     </div>
     <p id="cartPromoMessage" style="font-size:12px;color:#00ff88;margin:0 0 8px;"></p>
@@ -2125,7 +2141,7 @@ to { transform: translateX(120%); opacity: 0; }
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
     <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
     <details class="admin-add-form" style="margin-bottom:14px;"><summary>Promotions &amp; backup</summary>
-      <label>Promo code / discount %</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="7" placeholder="Optional code"><input id="promoPercent" type="number" min="1" max="90" placeholder="10"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" placeholder="Uses (optional)"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Generate / Save</button></div>
+      <label>Promo code / discount %</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="64" placeholder="At least 7 characters"><input id="promoPercent" type="number" min="1" max="90" placeholder="10"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" placeholder="Uses (optional)"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Generate / Save</button></div>
       <div id="adminPromoList" style="margin-top:8px;font-size:12px;color:#aaa;">Promo codes will appear here.</div>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
@@ -2380,17 +2396,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function xjOpenReducePrice(id) {
     const p = xjProductFromCard(id), state = xjReduceStateFor(id);
-    if (!xjEligibleForReduce(p) || state.used) return showToast('Reduce Price', 'This promotion is no longer available.', 'error');
+    if (!xjEligibleForReduce(p)) return showToast('Reduce Price', 'This promotion is no longer available.', 'error');
     xjCloseFeatureModal('xjDescriptionModal');
     const pct = Math.min(100, Math.round((state.shares / 30) * 100));
-    document.getElementById('xjReduceContent').innerHTML = '<h3>🔥 Reduce Your Price by 500 GMD!</h3><p>Share the XJ Games website with 30 people on WhatsApp to unlock 500 GMD off this product.</p><p><strong>Shared: ' + state.shares + ' / 30</strong></p><div class="reduce-progress"><div class="reduce-progress-bar" style="width:' + pct + '%"></div></div><button class="reduce-share-btn" onclick="xjShareReducePrice(\'' + id + '\')">Share on WhatsApp</button><div id="xjReduceStatus"></div>';
+    document.getElementById('xjReduceContent').innerHTML = '<h3>Reduce the price of the item</h3><p>Share this website to more than 30 people on whatsapp to reduce the price of this item</p><p><strong>' + state.shares + ' / 30</strong></p><div class="reduce-progress"><div class="reduce-progress-bar" style="width:' + pct + '%"></div></div><button class="reduce-share-btn" onclick="xjShareReducePrice(\'' + id + '\')">Share on WhatsApp</button>';
     document.getElementById('xjReduceModal').classList.add('active');
   }
   function xjShareReducePrice(id) {
-    const message = 'Check out XJ Games 🎮🔥\\nhttps://xj-games.github.io/xjgamesgm/\\n\\nNeed help? WhatsApp: 2164491\\n\\nIf you know anyone who loves or is need of games, please share this with them too, Allah will bless you🙏';
+    const message = 'Check our website out and buy your Playstation and games https://xj-games.github.io/xjgamesgm/ Please share with more people together we can make this the biggest online gaming store in gambia 🔥';
     window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
-    const status = document.getElementById('xjReduceStatus');
-    if (status) status.innerHTML = '<p style="margin:12px 0;color:#aaa;font-size:12px">After completing the share, confirm it below to update your progress.</p><button class="reduce-confirm-btn" onclick="xjConfirmReduceShare(\'' + id + '\')">I completed this share</button>';
+    xjConfirmReduceShare(id);
   }
   function xjConfirmReduceShare(id) {
     const state = xjReduceStateFor(id);
@@ -2399,8 +2414,10 @@ document.addEventListener('DOMContentLoaded', () => {
     state.unlocked = state.shares >= 30;
     if (state.unlocked) state.used = true;
     xjReduceState[id] = state; localStorage.setItem(XJ_REDUCE_KEY, JSON.stringify(xjReduceState));
-    if (state.unlocked) { showToast('Price Reduction Unlocked', '500 GMD has been deducted from this product.', 'success'); xjCloseFeatureModal('xjReduceModal'); }
-    else xjOpenReducePrice(id);
+    if (state.unlocked) {
+      showToast('Verified', 'Thank you for sharing the website we have reduce the price for this item, please share to more people', 'success');
+    }
+    xjOpenReducePrice(id);
     xjRefreshProductPrices();
   }
   function xjRefreshProductPrices() {
