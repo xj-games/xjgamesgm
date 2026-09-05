@@ -38,8 +38,15 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.get('isAdmin', false) == false
+        && request.resource.data.get('accountStatus', 'active') == 'active';
       allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
         && request.resource.data.get('accountStatus', resource.data.get('accountStatus', 'active')) == resource.data.get('accountStatus', 'active')
         && request.resource.data.get('statusUpdatedBy', resource.data.get('statusUpdatedBy', null)) == resource.data.get('statusUpdatedBy', null)
         && (resource.data.get('nameLocked', false) != true
@@ -75,7 +82,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /adminActivity/{activityId} {
+    match /adminLogs/{logId} {
       allow read: if isAdmin();
       allow write: if false;
     }
@@ -94,13 +101,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    match /promos/{promoId} {
+    match /promoCodes/{promoId} {
       allow read: if isAdmin();
       allow write: if false;
     }
 
     match /flashSales/{saleId} {
       allow read: if true;
+      allow write: if false;
+    }
+
+    match /websiteSettings/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if false;
     }
   }

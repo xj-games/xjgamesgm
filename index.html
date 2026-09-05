@@ -1435,7 +1435,7 @@ box-shadow: 0 0 10px rgba(0, 170, 255, 0.4);
 position: fixed;
 top: 100px;
 right: 25px;
-z-index: 10001;
+z-index: 100000;
 display: flex;
 flex-direction: column;
 gap: 15px;
@@ -1462,6 +1462,7 @@ animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 transform: translateX(120%);
 backdrop-filter: blur(15px);
 }
+#toastContainer{isolation:isolate}
 
 .toast.toast-info {
 border-left-color: #00bfff;
@@ -2130,7 +2131,6 @@ to { transform: translateX(120%); opacity: 0; }
         Don't have an account? <a href="#" onclick="toggleEmailMode(event)" style="color:#00bfff; text-decoration:none; font-weight:600;">Create Account</a>
       </p>
     </div>
-
   </div>
 </div>
 
@@ -2423,7 +2423,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function xjRefreshProductPrices() {
     document.querySelectorAll('#productGrid .card[data-product-id]').forEach(function(card) {
       const p = xjProductFromCard(card.getAttribute('data-product-id')), el = card.querySelector('.price');
-      if (p && el && xjReduceStateFor(p.id).unlocked) el.innerHTML = '<s style="color:#888;font-size:12px">' + Number(p.price).toLocaleString() + ' GMD</s> <strong>' + xjProductPrice(p.id, p.price).toLocaleString() + ' GMD</strong>';
+      if (p && el) el.textContent = Number(p.price).toLocaleString() + ' GMD';
     });
   }
   window.xjProductPrice = xjProductPrice;
@@ -2766,8 +2766,11 @@ function xjAddCartItem(item) {
   var key = xjCartItemKey(item);
   var existing = cart.find(function(entry) { return xjCartItemKey(entry) === key; });
   if (existing) {
-    existing.quantity = (Number(existing.quantity) || 1) + item.quantity;
+    existing.quantity = existing.quantitySelected
+      ? (Number(existing.quantity) > 0 ? Number(existing.quantity) : 1)
+      : 1;
   } else {
+    item.quantitySelected = false;
     cart.push(item);
   }
   saveCart();
@@ -2861,6 +2864,7 @@ function removeFromCart(index) {
 
 function changeCartQuantity(index, delta) {
   if (!cart[index]) return;
+  cart[index].quantitySelected = true;
   cart[index].quantity = (Number(cart[index].quantity) || 1) + delta;
   if (cart[index].quantity <= 0) {
     cart.splice(index, 1);
