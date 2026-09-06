@@ -2758,10 +2758,6 @@ function xjCartItemKey(item) {
 }
 
 function xjAddCartItem(item) {
-  if (!xjIsAuthenticated()) {
-    xjShowAuthRequiredModal("You need to sign in or create an account to add products to your cart.");
-    return false;
-  }
   item.quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
   var key = xjCartItemKey(item);
   var existing = cart.find(function(entry) { return xjCartItemKey(entry) === key; });
