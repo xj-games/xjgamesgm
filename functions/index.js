@@ -25,65 +25,48 @@ exports.createPromoCode = onCall(async (request) => {
   await requireAdmin(request);
   const code = cleanCode(request.data && request.data.code);
   const percent = Number(request.data && request.data.percent);
-  const usageLimitInput = request.data && request.data.usageLimit;
-  const usageLimit = usageLimitInput === undefined || usageLimitInput === null || usageLimitInput === ""
-    ? null
-    : Number(usageLimitInput);
   const expiresAt = request.data && request.data.expiresAt ? new Date(request.data.expiresAt) : null;
-  if (!/^[A-Z0-9]{7,}$/.test(code) || !Number.isFinite(percent) || percent < 1 || percent > 90 ||
-      (usageLimit !== null && (!Number.isInteger(usageLimit) || usageLimit < 1))) {
-    throw new HttpsError("invalid-argument", "Code must be at least 7 letters/numbers and discount must be 1-90%.");
+  if (!/^[A-Z0-9]{7}$/.test(code) || !Number.isFinite(percent) || percent < 1 || percent > 90) {
+    throw new HttpsError("invalid-argument", "Code must be exactly 7 letters/numbers and discount must be 1-90%.");
   }
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
     throw new HttpsError("invalid-argument", "Invalid expiration date.");
   }
-  const ref = db.doc(`promoCodes/${code}`);
+  const ref = db.doc(`promos/${code}`);
   await ref.create({
     code,
     percent,
     active: true,
-    usageLimit,
-    usageCount: 0,
+    used: false,
     expiresAt: expiresAt ? admin.firestore.Timestamp.fromDate(expiresAt) : null,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     createdBy: request.auth.uid
   });
-  await writeAdminLog(request, "promo_created", `promoCodes/${code}`, { percent });
+  await writeAdminLog(request, "promo_created", `promos/${code}`, { percent });
   return { code };
-});
-
-exports.listPromoCodes = onCall(async (request) => {
-  await requireAdmin(request);
-  const snapshot = await db.collection("promoCodes").orderBy("createdAt", "desc").limit(100).get();
-  return {
-    promos: snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        code: data.code || doc.id,
-        percent: Number(data.percent) || 0,
-        active: data.active === true,
-        usageLimit: data.usageLimit === null ? null : Number(data.usageLimit) || null,
-        usageCount: Number(data.usageCount) || 0,
-        expiresAt: data.expiresAt && data.expiresAt.toDate ? data.expiresAt.toDate().toISOString() : null
-      };
-    })
-  };
 });
 
 exports.redeemPromoCode = onCall(async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign-in required to redeem a promo code.");
   const code = cleanCode(request.data && request.data.code);
-  if (!/^[A-Z0-9]{7,}$/.test(code)) throw new HttpsError("invalid-argument", "Promo code must be at least 7 characters.");
-  const ref = db.doc(`promoCodes/${code}`);
-  const snap = await ref.get();
-  if (!snap.exists) throw new HttpsError("not-found", "Promo code is invalid.");
-  const promo = snap.data();
-  const expires = promo.expiresAt && promo.expiresAt.toMillis ? promo.expiresAt.toMillis() : 0;
-  if (promo.active !== true || (promo.usageLimit !== null && Number(promo.usageCount || 0) >= Number(promo.usageLimit)) ||
-      (expires && expires <= Date.now())) {
-    throw new HttpsError("failed-precondition", "Promo code is disabled, expired, or already used.");
-  }
-  return { percent: promo.percent };
+  if (!/^[A-Z0-9]{7}$/.test(code)) throw new HttpsError("invalid-argument", "Promo code must be exactly 7 characters.");
+  const ref = db.doc(`promos/${code}`);
+  const result = await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Promo code is invalid.");
+    const promo = snap.data();
+    const expires = promo.expiresAt && promo.expiresAt.toMillis ? promo.expiresAt.toMillis() : 0;
+    if (promo.active !== true || promo.used === true || (expires && expires <= Date.now())) {
+      throw new HttpsError("failed-precondition", "Promo code is disabled, expired, or already used.");
+    }
+    transaction.update(ref, {
+      used: true,
+      usedBy: request.auth.uid,
+      usedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return { percent: promo.percent };
+  });
+  return result;
 });
 
 exports.createFlashSale = onCall(async (request) => {
@@ -119,20 +102,17 @@ exports.cancelFlashSale = onCall(async (request) => {
     cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
     cancelledBy: request.auth.uid
   });
-  await writeAdminLog(request, "flash_sale_cancelled", `flashSales/${saleId}`);
-  return { ok: true };
-});
 
-exports.disablePromoCode = onCall(async (request) => {
+  exports.disablePromoCode = onCall(async (request) => {
     await requireAdmin(request);
     const code = cleanCode(request.data && request.data.code);
-    if (!/^[A-Z0-9]{7,}$/.test(code)) throw new HttpsError("invalid-argument", "Invalid promo code.");
-    await db.doc(`promoCodes/${code}`).update({ active: false, disabledAt: admin.firestore.FieldValue.serverTimestamp(), disabledBy: request.auth.uid });
-    await writeAdminLog(request, "promo_disabled", `promoCodes/${code}`);
+    if (!/^[A-Z0-9]{7}$/.test(code)) throw new HttpsError("invalid-argument", "Invalid promo code.");
+    await db.doc(`promos/${code}`).update({ active: false, disabledAt: admin.firestore.FieldValue.serverTimestamp(), disabledBy: request.auth.uid });
+    await writeAdminLog(request, "promo_disabled", `promos/${code}`);
     return { ok: true };
   });
 
-exports.createOrder = onCall(async (request) => {
+  exports.createOrder = onCall(async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign-in required.");
     const inputItems = Array.isArray(request.data && request.data.items) ? request.data.items : [];
     if (!inputItems.length || inputItems.length > 50) throw new HttpsError("invalid-argument", "Order items are required.");
@@ -144,74 +124,19 @@ exports.createOrder = onCall(async (request) => {
       const product = snapshot.data();
       const quantity = Math.max(1, Math.min(99, Number(inputItems[index].quantity) || 1));
       if (product.inStock === false) throw new HttpsError("failed-precondition", `${product.name} is out of stock.`);
-      const input = inputItems[index] || {};
-      let price = Number(product.price) || 0;
-      if (input.type === "ps4") {
-        if (input.consoleType === "Full Set") price += 500;
-        if (Number(input.psControllers) === 2) price += 1500;
-        if (input.games) {
-          price += String(input.games).split(",").map((game) => game.trim()).filter(Boolean).length * 1500;
-        }
-      } else if (input.type === "switch") {
-        if (input.switchController === "Yes") price += 1500;
-        if (input.switchDock === "Yes") price += 1000;
-        if (input.switchGrip === "Yes") price += 1000;
-      }
-      if (input.delivery === "Yes") price += 300;
+      const price = Number(product.price) || 0;
       total += price * quantity;
       return { productId: snapshot.id, name: product.name, quantity, price };
     });
-    let discount = 0;
-    const promoCode = cleanCode(request.data && request.data.promoCode);
-    if (promoCode) {
-      if (!/^[A-Z0-9]{7,}$/.test(promoCode)) throw new HttpsError("invalid-argument", "Invalid code, please try again");
-      const promoRef = db.doc(`promoCodes/${promoCode}`);
-      await db.runTransaction(async (transaction) => {
-        const promoSnap = await transaction.get(promoRef);
-        if (!promoSnap.exists) throw new HttpsError("not-found", "Invalid code, please try again");
-        const promo = promoSnap.data();
-        const expires = promo.expiresAt && promo.expiresAt.toMillis ? promo.expiresAt.toMillis() : 0;
-        if (promo.active !== true || (promo.usageLimit !== null && Number(promo.usageCount || 0) >= Number(promo.usageLimit)) ||
-            (expires && expires <= Date.now())) {
-          throw new HttpsError("failed-precondition", "Invalid code, please try again");
-        }
-        discount = Math.round(total * Number(promo.percent) / 100);
-        transaction.update(promoRef, {
-          usageCount: admin.firestore.FieldValue.increment(1),
-          usedBy: request.auth.uid,
-          usedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      });
-    }
-    const finalTotal = Math.max(0, total - discount);
-    const now = new Date();
-    const day = now.getDate();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const counterRef = db.doc("config/orderCounter");
-    const orderNumber = await db.runTransaction(async (transaction) => {
-      const counterSnap = await transaction.get(counterRef);
-      const nextNumber = (counterSnap.exists ? Number(counterSnap.data().nextNumber) || 1 : 1);
-      transaction.set(counterRef, { nextNumber: nextNumber + 1 }, { merge: true });
-      return nextNumber;
-    });
-    const orderNumberText = String(orderNumber).padStart(4, "0");
-    const orderId = ["220", day, month, year, promoCode || null, orderNumberText]
-      .filter((part) => part !== null)
-      .join("-");
-    const orderRef = db.collection(`users/${request.auth.uid}/orders`).doc(orderId);
+    const orderRef = db.collection(`users/${request.auth.uid}/orders`).doc(`XJ-${Date.now()}`);
     const order = {
-      id: orderId, orderId, userId: request.auth.uid,
-      customerName: String(request.data && request.data.customerName || "").trim().slice(0, 120),
-      items, subtotal: total, promoCode: promoCode || null, total: finalTotal, discount,
-      status: "Placed", paymentStatus: "pending",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      id: orderRef.id, userId: request.auth.uid, items, total, status: "Placed",
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
     };
     await orderRef.set(order);
-    await db.collection("orders").doc(orderId).set(order);
-    return { id: orderId, orderId, items, promoCode: promoCode || null, total: finalTotal, discount };
-});
+    await db.collection("orders").doc(orderRef.id).set(order);
+    return { id: orderRef.id, total };
+  });
 
   exports.updateWebsiteSettings = onCall(async (request) => {
     await requireAdmin(request);
@@ -222,8 +147,8 @@ exports.createOrder = onCall(async (request) => {
     allowed.forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(settings, key)) safe[key] = settings[key];
     });
-    await db.doc("websiteSettings/main").set({ ...safe, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    await writeAdminLog(request, "website_settings_changed", "websiteSettings/main", safe);
+    await db.doc("config/settings").set({ ...safe, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    await writeAdminLog(request, "website_settings_changed", "config/settings", safe);
     return { ok: true };
   });
 
@@ -243,6 +168,10 @@ exports.createOrder = onCall(async (request) => {
     await writeAdminLog(request, "backup_restored", `backups/${backupId}`);
     return { ok: true };
   });
+  await writeAdminLog(request, "flash_sale_cancelled", `flashSales/${saleId}`);
+  return { ok: true };
+});
+
 exports.setAccountStatus = onCall(async (request) => {
   await requireAdmin(request);
   const uid = String(request.data && request.data.uid || "");
@@ -261,7 +190,7 @@ exports.setAccountStatus = onCall(async (request) => {
 });
 
 async function writeAdminLog(request, action, resource, data) {
-  await db.collection("adminLogs").add({
+  await db.collection("adminActivity").add({
     adminUid: request.auth.uid,
     adminEmail: request.auth.token.email || "",
     action,
@@ -272,7 +201,7 @@ async function writeAdminLog(request, action, resource, data) {
 }
 
 exports.weeklyBackup = onSchedule("every monday 03:00", async () => {
-  const collections = ["products", "promoCodes", "flashSales", "websiteSettings", "config", "orders", "users"];
+  const collections = ["products", "promos", "flashSales", "config", "orders", "users"];
   const backup = { createdAt: admin.firestore.FieldValue.serverTimestamp(), collections: {} };
   for (const collection of collections) {
     const snapshot = await db.collection(collection).get();

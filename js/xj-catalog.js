@@ -19,7 +19,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "playstation-consoles",
     categories: ["ps4", "consoles", "playstation"],
-    price: 9500,
+    price: 9000,
     inStock: false,
     type: "ps4",
     extraControllerPrice: 1500,
@@ -39,7 +39,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "playstation-consoles",
     categories: ["ps4", "consoles", "playstation"],
-    price: 9000,
+    price: 8500,
     inStock: true,
     type: "ps4",
     extraControllerPrice: 1500,
@@ -204,14 +204,6 @@ function xjSetProductStock(productId, inStock) {
   xjInventoryState[productId] = inStock;
   if (XJ_PRODUCT_CATALOG[productId]) {
     XJ_PRODUCT_CATALOG[productId].inStock = !!inStock;
-  }
-}
-
-function xjSetProductPrice(productId, price) {
-  var normalizedPrice = Number(price);
-  if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0) return;
-  if (XJ_PRODUCT_CATALOG[productId]) {
-    XJ_PRODUCT_CATALOG[productId].price = normalizedPrice;
   }
 }
 
