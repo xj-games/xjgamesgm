@@ -2,6 +2,8 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
+const crypto = require("crypto");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -43,12 +45,12 @@ exports.syncProductPrices = onCall(async (request) => {
     Object.entries(prices).forEach(([productId, price]) => {
       transaction.set(db.doc(`products/${productId}`), {
         price,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
     });
     transaction.set(migrationRef, {
       ps4Prices20261002: true,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     return true;
   });
@@ -59,12 +61,11 @@ exports.createPromoCode = onCall(async (request) => {
   await requireAdmin(request);
 
   const code = cleanCode(request.data && request.data.code);
+  const requestedType = request.data && request.data.discountType;
   const percent = Number(request.data && request.data.percent);
   const discountAmount = Number(request.data && request.data.discountAmount);
-  const points = Number(request.data && request.data.points) || 0;
   const usageLimit = Number(request.data && request.data.usageLimit) || 1;
-  const hasPercent = Number.isFinite(percent) && percent > 0;
-  const hasAmount = Number.isFinite(discountAmount) && discountAmount > 0;
+  const discountType = requestedType === "fixed" || (!requestedType && discountAmount > 0 && percent <= 0) ? "fixed" : "percent";
   const expiresAt =
     request.data && request.data.expiresAt
       ? new Date(request.data.expiresAt)
@@ -72,14 +73,13 @@ exports.createPromoCode = onCall(async (request) => {
 
   if (
     !/^[A-Z0-9]{3,64}$/.test(code) ||
-    (hasPercent && (percent < 1 || percent > 90)) ||
-    (!hasPercent && !hasAmount) ||
-    !Number.isInteger(points) || points < 0 || points > 1000000 ||
+    (discountType === "percent" && (!Number.isFinite(percent) || percent < 1 || percent > 90)) ||
+    (discountType === "fixed" && (!Number.isSafeInteger(discountAmount) || discountAmount < 1)) ||
     (usageLimit !== null && (!Number.isInteger(usageLimit) || usageLimit < 1))
   ) {
     throw new HttpsError(
       "invalid-argument",
-      "Use a 3-64 character code and enter a valid discount, point award, and use limit."
+      "Use a 3-64 character code and enter a valid discount and use limit."
     );
   }
 
@@ -91,26 +91,151 @@ exports.createPromoCode = onCall(async (request) => {
 
   await ref.create({
     code,
-    percent: hasPercent ? percent : 0,
-    discountAmount: hasAmount ? discountAmount : 0,
-    points,
+    type: "discount",
+    discountType,
+    percent: discountType === "percent" ? percent : 0,
+    discountAmount: discountType === "fixed" ? discountAmount : 0,
     active: true,
     used: false,
     usedCount: 0,
     usageLimit,
     singleUsePerUser: true,
     expiresAt: expiresAt
-      ? admin.firestore.Timestamp.fromDate(expiresAt)
+      ? Timestamp.fromDate(expiresAt)
       : null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     createdBy: request.auth.uid,
   });
 
   await writeAdminLog(request, "promo_created", `promos/${code}`, {
-    percent, discountAmount, points, usageLimit,
+    discountType, percent, discountAmount, usageLimit,
   });
 
   return { code };
+});
+
+function generatePointsCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.randomBytes(8);
+  const value = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+  return `XJ-${value.slice(0, 4)}-${value.slice(4)}`;
+}
+
+exports.createPointsCode = onCall(async (request) => {
+  await requireAdmin(request);
+  const valueGmd = Number(request.data && request.data.valueGmd);
+  const usageLimit = Number(request.data && request.data.usageLimit) || 1;
+  if (!Number.isSafeInteger(valueGmd) || valueGmd < 1 || valueGmd > 10000000 ||
+      !Number.isInteger(usageLimit) || usageLimit < 1 || usageLimit > 100000) {
+    throw new HttpsError("invalid-argument", "Enter a valid GMD amount and use limit.");
+  }
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = generatePointsCode();
+    const ref = db.doc(`pointsCodes/${code}`);
+    try {
+      await ref.create({
+        code,
+        type: "points",
+        valueGmd,
+        usageLimit,
+        usedCount: 0,
+        active: true,
+        createdAt: FieldValue.serverTimestamp(),
+        createdBy: request.auth.uid,
+      });
+      await writeAdminLog(request, "points_code_created", ref.path, { valueGmd, usageLimit });
+      return { code, valueGmd, usageLimit };
+    } catch (error) {
+      if (error.code !== 6 && error.code !== "already-exists") throw error;
+    }
+  }
+  throw new HttpsError("internal", "Could not generate a unique code. Try again.");
+});
+
+exports.redeemPointsCode = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Please sign in to redeem an XJ Points code.");
+  const code = cleanCode(request.data && request.data.code);
+  if (!/^XJ-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+    throw new HttpsError("not-found", "Invalid XJ Points code. Please try again.");
+  }
+
+  const codeRef = db.doc(`pointsCodes/${code}`);
+  const userRef = db.doc(`users/${request.auth.uid}`);
+  const userRedemptionRef = userRef.collection("pointsCodeRedemptions").doc(code);
+  const historyRef = userRef.collection("pointsHistory").doc();
+
+  return db.runTransaction(async (transaction) => {
+    const codeSnap = await transaction.get(codeRef);
+    const userSnap = await transaction.get(userRef);
+    const userRedemptionSnap = await transaction.get(userRedemptionRef);
+    if (!codeSnap.exists) throw new HttpsError("not-found", "Invalid XJ Points code. Please try again.");
+    const codeData = codeSnap.data();
+    if (userRedemptionSnap.exists) {
+      throw new HttpsError("already-exists", "This XJ Points code has already been redeemed.");
+    }
+    const usedCount = Number(codeData.usedCount) || 0;
+    const usageLimit = Number(codeData.usageLimit) || 1;
+    if (codeData.active !== true) {
+      throw new HttpsError("failed-precondition", "Invalid XJ Points code. Please try again.");
+    }
+    if (usedCount >= usageLimit) {
+      throw new HttpsError("failed-precondition", "This XJ Points code has already been redeemed.");
+    }
+
+    const valueGmd = Number(codeData.valueGmd);
+    if (!Number.isSafeInteger(valueGmd) || valueGmd < 1) {
+      throw new HttpsError("failed-precondition", "This XJ Points code is unavailable.");
+    }
+    const nextUsedCount = usedCount + 1;
+    const currentBalance = Math.max(0, Number(userSnap.exists && userSnap.data().balanceGmd) || 0);
+    const balanceGmd = currentBalance + valueGmd;
+    if (!Number.isSafeInteger(balanceGmd)) {
+      throw new HttpsError("resource-exhausted", "The XJ Games balance limit would be exceeded.");
+    }
+    transaction.update(codeRef, {
+      usedCount: nextUsedCount,
+      used: nextUsedCount >= usageLimit,
+      lastRedeemedAt: FieldValue.serverTimestamp(),
+    });
+    transaction.set(userRef, {
+      uid: request.auth.uid,
+      balanceGmd,
+      balanceUpdatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    transaction.create(userRedemptionRef, {
+      code,
+      valueGmd,
+      redeemedAt: FieldValue.serverTimestamp(),
+    });
+    transaction.create(historyRef, {
+      type: "balance_added",
+      balanceGmd: valueGmd,
+      points: valueGmd,
+      code,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return { code, valueGmd, balanceGmd };
+  });
+});
+
+exports.setCodeActive = onCall(async (request) => {
+  await requireAdmin(request);
+  const code = cleanCode(request.data && request.data.code);
+  const codeType = request.data && request.data.codeType;
+  const active = request.data && request.data.active;
+  if (!/^[A-Z0-9-]{3,64}$/.test(code) || !["points", "discount"].includes(codeType) || typeof active !== "boolean") {
+    throw new HttpsError("invalid-argument", "Invalid code status request.");
+  }
+  const collection = codeType === "points" ? "pointsCodes" : "promos";
+  const ref = db.doc(`${collection}/${code}`);
+  await ref.update({
+    active,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  });
+  await writeAdminLog(request, active ? "code_enabled" : "code_disabled", ref.path);
+  return { code, active };
 });
 
 /*
@@ -203,10 +328,10 @@ exports.createFlashSale = onCall(async (request) => {
   await ref.set({
     productId,
     percent,
-    startsAt: admin.firestore.Timestamp.fromDate(startsAt),
-    endsAt: admin.firestore.Timestamp.fromDate(endsAt),
+    startsAt: Timestamp.fromDate(startsAt),
+    endsAt: Timestamp.fromDate(endsAt),
     active: true,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     createdBy: request.auth.uid,
   });
 
@@ -229,7 +354,7 @@ exports.cancelFlashSale = onCall(async (request) => {
 
   await db.doc(`flashSales/${saleId}`).update({
     active: false,
-    cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+    cancelledAt: FieldValue.serverTimestamp(),
     cancelledBy: request.auth.uid,
   });
 
@@ -247,13 +372,13 @@ exports.disablePromoCode = onCall(async (request) => {
 
   const code = cleanCode(request.data && request.data.code);
 
-  if (!/^[A-Z0-9]{7}$/.test(code)) {
+  if (!/^[A-Z0-9]{3,64}$/.test(code)) {
     throw new HttpsError("invalid-argument", "Invalid promo code.");
   }
 
   await db.doc(`promos/${code}`).update({
     active: false,
-    disabledAt: admin.firestore.FieldValue.serverTimestamp(),
+    disabledAt: FieldValue.serverTimestamp(),
     disabledBy: request.auth.uid,
   });
 
@@ -289,6 +414,7 @@ exports.createOrder = onCall(async (request) => {
 
   const customerName = String(data.customerName || "Customer").trim();
   const promoCode = cleanCode(data.promoCode);
+  const useBalance = data.useBalance === true;
 
   if (promoCode && !/^[A-Z0-9]{3,64}$/.test(promoCode)) {
     throw new HttpsError(
@@ -417,6 +543,7 @@ exports.createOrder = onCall(async (request) => {
       let userSnap = null;
       let usageLimit = 1;
       let usedCount = 0;
+      let availableBalance = 0;
 
       /*
        * Check promo inside the same transaction so two customers
@@ -465,6 +592,13 @@ exports.createOrder = onCall(async (request) => {
         }
       }
 
+      if (useBalance) {
+        if (!request.auth) throw new HttpsError("unauthenticated", "Sign in to use your XJ Games balance.");
+        if (!userRef) userRef = db.doc(`users/${request.auth.uid}`);
+        if (!userSnap) userSnap = await transaction.get(userRef);
+        availableBalance = Math.max(0, Number(userSnap.exists && userSnap.data().balanceGmd) || 0);
+      }
+
       const counterSnap = await transaction.get(counterRef);
 
       let orderNumber = 1;
@@ -483,10 +617,12 @@ exports.createOrder = onCall(async (request) => {
       const discountPercent = promo ? Number(promo.percent) || 0 : 0;
       const configuredDiscount = promo ? Number(promo.discountAmount) || 0 : 0;
       const discount = promo
-        ? Math.min(total, configuredDiscount || Math.round(total * (discountPercent / 100)))
+        ? Math.min(total, promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0)
+          ? configuredDiscount
+          : Math.round(total * (discountPercent / 100)))
         : 0;
-
-      const finalTotal = Math.max(0, total - discount);
+      const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
+      const finalTotal = Math.max(0, total - discount - balanceUsed);
 
       const order = {
         id: orderId,
@@ -497,10 +633,12 @@ exports.createOrder = onCall(async (request) => {
         subtotal: total,
         discount,
         discountPercent,
+        balanceUsed,
+        balanceRemaining: useBalance ? availableBalance - balanceUsed : null,
         promoCode: promoCode || null,
         total: finalTotal,
         status: "Placed",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       };
 
       /*
@@ -528,10 +666,25 @@ exports.createOrder = onCall(async (request) => {
         counterRef,
         {
           nextNumber: orderNumber + 1,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
+
+      if (balanceUsed > 0) {
+        const remainingBalance = availableBalance - balanceUsed;
+        transaction.set(userRef, {
+          uid: request.auth.uid,
+          balanceGmd: remainingBalance,
+          balanceUpdatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        transaction.set(userRef.collection("pointsHistory").doc(orderId), {
+          type: "balance_spent",
+          balanceGmd: -balanceUsed,
+          orderId,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
 
       /*
        * Consume the promo ONLY when the order is successfully created.
@@ -542,7 +695,7 @@ exports.createOrder = onCall(async (request) => {
           usedCount: nextUsedCount,
           used: nextUsedCount >= usageLimit,
           usedBy: request.auth.uid,
-          usedAt: admin.firestore.FieldValue.serverTimestamp(),
+          usedAt: FieldValue.serverTimestamp(),
           usedOrderId: orderId,
         });
         const pointsEarned = Math.max(0, Math.floor(Number(promo.points) || 0));
@@ -551,21 +704,21 @@ exports.createOrder = onCall(async (request) => {
           orderId,
           discount,
           pointsAwarded: pointsEarned,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         });
         if (pointsEarned > 0) {
           const currentPoints = Math.max(0, Number(userSnap.exists && userSnap.data().points) || 0);
           transaction.set(userRef, {
             uid: request.auth.uid,
             points: currentPoints + pointsEarned,
-            pointsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            pointsUpdatedAt: FieldValue.serverTimestamp(),
           }, { merge: true });
           transaction.set(userRef.collection("pointsHistory").doc(orderId), {
             type: "earned",
             points: pointsEarned,
             promoCode,
             orderId,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
           });
         }
       }
@@ -576,6 +729,8 @@ exports.createOrder = onCall(async (request) => {
         subtotal: total,
         discount,
         discountPercent,
+        balanceUsed,
+        remainingBalance: useBalance ? availableBalance - balanceUsed : null,
         pointsEarned: promo ? Math.max(0, Math.floor(Number(promo.points) || 0)) : 0,
         promoCode: promoCode || "",
         items,
@@ -634,7 +789,7 @@ exports.updateWebsiteSettings = onCall(async (request) => {
     .set(
       {
         ...safe,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -716,8 +871,7 @@ exports.setAccountStatus = onCall(async (request) => {
   await db.doc(`users/${uid}`).set(
     {
       accountStatus: status,
-      statusUpdatedAt:
-        admin.firestore.FieldValue.serverTimestamp(),
+      statusUpdatedAt: FieldValue.serverTimestamp(),
       statusUpdatedBy: request.auth.uid,
     },
     { merge: true }
@@ -745,7 +899,7 @@ async function writeAdminLog(
     action,
     resource,
     data: data || {},
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 }
 
@@ -755,6 +909,7 @@ exports.weeklyBackup = onSchedule(
     const collections = [
       "products",
       "promos",
+      "pointsCodes",
       "flashSales",
       "config",
       "orders",
@@ -762,7 +917,7 @@ exports.weeklyBackup = onSchedule(
     ];
 
     const backup = {
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       collections: {},
     };
 
