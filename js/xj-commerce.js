@@ -13,6 +13,21 @@
     localStorage.setItem("xj_flash_sales", JSON.stringify(flashSales));
   }
   function user() { return window.xjAuth && xjAuth.currentUser; }
+  function promoStorageKey() { var currentUser = user(); return currentUser ? "xj_redeemed_promo_" + currentUser.uid : ""; }
+  window.xjGetRedeemedPromo = function () {
+    var key = promoStorageKey();
+    if (!key) return null;
+    try { redeemedPromo = JSON.parse(localStorage.getItem(key) || "null"); } catch (error) { redeemedPromo = null; }
+    return redeemedPromo && redeemedPromo.uid === user().uid ? redeemedPromo : null;
+  };
+  window.xjRemovePromo = function () {
+    var key = promoStorageKey();
+    if (key) localStorage.removeItem(key);
+    redeemedPromo = null;
+    var message = document.getElementById("cartPromoMessage");
+    if (message) message.textContent = "";
+    if (window.updateCartUI) updateCartUI();
+  };
   function log(action, data) {
     var u = user();
     if (window.xjDb && u) xjDb.collection("users").doc(u.uid).collection("activity").add({
@@ -96,6 +111,7 @@
     var select = document.getElementById("flashProduct"); if (!select || !window.xjGetAllProductIds) return;
     select.innerHTML = xjGetAllProductIds().map(function (id) { var p = product(id); return "<option value='" + id + "'>" + xjEscapeHtml(p.name) + "</option>"; }).join("");
   }
+  window.xjRefreshCommerceProducts = function () { renderFlashPrices(); renderWishlist(); renderRecommendations(); };
   window.xjOpenCommercePanel = function (id) { var el = document.getElementById(id); if (el) el.classList.add("active"); };
   window.xjCloseCommercePanel = function (id) { var el = document.getElementById(id); if (el) el.classList.remove("active"); };
   window.xjSaveOrder = function () {
@@ -111,10 +127,15 @@
   }
   window.xjAdminAddPromo = async function () {
     if (!xjIsAdmin() || !window.xjDb || !firebase.functions) return showToast("Promo code", "Admin backend is not available.", "error");
-    var code = (document.getElementById("promoCode").value || "").trim().toUpperCase(), percent = Number(document.getElementById("promoPercent").value);
-    if (!/^[A-Z0-9]{7}$/.test(code) || percent < 1 || percent > 90) return showToast("Promo code", "Enter exactly 7 letters/numbers and a 1–90% discount.", "error");
+    var code = (document.getElementById("promoCode").value || "").trim().toUpperCase();
+    var percent = Number(document.getElementById("promoPercent").value) || 0;
+    var discountAmount = Number(document.getElementById("promoAmount").value) || 0;
+    var points = Number(document.getElementById("promoPoints").value) || 0;
+    var usageLimit = Number(document.getElementById("promoUsageLimit").value) || 1;
+    var expiresValue = document.getElementById("promoExpiresAt").value;
+    if (!/^[A-Z0-9]{3,64}$/.test(code) || (percent > 0 && percent > 90) || ((!percent || percent < 1) && discountAmount < 1)) return showToast("Promo code", "Enter a valid code and percentage or fixed discount.", "error");
     try {
-      await firebase.functions().httpsCallable("createPromoCode")({ code: code, percent: percent });
+      await firebase.functions().httpsCallable("createPromoCode")({ code: code, percent: percent, discountAmount: discountAmount, points: points, usageLimit: usageLimit, expiresAt: expiresValue ? new Date(expiresValue).toISOString() : null });
       showToast("Promo saved", code + " is active.");
     } catch (error) {
       console.error("Promo creation failed:", error);
@@ -182,15 +203,25 @@
     if (!input || !window.xjAuth || !xjAuth.currentUser || !firebase.functions) {
       return showToast("Promo code", "Please sign in before redeeming a promo code.", "error");
     }
+    var code = input.value.trim().toUpperCase();
+    if (!code) {
+      if (message) message.textContent = "Invalid code please try again";
+      return showToast("Promo code", "Invalid code please try again", "error");
+    }
     try {
-      var result = await firebase.functions().httpsCallable("redeemPromoCode")({ code: input.value });
-      redeemedPromo = { code: input.value.toUpperCase(), percent: Number(result.data.percent) };
-      if (message) message.textContent = redeemedPromo.percent + "% discount applied after order validation.";
-      showToast("Promo applied", "Your promo code is reserved for this redemption.", "success");
+      var result = await firebase.functions().httpsCallable("redeemPromoCode")({ code: code });
+      redeemedPromo = Object.assign({}, result.data, { uid: user().uid });
+      localStorage.setItem(promoStorageKey(), JSON.stringify(redeemedPromo));
+      if (message) message.textContent = redeemedPromo.discountAmount
+        ? redeemedPromo.discountAmount.toLocaleString() + " GMD discount applied at checkout."
+        : redeemedPromo.percent + "% discount applied at checkout.";
+      if (window.updateCartUI) updateCartUI();
+      showToast("Promo applied", "The discount will be verified again when your order is created.", "success");
     } catch (error) {
       console.error("Promo redemption failed:", error);
-      if (message) message.textContent = "";
-      showToast("Promo code", error.message || "Promo code rejected.", "error");
+      window.xjRemovePromo();
+      if (message) message.textContent = "Invalid code please try again";
+      showToast("Promo code", "Invalid code please try again", "error");
     }
   };
   window.xjRedeemTopPromo = function () {

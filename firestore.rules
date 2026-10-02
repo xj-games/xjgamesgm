@@ -38,8 +38,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && (!('points' in request.resource.data) || request.resource.data.points == 0)
+        && !('pointsUpdatedAt' in request.resource.data);
       allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.get('points', resource.data.get('points', 0)) == resource.data.get('points', 0)
+        && request.resource.data.get('pointsUpdatedAt', resource.data.get('pointsUpdatedAt', null)) == resource.data.get('pointsUpdatedAt', null)
         && request.resource.data.get('accountStatus', resource.data.get('accountStatus', 'active')) == resource.data.get('accountStatus', 'active')
         && request.resource.data.get('statusUpdatedBy', resource.data.get('statusUpdatedBy', null)) == resource.data.get('statusUpdatedBy', null)
         && (resource.data.get('nameLocked', false) != true
@@ -68,6 +72,16 @@ service cloud.firestore {
     match /users/{userId}/orders/{orderId} {
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow create, update, delete: if false;
+    }
+
+    match /users/{userId}/pointsHistory/{entryId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /users/{userId}/promoRedemptions/{code} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false;
     }
 
     match /orders/{orderId} {

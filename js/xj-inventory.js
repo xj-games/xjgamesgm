@@ -90,6 +90,16 @@ function xjApplyRemoteProduct(productId, data) {
 
   xjUnhideProduct(productId);
 
+  var existingProduct = XJ_PRODUCT_CATALOG[productId];
+  if (existingProduct) {
+    if (Number.isFinite(Number(data.price)) && Number(data.price) > 0) {
+      existingProduct.price = Number(data.price);
+    }
+    if (typeof data.description === "string") {
+      existingProduct.description = data.description;
+    }
+  }
+
   if (data.isCustom) {
     var customProduct = xjProductFromRemote(productId, data);
     xjRegisterProduct(customProduct);
@@ -98,6 +108,8 @@ function xjApplyRemoteProduct(productId, data) {
     } else {
       xjRefreshProductCard(customProduct);
     }
+  } else if (existingProduct) {
+    xjRefreshProductCard(existingProduct);
   }
 
   if (typeof data.inStock === "boolean") {
@@ -109,6 +121,8 @@ function xjApplyRemoteProduct(productId, data) {
       badge.classList.toggle("out-of-stock", !data.inStock);
     }
   }
+  if (window.xjRepriceCartFromCatalog) window.xjRepriceCartFromCatalog(productId);
+  if (window.xjRefreshCommerceProducts) window.xjRefreshCommerceProducts();
 }
 
 function xjProductFromRemote(productId, data) {
@@ -392,6 +406,8 @@ function xjRenderAdminInventoryPanel() {
       '<div class="admin-inventory-row">' +
         '<div class="admin-inventory-info">' +
           "<strong>" + xjEscapeHtml(product.name) + "</strong>" +
+          '<label class="admin-product-description">Description<textarea id="adminDescription-' + xjEscapeHtml(productId) + '" maxlength="2000" rows="3">' + xjEscapeHtml(product.description || "") + '</textarea></label>' +
+          '<button type="button" class="admin-action-btn" onclick="xjAdminSaveDescription(\'' + productId + '\')">Save description</button>' +
           '<span class="admin-inventory-status ' + (inStock ? "in-stock-label" : "out-stock-label") + '">' +
             (inStock ? "IN STOCK" : "OUT OF STOCK") +
           "</span>" +
@@ -408,6 +424,43 @@ function xjRenderAdminInventoryPanel() {
 
   container.innerHTML = html;
 }
+
+async function xjAdminSaveDescription(productId) {
+  if (!xjIsAdmin() || !xjDb) return;
+  var product = XJ_PRODUCT_CATALOG[productId];
+  var input = document.getElementById("adminDescription-" + productId);
+  if (!product || !input) return;
+  var description = input.value.trim();
+  if (description.length > 2000) {
+    showToast("Description", "Descriptions must be 2,000 characters or fewer.", "error");
+    return;
+  }
+  try {
+    await xjDb.collection("products").doc(productId).set({
+      description: description,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    product.description = description;
+    xjRefreshProductCard(product);
+    showToast("Description saved", product.name + " was updated.");
+  } catch (error) {
+    console.error("Failed to update product description:", error);
+    showToast("Description not saved", "Could not save this description to Firebase.", "error");
+  }
+}
+
+window.xjAdminSaveDescription = xjAdminSaveDescription;
+
+async function xjSyncCanonicalProductPrices() {
+  if (!xjIsAdmin() || !firebase.functions) return;
+  try {
+    await firebase.functions().httpsCallable("syncProductPrices")();
+  } catch (error) {
+    console.error("Failed to sync canonical product prices:", error);
+  }
+}
+
+window.xjSyncCanonicalProductPrices = xjSyncCanonicalProductPrices;
 
 async function xjAdminToggleStock(productId, inStock) {
   if (!xjIsAdmin()) return;

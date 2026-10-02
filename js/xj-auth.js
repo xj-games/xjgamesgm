@@ -68,6 +68,9 @@ async function xjInitFirebase() {
           xjUpdateAuthUI();
           xjLoadAdminEmailsFromFirestore().then(function() {
             xjUpdateAdminVisibility();
+            if (xjIsAdmin() && window.xjSyncCanonicalProductPrices) {
+              window.xjSyncCanonicalProductPrices();
+            }
           });
         });
       } else {
@@ -459,6 +462,7 @@ function xjUpdateAuthUI() {
   const container = document.getElementById("authContainer");
   if (!container) return;
   const user = xjGetCurrentUserDisplay();
+  if (window.xjInitPoints) window.xjInitPoints(user ? xjAuth.currentUser : null);
 
   if (user) {
     container.innerHTML =

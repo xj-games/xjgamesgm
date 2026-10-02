@@ -3,6 +3,9 @@
  */
 var xjProfileCache = null;
 var xjAccountMenuOpen = false;
+var xjPointsUserId = null;
+var xjPointsProfileUnsubscribe = null;
+var xjPointsHistoryUnsubscribe = null;
 var XJ_AVATAR_COLORS = ["#1a73e8", "#d93025", "#188038", "#e37400", "#9334e6", "#007b83", "#c5221f", "#1967d2"];
 
 function xjAvatarLetter(name) {
@@ -366,6 +369,83 @@ function xjConfirmSignOut() {
   xjCloseAccountMenu();
   logoutUser();
 }
+
+function xjInitPoints(user) {
+  var button = document.getElementById("pointsNavButton");
+  if (button) button.style.display = user ? "inline-flex" : "none";
+  if (!user) {
+    if (xjPointsProfileUnsubscribe) xjPointsProfileUnsubscribe();
+    if (xjPointsHistoryUnsubscribe) xjPointsHistoryUnsubscribe();
+    xjPointsProfileUnsubscribe = null;
+    xjPointsHistoryUnsubscribe = null;
+    xjPointsUserId = null;
+    xjRenderPoints(0, [], []);
+    xjRenderPointsHistory([]);
+    return;
+  }
+  if (!xjDb || xjPointsUserId === user.uid) return;
+  if (xjPointsProfileUnsubscribe) xjPointsProfileUnsubscribe();
+  if (xjPointsHistoryUnsubscribe) xjPointsHistoryUnsubscribe();
+  xjRenderPoints(0, []);
+  xjRenderPointsHistory([]);
+  xjPointsUserId = user.uid;
+  xjPointsProfileUnsubscribe = xjDb.collection("users").doc(user.uid).onSnapshot(function(snapshot) {
+    var profile = snapshot.exists ? snapshot.data() : {};
+    xjRenderPoints(Number(profile.points) || 0, Array.isArray(profile.availableRewards) ? profile.availableRewards : []);
+  }, function(error) {
+    console.error("Points profile listener error:", error);
+  });
+  xjPointsHistoryUnsubscribe = xjDb.collection("users").doc(user.uid).collection("pointsHistory")
+    .orderBy("createdAt", "desc").limit(20).onSnapshot(function(snapshot) {
+      xjRenderPointsHistory(snapshot.docs.map(function(doc) { return doc.data(); }));
+    }, function(error) {
+      console.error("Points history listener error:", error);
+    });
+}
+
+function xjRenderPoints(balance, rewards) {
+  var navBalance = document.getElementById("pointsNavBalance");
+  var modalBalance = document.getElementById("pointsModalBalance");
+  var rewardList = document.getElementById("pointsRewards");
+  if (navBalance) navBalance.textContent = Math.max(0, balance).toLocaleString();
+  if (modalBalance) modalBalance.textContent = Math.max(0, balance).toLocaleString();
+  if (rewardList) {
+    rewardList.textContent = rewards.length
+      ? rewards.map(function(reward) { return reward.label || reward.description || "Reward"; }).join(", ")
+      : "No rewards are currently available.";
+  }
+}
+
+function xjRenderPointsHistory(entries) {
+  var list = document.getElementById("pointsHistory");
+  if (!list) return;
+  if (!entries.length) {
+    list.innerHTML = "<li>No points activity yet.</li>";
+    return;
+  }
+  list.innerHTML = entries.map(function(entry) {
+    var createdAt = entry.createdAt && entry.createdAt.toDate ? entry.createdAt.toDate() : null;
+    var label = entry.type === "redeemed" ? "Redeemed" : "Earned";
+    var amount = Number(entry.points) || 0;
+    return "<li><span>" + xjEscapeHtml(label + (entry.promoCode ? " · " + entry.promoCode : "")) + "<br><small>" + (createdAt ? createdAt.toLocaleDateString() : "") + "</small></span><strong>" + (entry.type === "redeemed" ? "-" : "+") + amount.toLocaleString() + " pts</strong></li>";
+  }).join("");
+}
+
+function xjOpenPoints() {
+  var signedIn = !!(xjAuth && xjAuth.currentUser);
+  document.getElementById("pointsSignedOut").style.display = signedIn ? "none" : "block";
+  document.getElementById("pointsSignedIn").style.display = signedIn ? "block" : "none";
+  document.getElementById("pointsModal").classList.add("active");
+  if (!signedIn) openAuthModal();
+}
+
+function xjClosePoints() {
+  document.getElementById("pointsModal").classList.remove("active");
+}
+
+window.xjOpenPoints = xjOpenPoints;
+window.xjClosePoints = xjClosePoints;
+window.xjInitPoints = xjInitPoints;
 
 document.addEventListener("click", function(event) {
   var wrap = document.getElementById("xjAccountMenuWrap");
