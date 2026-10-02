@@ -1,13 +1,13 @@
-/* XJ Games commerce features: filters, wishlist, orders, recommendations and admin tools. */
+/* XJ Games commerce features: orders, recommendations and admin tools. */
 (function () {
-  var wishlist = JSON.parse(localStorage.getItem("xj_wishlist") || "[]");
   var orders = JSON.parse(localStorage.getItem("xj_orders") || "[]");
   var promos = JSON.parse(localStorage.getItem("xj_promos") || "[]");
   var flashSales = JSON.parse(localStorage.getItem("xj_flash_sales") || "[]");
   var redeemedPromo = null;
+  var adminPromoUnsubscribe = null;
+  var adminPointsCodeUnsubscribe = null;
 
   function save() {
-    localStorage.setItem("xj_wishlist", JSON.stringify(wishlist));
     localStorage.setItem("xj_orders", JSON.stringify(orders));
     localStorage.setItem("xj_promos", JSON.stringify(promos));
     localStorage.setItem("xj_flash_sales", JSON.stringify(flashSales));
@@ -78,23 +78,6 @@
     });
     if (window.xjRefreshProductPrices) window.xjRefreshProductPrices();
   }
-  window.xjToggleWishlist = function (id) {
-    if (wishlist.indexOf(id) < 0) wishlist.push(id); else wishlist.splice(wishlist.indexOf(id), 1);
-    save(); log("wishlist_updated", { productId: id, saved: wishlist.indexOf(id) >= 0 }); renderWishlist(); renderRecommendations();
-  };
-  window.xjIsWishlisted = function (id) { return wishlist.indexOf(id) >= 0; };
-  function renderWishlist() {
-    document.querySelectorAll("#productGrid .card[data-product-id]").forEach(function (card) {
-      var id = card.getAttribute("data-product-id"), b = card.querySelector(".xj-wishlist");
-      if (!b) { b = document.createElement("button"); b.className = "xj-wishlist"; b.type = "button"; card.insertBefore(b, card.firstChild); }
-      b.textContent = xjIsWishlisted(id) ? "♥ Saved" : "♡ Wishlist";
-      b.onclick = function (e) { e.stopPropagation(); xjToggleWishlist(id); };
-    });
-    var box = document.getElementById("wishlistItems"); if (!box) return;
-    box.innerHTML = wishlist.length ? wishlist.map(function (id) {
-      var p = product(id); return p ? "<div class='xj-list-row'><b>" + xjEscapeHtml(p.name) + "</b><span>" + price(id).toLocaleString() + " GMD</span><button onclick=\"xjToggleWishlist('" + id + "')\">Remove</button></div>" : "";
-    }).join("") : "<p>No saved products yet.</p>";
-  }
   window.xjFilterCategory = function () {
     var category = document.getElementById("categoryFilter").value, stock = document.getElementById("stockFilter").value;
     document.querySelectorAll("#productGrid .card[data-product-id]").forEach(function (card) {
@@ -104,14 +87,163 @@
   };
   function renderRecommendations() {
     var box = document.getElementById("recommendationItems"); if (!box) return;
-    var ids = xjGetAllProductIds().filter(function (id) { return wishlist.indexOf(id) < 0; }).slice(0, 4);
-    box.innerHTML = ids.map(function (id) { var p = product(id); return "<button class='xj-recommend' onclick=\"document.querySelector('[data-product-id=" + JSON.stringify(id) + "]').scrollIntoView({behavior:'smooth'})\">" + xjEscapeHtml(p.name) + " · " + price(id).toLocaleString() + " GMD</button>"; }).join("");
+    var ids = xjGetAllProductIds().filter(function (id) {
+      return xjGetProductStock(id) && !(window.xjIsProductHidden && xjIsProductHidden(id));
+    }).slice(0, 4);
+    box.classList.add("product-grid");
+    var cards = ids.map(function (id) {
+      var source = document.querySelector('#productGrid .card[data-product-id="' + id + '"]');
+      if (!source || (window.xjIsProductHidden && xjIsProductHidden(id))) return null;
+      var card = source.cloneNode(true);
+      card.removeAttribute("id");
+      card.style.display = "";
+      card.classList.remove("xj-search-highlight");
+      return card;
+    }).filter(Boolean);
+    box.replaceChildren.apply(box, cards);
+    cards.forEach(function (card) {
+      if (window.xjApplyStockState) xjApplyStockState(card);
+      card.querySelectorAll(".xj-product-carousel").forEach(function (carousel) {
+        var slides = Array.prototype.slice.call(carousel.querySelectorAll(".xj-carousel-slide"));
+        var dots = Array.prototype.slice.call(carousel.querySelectorAll(".xj-carousel-dot"));
+        dots.forEach(function (dot, index) {
+          dot.addEventListener("click", function () {
+            slides.forEach(function (slide, slideIndex) { slide.classList.toggle("xj-carousel-active", slideIndex === index); });
+            dots.forEach(function (item, dotIndex) { item.classList.toggle("xj-carousel-dot-active", dotIndex === index); });
+          });
+        });
+      });
+    });
   }
   function populateFlashProducts() {
     var select = document.getElementById("flashProduct"); if (!select || !window.xjGetAllProductIds) return;
     select.innerHTML = xjGetAllProductIds().map(function (id) { var p = product(id); return "<option value='" + id + "'>" + xjEscapeHtml(p.name) + "</option>"; }).join("");
   }
-  window.xjRefreshCommerceProducts = function () { renderFlashPrices(); renderWishlist(); renderRecommendations(); };
+  window.xjSetPromoDiscountType = function () {
+    var fixed = document.getElementById("promoDiscountType").value === "fixed";
+    document.querySelectorAll(".promo-percent-field").forEach(function (el) { el.style.display = fixed ? "none" : ""; });
+    document.querySelectorAll(".promo-amount-field").forEach(function (el) { el.style.display = fixed ? "" : "none"; });
+  };
+  function callable(name, data) {
+    if (!window.firebase || !firebase.functions) throw new Error("Admin backend is not available.");
+    return firebase.functions().httpsCallable(name)(data || {});
+  }
+  window.xjAdminCreatePointsCode = async function () {
+    if (!xjIsAdmin()) return showToast("Points code", "Admin permission required.", "error");
+    var valueGmd = Number(document.getElementById("pointsCodeValue").value);
+    var usageLimit = Number(document.getElementById("pointsCodeUses").value) || 1;
+    try {
+      var result = await callable("createPointsCode", { valueGmd: valueGmd, usageLimit: usageLimit });
+      document.getElementById("pointsCodeValue").value = "";
+      showToast("Points code created", result.data.code + " · " + Number(result.data.valueGmd).toLocaleString() + " GMD");
+      await xjCopyCode(result.data.code, false);
+    } catch (error) {
+      console.error("Points code creation failed:", error);
+      showToast("Points code", error.message || "Could not create the points code.", "error");
+    }
+  };
+  window.xjAdminAddPromo = async function () {
+    if (!xjIsAdmin() || !window.xjDb || !firebase.functions) return showToast("Discount code", "Admin backend is not available.", "error");
+    var code = (document.getElementById("promoCode").value || "").trim().toUpperCase();
+    var discountType = document.getElementById("promoDiscountType").value;
+    var percent = discountType === "percent" ? Number(document.getElementById("promoPercent").value) : 0;
+    var discountAmount = discountType === "fixed" ? Number(document.getElementById("promoAmount").value) : 0;
+    var usageLimit = Number(document.getElementById("promoUsageLimit").value) || 1;
+    var expiresValue = document.getElementById("promoExpiresAt").value;
+    if (!/^[A-Z0-9]{3,64}$/.test(code) || (discountType === "percent" && (percent < 1 || percent > 90)) || (discountType === "fixed" && discountAmount < 1)) {
+      return showToast("Discount code", "Enter a valid code and discount amount.", "error");
+    }
+    try {
+      await callable("createPromoCode", {
+        code: code,
+        discountType: discountType,
+        percent: percent,
+        discountAmount: discountAmount,
+        usageLimit: usageLimit,
+        expiresAt: expiresValue ? new Date(expiresValue).toISOString() : null
+      });
+      document.getElementById("promoCode").value = "";
+      showToast("Discount code created", code + " is active.");
+    } catch (error) {
+      console.error("Discount code creation failed:", error);
+      showToast("Discount code", error.message || "The code could not be saved.", "error");
+    }
+  };
+  window.xjLoadAdminCodeLists = function () {
+    if (!xjIsAdmin() || !window.xjDb) return;
+    if (adminPromoUnsubscribe) adminPromoUnsubscribe();
+    if (adminPointsCodeUnsubscribe) adminPointsCodeUnsubscribe();
+    adminPromoUnsubscribe = xjDb.collection("promos").onSnapshot(function (snapshot) {
+      window.xjRenderAdminDiscountCodes(snapshot.docs.map(function (doc) { return Object.assign({ code: doc.id }, doc.data()); }));
+    }, function (error) { console.error("Discount code list failed:", error); });
+    adminPointsCodeUnsubscribe = xjDb.collection("pointsCodes").onSnapshot(function (snapshot) {
+      window.xjRenderAdminPointsCodes(snapshot.docs.map(function (doc) { return Object.assign({ code: doc.id }, doc.data()); }));
+    }, function (error) { console.error("Points code list failed:", error); });
+  };
+  function renderAdminCodeRows(containerId, entries, kind) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    container.replaceChildren();
+    if (!entries.length) {
+      container.textContent = "No " + (kind === "points" ? "points" : "discount") + " codes yet.";
+      return;
+    }
+    entries.forEach(function (entry) {
+      var count = Number(entry.usedCount) || (entry.used ? 1 : 0);
+      var limit = Number(entry.usageLimit) || 1;
+      var exhausted = count >= limit;
+      var row = document.createElement("div");
+      row.className = "points-code-row";
+      var info = document.createElement("span");
+      var value = kind === "points"
+        ? Number(entry.valueGmd).toLocaleString() + " GMD"
+        : entry.discountType === "fixed" || Number(entry.discountAmount) > 0
+          ? Number(entry.discountAmount).toLocaleString() + " GMD off"
+          : Number(entry.percent) + "% off";
+        var expiryMillis = entry.expiresAt && entry.expiresAt.toMillis ? entry.expiresAt.toMillis() : 0;
+        var expired = expiryMillis > 0 && expiryMillis <= Date.now();
+        var status = expired ? "Expired" : entry.active !== false && !exhausted ? (count ? "Active · " + count + "/" + limit + " uses" : "Unused · " + limit + " uses") : exhausted ? "Redeemed · " + count + "/" + limit : "Disabled";
+        var createdAt = entry.createdAt && entry.createdAt.toDate ? entry.createdAt.toDate().toLocaleString() : "Creation date unavailable";
+        info.textContent = entry.code + " · " + value + " · " + status + " · Created " + createdAt;
+      var actions = document.createElement("span");
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.textContent = "Copy";
+      copy.addEventListener("click", function () { xjCopyCode(entry.code, true); });
+      actions.appendChild(copy);
+      if (!exhausted && !expired) {
+        var toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.textContent = entry.active === false ? "Enable" : "Disable";
+        toggle.addEventListener("click", function () { window.xjAdminSetCodeActive(entry.code, kind, entry.active === false); });
+        actions.appendChild(toggle);
+      }
+      row.appendChild(info);
+      row.appendChild(actions);
+      container.appendChild(row);
+    });
+  }
+  window.xjRenderAdminDiscountCodes = function (entries) { renderAdminCodeRows("adminPromoList", entries, "discount"); };
+  window.xjRenderAdminPointsCodes = function (entries) { renderAdminCodeRows("adminPointsCodeList", entries, "points"); };
+  window.xjAdminSetCodeActive = async function (code, codeType, active) {
+    if (!xjIsAdmin()) return showToast("Code status", "Admin permission required.", "error");
+    try {
+      await callable("setCodeActive", { code: code, codeType: codeType, active: active });
+      showToast("Code updated", code + (active ? " enabled." : " disabled."));
+    } catch (error) {
+      console.error("Code status update failed:", error);
+      showToast("Code status", error.message || "Could not update the code.", "error");
+    }
+  };
+  window.xjCopyCode = async function (code, notify) {
+    try {
+      await navigator.clipboard.writeText(code);
+      if (notify) showToast("Copied", code + " copied to clipboard.");
+    } catch (error) {
+      showToast("Copy code", "Clipboard access is unavailable. Select and copy: " + code, "info");
+    }
+  };
+  window.xjRefreshCommerceProducts = function () { renderFlashPrices(); renderRecommendations(); };
   window.xjOpenCommercePanel = function (id) { var el = document.getElementById(id); if (el) el.classList.add("active"); };
   window.xjCloseCommercePanel = function (id) { var el = document.getElementById(id); if (el) el.classList.remove("active"); };
   window.xjSaveOrder = function () {
@@ -125,23 +257,6 @@
     var box = document.getElementById("orderHistoryItems"); if (!box) return;
     box.innerHTML = orders.length ? orders.map(function (o) { return "<div class='xj-list-row'><b>" + o.id + "</b><span>" + o.total.toLocaleString() + " GMD · " + o.status + "</span><small>" + new Date(o.createdAt).toLocaleDateString() + "</small></div>"; }).join("") : "<p>No orders recorded on this device.</p>";
   }
-  window.xjAdminAddPromo = async function () {
-    if (!xjIsAdmin() || !window.xjDb || !firebase.functions) return showToast("Promo code", "Admin backend is not available.", "error");
-    var code = (document.getElementById("promoCode").value || "").trim().toUpperCase();
-    var percent = Number(document.getElementById("promoPercent").value) || 0;
-    var discountAmount = Number(document.getElementById("promoAmount").value) || 0;
-    var points = Number(document.getElementById("promoPoints").value) || 0;
-    var usageLimit = Number(document.getElementById("promoUsageLimit").value) || 1;
-    var expiresValue = document.getElementById("promoExpiresAt").value;
-    if (!/^[A-Z0-9]{3,64}$/.test(code) || (percent > 0 && percent > 90) || ((!percent || percent < 1) && discountAmount < 1)) return showToast("Promo code", "Enter a valid code and percentage or fixed discount.", "error");
-    try {
-      await firebase.functions().httpsCallable("createPromoCode")({ code: code, percent: percent, discountAmount: discountAmount, points: points, usageLimit: usageLimit, expiresAt: expiresValue ? new Date(expiresValue).toISOString() : null });
-      showToast("Promo saved", code + " is active.");
-    } catch (error) {
-      console.error("Promo creation failed:", error);
-      showToast("Promo code", error.message || "The promo code could not be saved.", "error");
-    }
-  };
   window.xjAdminAddFlashSale = async function () {
     if (!xjIsAdmin() || !window.xjDb || !firebase.functions) return showToast("Flash sale", "Admin backend is not available.", "error");
     var id = document.getElementById("flashProduct").value, percent = Number(document.getElementById("flashPercent").value), hours = Number(document.getElementById("flashHours").value);
@@ -205,8 +320,8 @@
     }
     var code = input.value.trim().toUpperCase();
     if (!code) {
-      if (message) message.textContent = "Invalid code please try again";
-      return showToast("Promo code", "Invalid code please try again", "error");
+      if (message) message.textContent = "Invalid promo code. Please try again.";
+      return showToast("Promo code", "Invalid promo code. Please try again.", "error");
     }
     try {
       var result = await firebase.functions().httpsCallable("redeemPromoCode")({ code: code });
@@ -218,10 +333,12 @@
       if (window.updateCartUI) updateCartUI();
       showToast("Promo applied", "The discount will be verified again when your order is created.", "success");
     } catch (error) {
-      console.error("Promo redemption failed:", error);
+      if (!error || !["functions/not-found", "functions/failed-precondition", "functions/invalid-argument"].includes(error.code)) {
+        console.error("Promo redemption failed:", error);
+      }
       window.xjRemovePromo();
-      if (message) message.textContent = "Invalid code please try again";
-      showToast("Promo code", "Invalid code please try again", "error");
+      if (message) message.textContent = "Invalid promo code. Please try again.";
+      showToast("Promo code", "Invalid promo code. Please try again.", "error");
     }
   };
   window.xjRedeemTopPromo = function () {
@@ -232,12 +349,13 @@
     window.xjRedeemPromo();
   };
   window.xjBackupStore = function () {
-    var data = { wishlist: wishlist, orders: orders, promos: promos, flashSales: flashSales, exportedAt: new Date().toISOString() }, a = document.createElement("a");
+    var data = { orders: orders, promos: promos, flashSales: flashSales, exportedAt: new Date().toISOString() }, a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.download = "xj-games-backup.json"; a.click(); URL.revokeObjectURL(a.href);
   };
-  window.xjRestoreStore = function (input) { var f = input.files && input.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { try { var d = JSON.parse(r.result); wishlist = Array.isArray(d.wishlist) ? d.wishlist : []; orders = Array.isArray(d.orders) ? d.orders : []; promos = Array.isArray(d.promos) ? d.promos : []; flashSales = Array.isArray(d.flashSales) ? d.flashSales : []; save(); renderWishlist(); renderOrders(); showToast("Backup restored", "Your local store data was restored."); } catch (e) { showToast("Restore failed", "The backup file is invalid.", "error"); } }; r.readAsText(f); };
-  document.addEventListener("DOMContentLoaded", function () {
-    renderWishlist(); renderOrders(); renderRecommendations(); populateFlashProducts(); renderFlashPrices();
+  window.xjRestoreStore = function (input) { var f = input.files && input.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { try { var d = JSON.parse(r.result); orders = Array.isArray(d.orders) ? d.orders : []; promos = Array.isArray(d.promos) ? d.promos : []; flashSales = Array.isArray(d.flashSales) ? d.flashSales : []; save(); renderOrders(); showToast("Backup restored", "Your local store data was restored."); } catch (e) { showToast("Restore failed", "The backup file is invalid.", "error"); } }; r.readAsText(f); };
+  function initializeCommerceUi() {
+    renderOrders(); populateFlashProducts(); renderFlashPrices();
+    window.setTimeout(renderRecommendations, 0);
     if (window.xjDb) {
       xjDb.collection("flashSales").onSnapshot(function (snapshot) {
         flashSales = snapshot.docs.map(function (doc) { return Object.assign({ id: doc.id }, doc.data()); });
@@ -250,5 +368,6 @@
     }
     var f = document.getElementById("categoryFilter"); if (f) f.onchange = xjFilterCategory;
     var s = document.getElementById("stockFilter"); if (s) s.onchange = xjFilterCategory;
-  });
+  }
+  initializeCommerceUi();
 })();

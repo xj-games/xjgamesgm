@@ -132,7 +132,7 @@ display:none;
 @media (max-width: 1400px) {
 .mobile-menu-toggle{ display:flex; align-items:center; justify-content:center; margin-left:auto; }
 .scrollable-nav-container{ display:none; }
-.mobile-nav-menu{ display:none; }
+.mobile-nav-menu{ display:flex; }
 }
 
 @media (min-width: 1401px) {
@@ -697,6 +697,15 @@ cursor:pointer;
 .points-summary strong{font:700 28px Orbitron;color:#00ff88}
 .points-history{list-style:none;padding:0;margin:12px 0 0}
 .points-history li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:#bbb}
+.points-redeem{display:flex;gap:8px;margin-top:10px}
+.points-redeem input{flex:1;min-width:0;padding:10px;background:#070b16;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px}
+.points-code-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:#ccc}
+.points-code-row button{padding:6px 9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:#111827;color:#fff;cursor:pointer}
+.cart-balance-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#00ff88;margin:10px 0}
+.cart-balance-toggle input{accent-color:#00ff88;width:16px;height:16px}
+.cart-totals{font-size:13px;line-height:1.8;margin-top:8px}
+.cart-totals div{display:flex;justify-content:space-between;gap:10px}
+.cart-totals .cart-final-total{font-size:15px;font-weight:700;color:#00bfff;border-top:1px solid rgba(255,255,255,.1);padding-top:7px;margin-top:5px}
 .admin-product-description{display:block;width:min(100%,480px);font-size:11px;color:#aaa}
 .admin-product-description textarea{display:block;width:100%;margin-top:5px;padding:8px;background:#070b16;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;font:12px Poppins,sans-serif;resize:vertical}
 
@@ -971,6 +980,7 @@ overflow: hidden;
 text-overflow: ellipsis;
 display: -webkit-box;
 -webkit-line-clamp: 3;
+line-clamp: 3;
 -webkit-box-orient: vertical;
 }
 
@@ -1594,6 +1604,33 @@ to { transform: translateX(120%); opacity: 0; }
   .mobile-nav-menu a:hover{ background:rgba(0,191,255,.12); color:#00bfff; }
 }
 
+@media (min-width:1201px) and (max-width:1400px){
+  .mobile-nav-menu{
+    position:fixed;
+    top:102px;
+    left:auto;
+    right:12px;
+    width:420px;
+    max-width:calc(100vw - 24px);
+    z-index:1100;
+    flex-direction:column;
+    gap:4px;
+    padding:10px;
+    background:rgba(8,10,18,.98);
+    border:1px solid rgba(0,191,255,.22);
+    border-radius:14px;
+    box-shadow:0 18px 45px rgba(0,0,0,.55);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(-12px);
+    transition:opacity .22s ease, transform .22s ease, visibility .22s ease;
+  }
+  .mobile-nav-menu.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+  .mobile-nav-menu a{color:#fff;text-decoration:none;padding:13px 14px;border-radius:10px;font-size:14px}
+  .mobile-nav-menu a:hover{background:rgba(0,191,255,.12);color:#00bfff}
+}
+
 @media (max-width: 700px) {
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
@@ -1606,11 +1643,204 @@ to { transform: translateX(120%); opacity: 0; }
 
 .catalog-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto 20px}
 .catalog-tools select,.xj-list-row button{background:#111827;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:8px}
-.xj-wishlist{position:absolute;top:10px;right:10px;background:rgba(7,11,22,.85);color:#00bfff;border:1px solid #00bfff;border-radius:8px;padding:5px 8px;cursor:pointer;z-index:2}
 .xj-panel{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 .xj-panel.active{display:flex}.xj-panel-card{background:#111827;border:1px solid #00bfff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:85vh;overflow:auto}
 .xj-list-row{display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1);padding:10px 0}
 .xj-recommend{background:#17243b;color:#fff;border:1px solid #00bfff;border-radius:8px;padding:8px;margin:4px;cursor:pointer}
+
+/* XJ visual system: quieter surfaces, consistent controls, and clear hierarchy. */
+:root{
+  color-scheme:dark;
+  --xj-bg:#080d17;
+  --xj-surface:#101827;
+  --xj-surface-raised:#151f30;
+  --xj-border:rgba(179,198,222,.13);
+  --xj-border-strong:rgba(179,198,222,.22);
+  --xj-text:#edf2f8;
+  --xj-muted:#a4afc0;
+  --xj-cyan:#52c5e8;
+  --xj-blue:#288fe0;
+  --xj-green:#53d3a1;
+  --xj-red:#f27680;
+}
+
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{background:var(--xj-bg);color:var(--xj-text);line-height:1.55}
+body::before{
+  background:
+    linear-gradient(135deg,rgba(30,67,98,.16),transparent 36%),
+    radial-gradient(ellipse at 78% 6%,rgba(56,139,177,.08),transparent 42%),
+    linear-gradient(180deg,#080d17 0%,#0a111d 58%,#080d17 100%);
+}
+.glow{display:none}
+nav{background:rgba(8,13,23,.96);border-bottom-color:var(--xj-border);backdrop-filter:blur(16px)}
+.brand-bar{min-height:52px;padding:8px 4%;gap:10px;border-bottom-color:rgba(179,198,222,.08)}
+.brand-bar .logo{font-size:15px;white-space:nowrap}
+.brand-bar .logo img{box-shadow:0 0 0 2px rgba(82,197,232,.2)}
+.points-nav-btn{border-color:rgba(83,211,161,.28);background:rgba(83,211,161,.08);color:#8be3bc;border-radius:9px}
+.points-nav-btn:hover{background:rgba(83,211,161,.14);border-color:rgba(83,211,161,.48)}
+.redeem-strip{gap:10px;padding:9px 4%;background:rgba(16,24,39,.8);border-bottom-color:var(--xj-border)}
+.redeem-strip strong{color:#c9d5e4;font-size:12px}
+.redeem-strip input,.search input{color:var(--xj-text)}
+.redeem-strip input{border-color:var(--xj-border-strong);background:var(--xj-bg);border-radius:8px}
+.scrollable-nav-container{background:rgba(10,16,27,.8)}
+.scrollable-nav-inner{gap:16px}
+.nav-links-list a{color:#c6d0df}
+.nav-links-list a:hover{color:var(--xj-cyan)}
+.search{border-color:var(--xj-border);background:var(--xj-surface);border-radius:10px}
+.search:focus-within{border-color:rgba(82,197,232,.6);box-shadow:0 0 0 3px rgba(82,197,232,.08)}
+
+.hero{padding-top:150px;gap:44px}
+.left h1{line-height:1.12}
+.left p{color:#b8c3d2}
+.rightHero img{box-shadow:0 0 0 1px rgba(82,197,232,.12),0 18px 54px rgba(0,0,0,.42)}
+.stats{gap:32px}
+.stats div h2{color:var(--xj-cyan)}
+.stats div p{color:var(--xj-muted)}
+.products{padding-top:112px}
+.section-title{font-size:32px;line-height:1.2;margin-bottom:34px}
+.catalog-tools{margin:0 auto 24px;gap:8px}
+.catalog-tools label{color:var(--xj-muted);font-size:12px}
+.catalog-tools select{margin-left:5px}
+.product-grid{gap:20px}
+.card{background:linear-gradient(155deg,rgba(21,31,48,.98),rgba(15,23,36,.98));border:1px solid var(--xj-border);border-radius:14px;padding:20px 18px 18px;box-shadow:0 12px 28px rgba(0,0,0,.16);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.card:hover{transform:translateY(-3px);border-color:rgba(82,197,232,.28);box-shadow:0 17px 34px rgba(0,0,0,.25)}
+.card h3{font-size:18px;line-height:1.35;color:#f0f4f9}
+.card .desc{height:58px;color:var(--xj-muted);line-height:1.5}
+.price{font-size:22px;color:#78d7f1;margin-bottom:16px}
+.stock{left:14px;padding:5px 9px;border-radius:7px;font-size:10px;box-shadow:0 4px 12px rgba(0,0,0,.22)}
+.stock:not(.out-of-stock){background:#205f4c;color:#a0ebcb}
+.stock.out-of-stock{background:#65353d;color:#ffc2c6}
+.card-actions{gap:7px;min-height:42px}
+.card-actions > button:first-child{min-height:42px;padding:10px 12px;border-radius:9px;background:linear-gradient(100deg,#248acb,#2878c4);font-size:12px}
+.card-actions > button:first-child:hover{box-shadow:0 7px 18px rgba(24,116,176,.22)}
+.card-actions .product-menu-toggle{flex-basis:42px;width:42px;min-height:42px;border-radius:9px;background:rgba(255,255,255,.045);border-color:var(--xj-border)}
+.product-menu{border-color:var(--xj-border-strong);border-radius:10px;background:#111b2a;box-shadow:0 14px 30px rgba(0,0,0,.38)}
+
+.features,.reviews,.contact{padding-top:76px;padding-bottom:76px}
+.feature-grid,.review-grid{gap:18px}
+.feature-card,.review{background:var(--xj-surface);border:1px solid var(--xj-border);border-radius:14px;padding:22px;transition:transform .2s ease,border-color .2s ease}
+.feature-card:hover,.review:hover{transform:translateY(-2px);border-color:var(--xj-border-strong);box-shadow:0 12px 26px rgba(0,0,0,.2)}
+.feature-card h1{font-size:38px}
+.review p{color:#c2ccda}
+.review-table-wrap{width:100%;overflow-x:auto;background:var(--xj-surface);border:1px solid var(--xj-border);border-radius:12px;overscroll-behavior-x:contain}
+.review-table{width:100%;min-width:620px;border-collapse:collapse;text-align:left}
+.review-table thead{background:rgba(255,255,255,.035)}
+.review-table th{padding:12px 15px;color:#bdc9d8;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--xj-border);white-space:nowrap}
+.review-table td{padding:13px 15px;color:#c7d1df;font-size:12px;line-height:1.55;vertical-align:top;border-bottom:1px solid var(--xj-border)}
+.review-table tbody tr:last-child td{border-bottom:0}
+.review-table tbody tr:hover{background:rgba(255,255,255,.025)}
+.review-rating{color:#f2c56b;white-space:nowrap;font-size:13px}
+.review-customer{display:flex;align-items:center;gap:8px;min-width:128px;color:#edf2f8;font-weight:600}
+.review-customer img{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--xj-border-strong)}
+.review-customer small{display:block;color:var(--xj-muted);font-size:10px;font-weight:400}
+.review-table .review-text{min-width:240px;max-width:560px;overflow-wrap:anywhere}
+.review-date{white-space:nowrap;color:var(--xj-muted)!important;font-size:11px!important}
+.review-expander{display:block;margin:14px auto 0;padding:8px 14px;border:1px solid var(--xj-border-strong);border-radius:8px;background:#142033;color:#dce7f4;font-size:12px;font-weight:600;cursor:pointer}
+.review-expander:hover{border-color:rgba(82,197,232,.52);color:#a8e8f6;background:#18283c}
+.add-review-box{background:var(--xj-surface);border-color:var(--xj-border);border-radius:14px;padding:24px}
+.add-review-box h3{font-size:18px}
+footer{background:#070b13;border-top-color:var(--xj-border)}
+
+button,input,select,textarea{font-family:Poppins,sans-serif}
+input,select,textarea{border-color:var(--xj-border-strong)!important;border-radius:9px!important;background-color:#0b1320!important;color:var(--xj-text)!important}
+input::placeholder,textarea::placeholder{color:#718096}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(82,197,232,.7)!important;box-shadow:0 0 0 3px rgba(82,197,232,.1)}
+button{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease}
+.admin-action-btn,.auth-btn,.checkout-btn,.add-review-box button{background:linear-gradient(105deg,#278bc4,#2876c3);border:1px solid rgba(115,198,233,.2);border-radius:9px;color:white;font-weight:600;box-shadow:none}
+.admin-action-btn:hover,.auth-btn:hover,.checkout-btn:hover,.add-review-box button:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(26,112,165,.2)}
+.admin-remove-btn,.account-danger{border-radius:9px;background:rgba(197,73,83,.12);color:#ffa4aa}
+.account-section{background:#0d1522;border:1px solid var(--xj-border);border-radius:12px;padding:16px}
+.account-section h4{color:#e5edf6}
+.account-hint,.account-hero p{color:var(--xj-muted)}
+.account-hero h3{color:var(--xj-cyan)}
+.admin-inventory-row{background:#0d1522;border:1px solid var(--xj-border);border-radius:11px;padding:14px}
+.admin-inventory-info{min-width:0;flex:1}
+.admin-row-actions{flex:0 0 auto}
+details.admin-add-form{background:#0d1522;border:1px solid var(--xj-border);border-radius:12px;padding:14px}
+details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
+.admin-category-order{background:rgba(13,21,34,.7);border-color:var(--xj-border);border-radius:11px}
+.admin-toolbar{gap:7px}
+.admin-help{color:#8f9bae}
+.points-code-row{border-bottom-color:var(--xj-border);color:#c4cfdd}
+.points-code-row button{background:#162235;border-color:var(--xj-border);border-radius:7px}
+.points-code-row button:hover{border-color:rgba(82,197,232,.5);color:#9ce4f5}
+.points-summary{border-bottom-color:var(--xj-border)}
+.points-summary strong{color:var(--xj-green)}
+.points-history li{border-bottom-color:var(--xj-border);color:#bdc8d6}
+.points-redeem input{background:#0b1320!important}
+.cart-panel{background:#0d1522;box-shadow:-16px 0 44px rgba(0,0,0,.38)}
+.cart-header,.cart-footer{border-color:var(--xj-border)}
+.cart-header{padding:20px 22px}
+.cart-header h2{font-size:18px}
+.cart-footer{padding:16px 20px 20px}
+.cart-balance-toggle{color:#9ce2bf}
+.cart-totals{color:#c4cfdd}
+.cart-totals .cart-final-total{color:#83d9f0;border-top-color:var(--xj-border)}
+.modal-overlay,.xj-panel{background:rgba(3,7,13,.78);backdrop-filter:blur(10px)}
+.modal-card,.xj-panel-card{background:#111b2a;border:1px solid var(--xj-border-strong);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.52)}
+.modal-card{padding:28px}
+.modal-card h3{color:#eaf1f8!important}
+.modal-card .account-hero h3,.modal-card .xj-feature-modal-card h3{color:var(--xj-cyan)!important}
+.modal-card .checkout-btn{border-radius:9px}
+.toast{background:#111b2a;border-radius:10px;border-left-width:3px;box-shadow:0 14px 34px rgba(0,0,0,.32);backdrop-filter:blur(12px)}
+.toast.toast-success{border-left-color:var(--xj-green)}
+.toast.toast-info{border-left-color:var(--xj-cyan)}
+.xj-account-dropdown{background:#111b2a;border-color:var(--xj-border-strong);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.45)}
+.xj-account-dropdown button:hover{color:var(--xj-cyan)}
+
+@media(max-width:700px){
+  .brand-bar{padding:8px 12px;gap:7px;min-height:50px}
+  .brand-bar .logo{flex:0 0 auto;font-size:13px;gap:5px}
+  .brand-bar .logo img{width:25px;height:25px}
+  .brand-bar #authContainer{max-width:25vw}
+  .brand-bar #authContainer .user-profile{gap:4px;padding-right:6px}
+  .brand-bar #authContainer .user-profile span:not(.xj-account-caret){max-width:48px;font-size:10px}
+  .points-nav-btn{padding:6px 7px;gap:3px;font-size:10px;border-radius:8px}
+  .mobile-menu-toggle{width:36px;height:36px;flex-basis:36px;border-radius:9px}
+  .redeem-strip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;padding:8px 12px}
+  .redeem-strip strong{grid-column:1/-1}
+  .redeem-strip input{width:100%;padding:8px}
+  .redeem-strip .admin-action-btn{min-height:34px;padding:6px 10px}
+  .mobile-nav-menu{top:102px}
+  .hero{padding:126px 6% 48px;gap:24px}
+  .rightHero img{width:min(68vw,250px)}
+  .left h1{font-size:36px}
+  .left p{font-size:15px;line-height:1.6}
+  .stats{gap:18px;margin-top:28px}
+  .stats div h2{font-size:27px}
+  .products{padding:100px 5% 64px}
+  .features,.reviews,.contact{padding:64px 5%}
+  .section-title{font-size:26px;margin-bottom:24px}
+  .product-grid,.feature-grid,.review-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px}
+  .card{padding:17px 15px 15px;border-radius:12px}
+  .card img,.xj-product-carousel,.xj-product-carousel .xj-carousel-slide{height:190px}
+  .card h3{font-size:16px}
+  .price{font-size:20px}
+  .feature-card,.review{padding:18px}
+  .review-table{min-width:600px}
+  .review-table th,.review-table td{padding:11px 12px}
+  .add-review-box{padding:20px}
+  .modal-card{padding:22px 18px;border-radius:14px}
+  .admin-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-toolbar .admin-action-btn{min-width:0;white-space:normal}
+  .admin-inventory-info{width:100%}
+  .admin-row-actions{width:100%}
+  .admin-add-form > div{display:flex;flex-wrap:wrap;gap:8px}
+  .admin-add-form > div input,.admin-add-form > div select{flex:1 1 135px;min-width:0}
+  .admin-add-form > div button{flex:1 1 100%;white-space:normal}
+  .points-code-row{align-items:flex-start}
+  .points-code-row>span:first-child{overflow-wrap:anywhere}
+  .cart-panel{width:100%;max-width:460px;right:-100%}
+  .cart-panel.active{right:0;width:100%;max-width:460px}
+  .cart-header{padding:16px 18px}
+  #cartItems{padding:14px}
+  .cart-footer{padding:13px 15px calc(16px + env(safe-area-inset-bottom))}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 
 </style>
 
@@ -1630,7 +1860,7 @@ to { transform: translateX(120%); opacity: 0; }
       XJ Games
     </a>
     <div id="authContainer" style="display:inline-block;"></div>
-    <button type="button" class="points-nav-btn" id="pointsNavButton" onclick="xjOpenPoints()" aria-label="View points and rewards">Points: <span id="pointsNavBalance">0</span></button>
+    <button type="button" class="points-nav-btn" id="pointsNavButton" onclick="xjOpenPoints()" aria-label="View XJ Games balance">Balance: <span id="pointsNavBalance">0</span> GMD</button>
     <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">☰</button>
   </div>
   <div class="redeem-strip">
@@ -1655,7 +1885,6 @@ to { transform: translateX(120%); opacity: 0; }
       </ul>
 
       <button type="button" class="admin-toggle-btn" id="adminToggleBtn" onclick="openAdminPanel()" title="Manage Inventory">⚙ Admin</button>
-      <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('wishlistPanel')">♥ Wishlist</button>
       <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('ordersPanel')">📦 Orders</button>
 
       <div class="cart" id="cartButton">
@@ -1887,7 +2116,7 @@ to { transform: translateX(120%); opacity: 0; }
 
 </div>
 </section>
-<section class="features" id="recommendations"><h2 class="section-title">Recommended For You</h2><div id="recommendationItems"></div></section>
+<section class="features" id="recommendations"><h2 class="section-title">Recommended For You</h2><div id="recommendationItems" class="product-grid"></div></section>
 
 <!-- ================= WHY CHOOSE US ================= -->
 <section id="about" class="features">
@@ -1918,13 +2147,28 @@ to { transform: translateX(120%); opacity: 0; }
 <p>Contact us anytime on WhatsApp.</p>
 </div>
 
+<div class="feature-card">
+<h1>🏷️</h1>
+<h3>Clear Pricing</h3>
+<p>See product prices and available options before placing your order.</p>
+</div>
+
+<div class="feature-card">
+<h1>📍</h1>
+<h3>Local Support</h3>
+<p>Shop with a Gambia-based gaming store and reach us directly on WhatsApp.</p>
+</div>
+
 </div>
 </section>
 
 <!-- ================= REVIEWS ================= -->
 <section id="reviews" class="reviews">
 <h2 class="section-title">Customer Reviews</h2>
-<div class="review-grid" id="reviewGrid"></div>
+<div class="review-table-wrap">
+  <table id="reviewGrid" class="review-table" aria-label="Customer reviews"></table>
+</div>
+<button type="button" id="reviewsToggle" class="review-expander" onclick="xjToggleAllReviews()" aria-expanded="false" hidden>See all reviews</button>
 
 <div class="add-review-box">
   <h3>Leave a Review</h3>
@@ -1975,14 +2219,18 @@ to { transform: translateX(120%); opacity: 0; }
   </div>
   <div class="cart-footer">
     <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input id="cartPromoCode" type="text" maxlength="64" placeholder="Promo code (7+ characters)" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
+      <input id="cartPromoCode" type="text" maxlength="64" placeholder="Discount code" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
       <button type="button" class="admin-action-btn" onclick="xjRedeemPromo()">Apply</button>
     </div>
     <p id="cartPromoMessage" style="font-size:12px;color:#00ff88;margin:0 0 8px;"></p>
     <button type="button" onclick="xjRemovePromo()" style="display:block;background:none;border:0;color:#aaa;font-size:12px;padding:0;margin:-2px 0 8px;cursor:pointer;">Remove promo code</button>
-    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:10px;">
-      <span>Total:</span>
-      <span id="cartTotalPrice">0 GMD</span>
+    <label class="cart-balance-toggle"><input id="useXjBalance" type="checkbox" onchange="updateCartUI()"><span>Use XJ Games balance</span></label>
+    <p id="cartBalanceMessage" style="font-size:11px;color:#aaa;margin:0 0 8px;"></p>
+    <div class="cart-totals" id="cartTotals">
+      <div><span>Subtotal</span><span id="cartSubtotal">0 GMD</span></div>
+      <div id="cartDiscountRow" style="display:none"><span>Discount</span><span id="cartDiscount">-0 GMD</span></div>
+      <div id="cartBalanceRow" style="display:none"><span>XJ Games Balance</span><span id="cartBalanceApplied">-0 GMD</span></div>
+      <div class="cart-final-total"><span>Final Amount</span><span id="cartTotalPrice">0 GMD</span></div>
     </div>
     <button onclick="checkoutCart()" class="checkout-btn">Checkout Order</button>
   </div>
@@ -2163,8 +2411,16 @@ to { transform: translateX(120%); opacity: 0; }
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
     <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
     <details class="admin-add-form" style="margin-bottom:14px;"><summary>Promotions &amp; backup</summary>
-      <label>Promo code / discount</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="64" placeholder="Promo code"><input id="promoPercent" type="number" min="1" max="90" placeholder="Percent"><input id="promoAmount" type="number" min="1" placeholder="GMD off"><input id="promoPoints" type="number" min="0" placeholder="Points"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" placeholder="Uses (default 1)"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Generate / Save</button></div>
-      <div id="adminPromoList" style="margin-top:8px;font-size:12px;color:#aaa;">Promo codes will appear here.</div>
+      <h4 style="margin:8px 0;color:#00ff88">XJ Points Codes</h4>
+      <label>Balance value (GMD)</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="pointsCodeValue" type="number" min="1" step="1" placeholder="e.g. 1000"><input id="pointsCodeUses" type="number" min="1" step="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminCreatePointsCode()">Generate points code</button></div>
+      <div id="adminPointsCodeList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Points codes will appear here.</div>
+      <h4 style="margin:8px 0;color:#00bfff">Discount Codes</h4>
+      <label>Code</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="64" placeholder="e.g. XJ10OFF">
+        <select id="promoDiscountType" onchange="xjSetPromoDiscountType()"><option value="percent">Percentage</option><option value="fixed">Fixed GMD</option></select>
+        <input id="promoPercent" class="promo-percent-field" type="number" min="1" max="90" placeholder="Percent">
+        <input id="promoAmount" class="promo-amount-field" type="number" min="1" placeholder="GMD off" style="display:none">
+        <input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Create discount code</button></div>
+      <div id="adminPromoList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Discount codes will appear here.</div>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
     </details>
@@ -2184,7 +2440,6 @@ to { transform: translateX(120%); opacity: 0; }
   </div>
 
 </div>
-<div id="wishlistPanel" class="xj-panel" onclick="if(event.target===this)xjCloseCommercePanel('wishlistPanel')"><div class="xj-panel-card"><h3>♥ Wishlist</h3><div id="wishlistItems"></div><button class="checkout-btn" onclick="xjCloseCommercePanel('wishlistPanel')">Close</button></div></div>
 <div id="ordersPanel" class="xj-panel" onclick="if(event.target===this)xjCloseCommercePanel('ordersPanel')"><div class="xj-panel-card"><h3>📦 Order History</h3><div id="orderHistoryItems"></div><button class="checkout-btn" onclick="xjCloseCommercePanel('ordersPanel')">Close</button></div></div>
 <div id="xjDescriptionModal" class="modal-overlay xj-description-modal" onclick="if(event.target===this)xjCloseFeatureModal('xjDescriptionModal')"><div class="modal-card xj-feature-modal-card"><button class="feature-close" onclick="xjCloseFeatureModal('xjDescriptionModal')" aria-label="Close">&times;</button><div id="xjDescriptionContent"></div></div></div>
 <div id="xjReduceModal" class="modal-overlay xj-reduce-modal" onclick="if(event.target===this)xjCloseFeatureModal('xjReduceModal')"><div class="modal-card xj-feature-modal-card"><button class="feature-close" onclick="xjCloseFeatureModal('xjReduceModal')" aria-label="Close">&times;</button><div id="xjReduceContent"></div></div></div>
@@ -2257,11 +2512,14 @@ to { transform: translateX(120%); opacity: 0; }
   <div class="modal-card" style="text-align:left;max-width:520px">
     <button type="button" onclick="xjClosePoints()" aria-label="Close points" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
     <h3 style="color:#00ff88;font-family:Orbitron;margin-bottom:8px">Points &amp; Rewards</h3>
-    <div id="pointsSignedOut" style="display:none;color:#bbb;font-size:13px;padding:14px 0">Sign in or create an account to view your points and rewards.</div>
+    <div id="pointsSignedOut" style="display:none;color:#bbb;font-size:13px;padding:14px 0">Please sign in to redeem an XJ Points code and view your XJ Games balance.</div>
     <div id="pointsSignedIn">
-      <div class="points-summary"><span>Current balance</span><strong id="pointsModalBalance">0</strong></div>
+      <div class="points-summary"><span>XJ Games Balance</span><strong><span id="pointsModalBalance">0</span> <small style="font:500 12px Poppins;color:#aaa">GMD</small></strong></div>
       <h4 style="margin-top:18px">Available rewards</h4>
       <p id="pointsRewards" style="font-size:12px;color:#aaa;margin-top:7px">No rewards are currently available.</p>
+      <h4 style="margin-top:18px">Redeem XJ Points Code</h4>
+      <div class="points-redeem"><input id="pointsCodeInput" type="text" maxlength="32" placeholder="Enter your XJ Points code" autocomplete="off"><button type="button" class="admin-action-btn" onclick="xjRedeemPointsCode()">Redeem</button></div>
+      <p id="pointsCodeMessage" style="min-height:18px;font-size:12px;margin-top:6px;color:#aaa"></p>
       <h4 style="margin-top:18px">Points history</h4>
       <ul id="pointsHistory" class="points-history"><li>No points activity yet.</li></ul>
     </div>
@@ -2295,14 +2553,15 @@ to { transform: translateX(120%); opacity: 0; }
 <script src="js/firebase-config.js?v=20260822d"></script>
 <script src="js/xj-catalog.js?v=20261002a"></script>
 <script src="js/xj-search.js?v=20260822d"></script>
-<script src="js/xj-auth.js?v=20261002a"></script>
-<script src="js/xj-profile.js?v=20261002a"></script>
-<script src="js/xj-inventory.js?v=20261002a"></script>
-<script src="js/xj-reviews.js?v=20260822d"></script>
-<script src="js/xj-commerce.js?v=20261002a"></script>
+<script src="js/xj-auth.js?v=20261002b"></script>
+<script src="js/xj-profile.js?v=20261002b"></script>
+<script src="js/xj-inventory.js?v=20261002c"></script>
+<script src="js/xj-reviews.js?v=20261002a"></script>
+<script src="js/xj-commerce.js?v=20261002g"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
+let xjCheckoutInProgress = false;
 const XJ_REDUCE_KEY = 'xj_reduce_price_state';
 let xjReduceState = JSON.parse(localStorage.getItem(XJ_REDUCE_KEY) || '{}');
 
@@ -2840,7 +3099,15 @@ function updateCartUI() {
 
   if (cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
+    document.getElementById('cartSubtotal').textContent = '0 GMD';
+    document.getElementById('cartDiscountRow').style.display = 'none';
+    document.getElementById('cartBalanceRow').style.display = 'none';
     cartTotalPrice.innerText = '0 GMD';
+    const emptyCartPromo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+    document.getElementById('cartPromoMessage').textContent = emptyCartPromo
+      ? 'Discount code ' + emptyCartPromo.code + ' applied. Add items to see the discount.'
+      : '';
+    document.getElementById('cartBalanceMessage').textContent = '';
     return;
   }
 
@@ -2882,16 +3149,26 @@ function updateCartUI() {
   cartItemsContainer.innerHTML = html;
   const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
   const discount = promo ? Math.min(total, Number(promo.discountAmount) || Math.round(total * Number(promo.percent || 0) / 100)) : 0;
-  const finalTotal = Math.max(0, total - discount);
+  const signedIn = !!(window.xjAuth && xjAuth.currentUser);
+  const availableBalance = signedIn ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
+  const useBalance = !!(document.getElementById('useXjBalance') && document.getElementById('useXjBalance').checked && signedIn);
+  const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
+  const finalTotal = Math.max(0, total - discount - balanceUsed);
+  document.getElementById('cartSubtotal').textContent = total.toLocaleString() + ' GMD';
+  document.getElementById('cartDiscountRow').style.display = discount ? 'flex' : 'none';
+  document.getElementById('cartDiscount').textContent = '-' + discount.toLocaleString() + ' GMD';
+  document.getElementById('cartBalanceRow').style.display = balanceUsed ? 'flex' : 'none';
+  document.getElementById('cartBalanceApplied').textContent = '-' + balanceUsed.toLocaleString() + ' GMD';
+  document.getElementById('cartBalanceMessage').textContent = !signedIn && document.getElementById('useXjBalance').checked
+    ? 'Please sign in to use your XJ Games balance.'
+    : signedIn ? 'Available XJ Games balance: ' + availableBalance.toLocaleString() + ' GMD' + (useBalance ? ' · Remaining after order: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD' : '') : '';
   const promoMessage = document.getElementById('cartPromoMessage');
   if (promoMessage) {
     promoMessage.textContent = promo
-      ? 'Promo ' + promo.code + ' applied: ' + discount.toLocaleString() + ' GMD off.'
+      ? 'Discount code ' + promo.code + ' applied: ' + discount.toLocaleString() + ' GMD off.'
       : '';
   }
-  cartTotalPrice.innerHTML = promo
-    ? '<s style="color:#888;font-size:12px;">' + total.toLocaleString() + ' GMD</s> <strong>' + finalTotal.toLocaleString() + ' GMD</strong><small style="display:block;color:#00ff88;">Discount: ' + discount.toLocaleString() + ' GMD</small>'
-    : total.toLocaleString() + ' GMD';
+  cartTotalPrice.textContent = finalTotal.toLocaleString() + ' GMD';
 }
 
 function xjRepriceCartFromCatalog(productId) {
@@ -2948,12 +3225,14 @@ function xjUpdateHeaderLayout() {
   if (navList) {
     navList.style.display = compactMode ? 'none' : 'inline-flex';
   }
-  if (menu) {
+  if (!compactMode && menu) {
     menu.classList.remove('open');
     menu.setAttribute('aria-hidden', 'true');
-  }
-  if (toggle) {
-    toggle.setAttribute('aria-expanded', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  } else if (menu && toggle) {
+    var menuIsOpen = menu.classList.contains('open');
+    menu.setAttribute('aria-hidden', menuIsOpen ? 'false' : 'true');
+    toggle.setAttribute('aria-expanded', menuIsOpen ? 'true' : 'false');
   }
 }
 
@@ -2981,6 +3260,7 @@ document.addEventListener('DOMContentLoaded', xjUpdateHeaderLayout);
 xjUpdateHeaderLayout();
 
 async function checkoutCart() {
+  if (xjCheckoutInProgress) return;
   if (cart.length === 0) {
     showToast('Empty Cart', 'Add items to your cart before checking out.', 'error');
     return;
@@ -3000,6 +3280,11 @@ async function checkoutCart() {
   }
 
   const customer = xjGetCurrentUserDisplay();
+  const useBalance = !!document.getElementById('useXjBalance').checked;
+  if (useBalance && !xjIsAuthenticated()) {
+    showToast('Sign in required', 'Please sign in to use your XJ Games balance.', 'error');
+    return;
+  }
   const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
   const checkoutItems = cart.map(function(item) {
     const details = item.type === 'ps4'
@@ -3025,11 +3310,13 @@ async function checkoutCart() {
     };
   });
 
+  xjCheckoutInProgress = true;
   try {
     const result = await firebase.functions().httpsCallable('createOrder')({
       customerName: customer ? customer.name : '',
       items: checkoutItems,
       promoCode: promo ? promo.code : '',
+      useBalance: useBalance,
     });
     const order = result.data;
     const lines = [
@@ -3046,21 +3333,28 @@ async function checkoutCart() {
     if (promo) {
       lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + order.discount.toLocaleString() + ' GMD');
     }
+    if (order.balanceUsed) lines.push('XJ Games Balance: -' + order.balanceUsed.toLocaleString() + ' GMD');
+    if (order.balanceUsed) lines.push('Remaining XJ Games Balance: ' + Number(order.remainingBalance).toLocaleString() + ' GMD');
     if (order.pointsEarned) lines.push('Points earned: ' + order.pointsEarned);
     lines.push('', 'Final total: ' + order.total.toLocaleString() + ' GMD');
     window.open('https://wa.me/2202164491?text=' + encodeURIComponent(lines.join('\n')), '_blank');
     showToast('Order created', 'Order ' + order.id + ' is ready to send on WhatsApp.');
     if (promo && window.xjRemovePromo) window.xjRemovePromo();
+    document.getElementById('useXjBalance').checked = false;
+    cart = [];
+    saveCart();
   } catch (error) {
     console.error('Checkout order creation failed:', error);
     if (promo && error && ['functions/not-found', 'functions/failed-precondition'].includes(error.code) && /promo|code/i.test(error.message || '')) {
       if (window.xjRemovePromo) window.xjRemovePromo();
       const promoMessage = document.getElementById('cartPromoMessage');
-      if (promoMessage) promoMessage.textContent = 'Invalid code please try again';
-      showToast('Promo code', 'Invalid code please try again', 'error');
+      if (promoMessage) promoMessage.textContent = 'Invalid promo code. Please try again.';
+      showToast('Promo code', 'Invalid promo code. Please try again.', 'error');
       return;
     }
     showToast('Checkout failed', error.message || 'Could not create your order. Please try again.', 'error');
+  } finally {
+    xjCheckoutInProgress = false;
   }
 }
 </script>

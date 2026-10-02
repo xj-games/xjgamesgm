@@ -6,6 +6,9 @@ var xjAccountMenuOpen = false;
 var xjPointsUserId = null;
 var xjPointsProfileUnsubscribe = null;
 var xjPointsHistoryUnsubscribe = null;
+var xjCurrentBalanceGmd = 0;
+var xjAvailableRewards = [];
+var xjPointsHistoryCache = [];
 var XJ_AVATAR_COLORS = ["#1a73e8", "#d93025", "#188038", "#e37400", "#9334e6", "#007b83", "#c5221f", "#1967d2"];
 
 function xjAvatarLetter(name) {
@@ -379,19 +382,32 @@ function xjInitPoints(user) {
     xjPointsProfileUnsubscribe = null;
     xjPointsHistoryUnsubscribe = null;
     xjPointsUserId = null;
-    xjRenderPoints(0, [], []);
+    xjCurrentBalanceGmd = 0;
+    window.xjCurrentBalanceGmd = 0;
+    xjAvailableRewards = [];
+    xjPointsHistoryCache = [];
+    xjRenderPoints(0, []);
     xjRenderPointsHistory([]);
+    if (window.updateCartUI) updateCartUI();
     return;
   }
   if (!xjDb || xjPointsUserId === user.uid) return;
   if (xjPointsProfileUnsubscribe) xjPointsProfileUnsubscribe();
   if (xjPointsHistoryUnsubscribe) xjPointsHistoryUnsubscribe();
+  xjCurrentBalanceGmd = 0;
+  window.xjCurrentBalanceGmd = 0;
+  xjAvailableRewards = [];
+  xjPointsHistoryCache = [];
   xjRenderPoints(0, []);
   xjRenderPointsHistory([]);
   xjPointsUserId = user.uid;
   xjPointsProfileUnsubscribe = xjDb.collection("users").doc(user.uid).onSnapshot(function(snapshot) {
     var profile = snapshot.exists ? snapshot.data() : {};
-    xjRenderPoints(Number(profile.points) || 0, Array.isArray(profile.availableRewards) ? profile.availableRewards : []);
+    xjCurrentBalanceGmd = Math.max(0, Number(profile.balanceGmd) || 0);
+    window.xjCurrentBalanceGmd = xjCurrentBalanceGmd;
+    xjAvailableRewards = Array.isArray(profile.availableRewards) ? profile.availableRewards : [];
+    xjRenderPoints(xjCurrentBalanceGmd, xjAvailableRewards);
+    if (window.updateCartUI) updateCartUI();
   }, function(error) {
     console.error("Points profile listener error:", error);
   });
@@ -404,6 +420,7 @@ function xjInitPoints(user) {
 }
 
 function xjRenderPoints(balance, rewards) {
+  xjAvailableRewards = Array.isArray(rewards) ? rewards : xjAvailableRewards;
   var navBalance = document.getElementById("pointsNavBalance");
   var modalBalance = document.getElementById("pointsModalBalance");
   var rewardList = document.getElementById("pointsRewards");
@@ -417,6 +434,7 @@ function xjRenderPoints(balance, rewards) {
 }
 
 function xjRenderPointsHistory(entries) {
+  xjPointsHistoryCache = entries.slice();
   var list = document.getElementById("pointsHistory");
   if (!list) return;
   if (!entries.length) {
@@ -425,10 +443,61 @@ function xjRenderPointsHistory(entries) {
   }
   list.innerHTML = entries.map(function(entry) {
     var createdAt = entry.createdAt && entry.createdAt.toDate ? entry.createdAt.toDate() : null;
+    if (typeof entry.balanceGmd === "number") {
+      var amountGmd = entry.balanceGmd;
+      var labelGmd = entry.type === "balance_spent" ? "Order balance used" : "XJ balance added";
+      return "<li><span>" + xjEscapeHtml(labelGmd + (entry.code ? " · " + entry.code : "")) + "<br><small>" + (createdAt ? createdAt.toLocaleDateString() : "") + "</small></span><strong>" + (amountGmd > 0 ? "+" : "-") + Math.abs(amountGmd).toLocaleString() + " GMD</strong></li>";
+    }
     var label = entry.type === "redeemed" ? "Redeemed" : "Earned";
     var amount = Number(entry.points) || 0;
     return "<li><span>" + xjEscapeHtml(label + (entry.promoCode ? " · " + entry.promoCode : "")) + "<br><small>" + (createdAt ? createdAt.toLocaleDateString() : "") + "</small></span><strong>" + (entry.type === "redeemed" ? "-" : "+") + amount.toLocaleString() + " pts</strong></li>";
   }).join("");
+}
+
+async function xjRedeemPointsCode() {
+  var input = document.getElementById("pointsCodeInput");
+  var message = document.getElementById("pointsCodeMessage");
+  var button = document.querySelector("#pointsSignedIn .points-redeem button");
+  var user = xjAuth && xjAuth.currentUser;
+  if (!user) {
+    if (message) message.textContent = "Please sign in to redeem an XJ Points code.";
+    return;
+  }
+  var code = input ? input.value.trim().toUpperCase() : "";
+  if (!code) {
+    if (message) message.textContent = "Invalid XJ Points code. Please try again.";
+    return;
+  }
+  if (button) button.disabled = true;
+  if (message) message.textContent = "Checking code…";
+  try {
+    var result = await firebase.functions().httpsCallable("redeemPointsCode")({ code: code });
+    xjCurrentBalanceGmd = Number(result.data.balanceGmd) || 0;
+    window.xjCurrentBalanceGmd = xjCurrentBalanceGmd;
+    xjRenderPoints(xjCurrentBalanceGmd, xjAvailableRewards);
+    xjRenderPointsHistory([{ type: "balance_added", balanceGmd: Number(result.data.valueGmd) || 0, code: result.data.code }].concat(xjPointsHistoryCache));
+    if (window.updateCartUI) updateCartUI();
+    if (input) input.value = "";
+    if (message) message.textContent = "Success! " + Number(result.data.valueGmd).toLocaleString() + " GMD has been added to your XJ Games balance.";
+    showToast("Balance added", Number(result.data.valueGmd).toLocaleString() + " GMD has been added to your XJ Games balance.", "success");
+  } catch (error) {
+    var codeName = String(error && error.code || "");
+    var errorText = String(error && error.message || "").toLowerCase();
+    if (!["functions/already-exists", "functions/not-found", "functions/failed-precondition", "functions/unauthenticated"].includes(codeName)) {
+      console.error("XJ Points code redemption failed:", error);
+    }
+    var userMessage = codeName.endsWith("already-exists") || errorText.indexOf("already been redeemed") >= 0
+      ? "This XJ Points code has already been redeemed."
+      : codeName.endsWith("not-found") || errorText.indexOf("invalid xj points code") >= 0
+        ? "Invalid XJ Points code. Please try again."
+        : errorText.indexOf("unauthenticated") >= 0
+          ? "Please sign in to redeem an XJ Points code."
+          : "Could not redeem this XJ Points code. Please try again.";
+    if (message) message.textContent = userMessage;
+    showToast("Points code", userMessage, "error");
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function xjOpenPoints() {
@@ -446,6 +515,7 @@ function xjClosePoints() {
 window.xjOpenPoints = xjOpenPoints;
 window.xjClosePoints = xjClosePoints;
 window.xjInitPoints = xjInitPoints;
+window.xjRedeemPointsCode = xjRedeemPointsCode;
 
 document.addEventListener("click", function(event) {
   var wrap = document.getElementById("xjAccountMenuWrap");

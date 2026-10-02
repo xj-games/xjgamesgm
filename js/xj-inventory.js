@@ -342,6 +342,7 @@ function openAdminPanel() {
   }
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
+  if (window.xjLoadAdminCodeLists) window.xjLoadAdminCodeLists();
   document.getElementById("adminModal").classList.add("active");
 }
 
@@ -362,6 +363,7 @@ function xjRenderAdminInventoryPanel() {
     '<div class="admin-toolbar">' +
       '<button type="button" class="admin-action-btn" onclick="xjToggleAdminAddForm()">' + (xjAdminFormOpen ? "Close form" : "Add product") + "</button>" +
       '<button type="button" class="admin-action-btn" onclick="xjSaveCategoryOrder()">Save category order</button>' +
+      '<button type="button" class="admin-action-btn" onclick="xjSyncCanonicalProductPrices()">Sync PS4 prices</button>' +
     "</div>";
   html += '<div class="admin-category-order"><label>Category priority (top to bottom)</label><div id="adminCategoryOrder">';
   xjCategoryOrder.forEach(function(category, index) {
@@ -452,11 +454,13 @@ async function xjAdminSaveDescription(productId) {
 window.xjAdminSaveDescription = xjAdminSaveDescription;
 
 async function xjSyncCanonicalProductPrices() {
-  if (!xjIsAdmin() || !firebase.functions) return;
+  if (!xjIsAdmin() || !firebase.functions) return showToast("Price update", "Admin backend is not available.", "error");
   try {
-    await firebase.functions().httpsCallable("syncProductPrices")();
+    var result = await firebase.functions().httpsCallable("syncProductPrices")();
+    showToast("Prices updated", result.data.updated.length ? "PS4 Slim and PS4 Fat prices were saved." : "The PS4 price update was already applied.");
   } catch (error) {
     console.error("Failed to sync canonical product prices:", error);
+    showToast("Price update failed", "Could not update PS4 prices in Firebase.", "error");
   }
 }
 

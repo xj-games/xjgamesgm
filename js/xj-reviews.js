@@ -18,6 +18,8 @@ const XJ_DEFAULT_REVIEWS = [
 ];
 
 var xjReviewsUnsubscribe = null;
+var xjReviewRows = [];
+var xjReviewsExpanded = false;
 
 function xjInitReviews() {
   if (!xjDb || !xjIsFirebaseConfigured()) {
@@ -62,31 +64,40 @@ function renderReviews() {
 function xjRenderReviews(reviews) {
   const grid = document.getElementById("reviewGrid");
   if (!grid) return;
-  let html = "";
-
-  reviews.forEach(function(rev) {
-    const stars = "⭐".repeat(rev.rating || 5);
+  xjReviewRows = Array.isArray(reviews) ? reviews : [];
+  const visibleReviews = xjReviewsExpanded ? xjReviewRows : xjReviewRows.slice(0, 3);
+  const rows = visibleReviews.map(function(rev) {
+    const rating = Math.max(1, Math.min(5, Number(rev.rating) || 5));
     const name = xjEscapeHtml(rev.name || "Customer");
     const text = xjEscapeHtml(rev.text || "");
     const avatar = xjEscapeHtml(rev.avatar || "https://www.svgrepo.com/show/498369/profile-circle.svg");
-    html +=
-      '<div class="review">' +
-        '<div>' +
-          '<div style="color:#ffcc00; font-size:14px; margin-bottom:8px;">' + stars + '</div>' +
-          '<p>' + text + '</p>' +
-        '</div>' +
-        '<div class="review-author-info">' +
-          '<img src="' + avatar + '" alt="' + name + '">' +
-          '<div>' +
-            '<h4>' + name + '</h4>' +
-            '<span style="font-size:11px; color:#888;">Verified Customer</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-  });
+    const rawDate = rev.createdAt && typeof rev.createdAt.toDate === "function"
+      ? rev.createdAt.toDate()
+      : rev.createdAt ? new Date(rev.createdAt) : null;
+    const date = rawDate && !Number.isNaN(rawDate.getTime()) ? rawDate.toLocaleDateString() : "";
+    return "<tr>" +
+      '<td class="review-rating" aria-label="' + rating + ' out of 5">' + "★".repeat(rating) + "<span class=\"review-rating-number\"> " + rating + "/5</span></td>" +
+      '<td><span class="review-customer"><img src="' + avatar + '" alt=""><span>' + name + '<small>Customer</small></span></span></td>' +
+      '<td class="review-text">' + text + "</td>" +
+      '<td class="review-date">' + date + "</td>" +
+      "</tr>";
+  }).join("");
+  grid.innerHTML = "<thead><tr><th scope=\"col\">Rating</th><th scope=\"col\">Customer</th><th scope=\"col\">Review</th><th scope=\"col\">Date</th></tr></thead><tbody>" + rows + "</tbody>";
 
-  grid.innerHTML = html;
+  const toggle = document.getElementById("reviewsToggle");
+  if (toggle) {
+    toggle.hidden = xjReviewRows.length <= 3;
+    toggle.textContent = xjReviewsExpanded ? "Show fewer reviews" : "See all reviews (" + xjReviewRows.length + ")";
+    toggle.setAttribute("aria-expanded", xjReviewsExpanded ? "true" : "false");
+  }
 }
+
+function xjToggleAllReviews() {
+  xjReviewsExpanded = !xjReviewsExpanded;
+  xjRenderReviews(xjReviewRows);
+}
+
+window.xjToggleAllReviews = xjToggleAllReviews;
 
 async function submitReview() {
   if (!xjRequireAuth("Please sign in to leave a review.")) {

@@ -40,10 +40,14 @@ service cloud.firestore {
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow create: if isSignedIn() && request.auth.uid == userId
         && (!('points' in request.resource.data) || request.resource.data.points == 0)
-        && !('pointsUpdatedAt' in request.resource.data);
+        && !('pointsUpdatedAt' in request.resource.data)
+        && (!('balanceGmd' in request.resource.data) || request.resource.data.balanceGmd == 0)
+        && !('balanceUpdatedAt' in request.resource.data);
       allow update: if isSignedIn() && request.auth.uid == userId
         && request.resource.data.get('points', resource.data.get('points', 0)) == resource.data.get('points', 0)
         && request.resource.data.get('pointsUpdatedAt', resource.data.get('pointsUpdatedAt', null)) == resource.data.get('pointsUpdatedAt', null)
+        && request.resource.data.get('balanceGmd', resource.data.get('balanceGmd', 0)) == resource.data.get('balanceGmd', 0)
+        && request.resource.data.get('balanceUpdatedAt', resource.data.get('balanceUpdatedAt', null)) == resource.data.get('balanceUpdatedAt', null)
         && request.resource.data.get('accountStatus', resource.data.get('accountStatus', 'active')) == resource.data.get('accountStatus', 'active')
         && request.resource.data.get('statusUpdatedBy', resource.data.get('statusUpdatedBy', null)) == resource.data.get('statusUpdatedBy', null)
         && (resource.data.get('nameLocked', false) != true
@@ -84,6 +88,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /users/{userId}/pointsCodeRedemptions/{code} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
     match /orders/{orderId} {
       allow read: if isAdmin();
       allow write: if false;
@@ -109,6 +118,11 @@ service cloud.firestore {
     }
 
     match /promos/{promoId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /pointsCodes/{code} {
       allow read: if isAdmin();
       allow write: if false;
     }

@@ -63,14 +63,12 @@ async function xjInitFirebase() {
 
     xjAuth.onAuthStateChanged(function(user) {
       xjFirebaseUser = user || null;
+      xjUpdateAdminVisibility();
       if (user) {
         Promise.resolve(xjLoadUserProfile(user)).finally(function() {
           xjUpdateAuthUI();
           xjLoadAdminEmailsFromFirestore().then(function() {
             xjUpdateAdminVisibility();
-            if (xjIsAdmin() && window.xjSyncCanonicalProductPrices) {
-              window.xjSyncCanonicalProductPrices();
-            }
           });
         });
       } else {
@@ -234,6 +232,10 @@ async function handleGoogleLogin() {
       return;
     }
 
+    xjFirebaseUser = result.user;
+    xjUpdateAuthUI();
+    xjUpdateAdminVisibility();
+
     try {
       await xjSaveUserProfile(result.user, {});
     } catch (profileError) {
@@ -315,7 +317,9 @@ async function handleEmailSubmit() {
       await credential.user.updateProfile({
         displayName: nameCheck.name
       });
-      await credential.user.sendEmailVerification();
+      xjFirebaseUser = credential.user;
+      xjUpdateAuthUI();
+      xjUpdateAdminVisibility();
       try {
         await xjSaveUserProfile(credential.user, {
           firstName: firstName,
@@ -330,9 +334,8 @@ async function handleEmailSubmit() {
       } catch (profileError) {
         console.error("Account created, but profile save failed:", profileError);
       }
-      await xjAuth.signOut();
       closeAuthModal();
-      showToast("Verify your email", "We sent a verification link to " + email + ". Verify it before signing in.", "info");
+      showToast("Account created", "You are signed in and ready to use your account.", "success");
     } else {
       const credential = await xjAuth.signInWithEmailAndPassword(email, password);
       if (!credential || !credential.user) {
@@ -340,13 +343,9 @@ async function handleEmailSubmit() {
         xjShowAuthFormError("Sign-in did not complete. You are not signed in.");
         return;
       }
-      if (!credential.user.emailVerified) {
-        await credential.user.sendEmailVerification();
-        await xjAuth.signOut();
-        xjShowAuthFormError("Please verify your email before signing in. A new verification link was sent.");
-        showToast("Email verification required", "Check your inbox and verify your email before signing in.", "error");
-        return;
-      }
+      xjFirebaseUser = credential.user;
+      xjUpdateAuthUI();
+      xjUpdateAdminVisibility();
       closeAuthModal();
       showToast("Success", "Signed in successfully!");
     }
