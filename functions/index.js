@@ -57,6 +57,64 @@ exports.syncProductPrices = onCall(async (request) => {
   return { updated: applied ? Object.keys(prices) : [] };
 });
 
+function timestampMillis(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  const date = value instanceof Date ? value : new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function assertPromoUsable(promo, priorRedemptionExists) {
+  const now = Date.now();
+  const starts = timestampMillis(promo.startsAt);
+  const expires = timestampMillis(promo.expiresAt);
+  const usageLimit = Number(promo.usageLimit) || 1;
+  const usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
+
+  if (!promo || promo.active !== true || promo.used === true || usedCount >= usageLimit) {
+    throw new HttpsError("failed-precondition", "Invalid code, please try again.");
+  }
+  if (starts && starts > now) {
+    throw new HttpsError("failed-precondition", "This promo code is not active yet.");
+  }
+  if (expires && expires <= now) {
+    throw new HttpsError("failed-precondition", "This promo code has expired.");
+  }
+  if (promo.singleUsePerUser !== false && priorRedemptionExists) {
+    throw new HttpsError("failed-precondition", "Invalid code, please try again.");
+  }
+}
+
+function discountForSelectedItem(promo, items, appliedItemKey) {
+  let targetIndex = items.length === 1 ? 0 : items.findIndex((item) =>
+    item.cartItemKey && item.cartItemKey === appliedItemKey
+  );
+  if (targetIndex < 0) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Select which product the discount applies to."
+    );
+  }
+
+  const selectedItem = items[targetIndex];
+  const selectedTotal = (Number(selectedItem.price) || 0) * (Number(selectedItem.quantity) || 1);
+  const discountPercent = Number(promo.percent) || 0;
+  const configuredDiscount = Number(promo.discountAmount) || 0;
+  const isFixed = promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0 && discountPercent <= 0);
+  const discount = isFixed
+    ? Math.min(selectedTotal, configuredDiscount)
+    : Math.round(selectedTotal * (discountPercent / 100));
+
+  return {
+    discount: Math.min(selectedTotal, Math.max(0, discount)),
+    discountPercent,
+    appliedItemIndex: targetIndex,
+    appliedProductId: selectedItem.productId,
+    appliedProductName: selectedItem.name,
+  };
+}
+
 exports.createPromoCode = onCall(async (request) => {
   await requireAdmin(request);
 
@@ -66,6 +124,10 @@ exports.createPromoCode = onCall(async (request) => {
   const discountAmount = Number(request.data && request.data.discountAmount);
   const usageLimit = Number(request.data && request.data.usageLimit) || 1;
   const discountType = requestedType === "fixed" || (!requestedType && discountAmount > 0 && percent <= 0) ? "fixed" : "percent";
+  const startsAt =
+    request.data && request.data.startsAt
+      ? new Date(request.data.startsAt)
+      : null;
   const expiresAt =
     request.data && request.data.expiresAt
       ? new Date(request.data.expiresAt)
@@ -83,8 +145,14 @@ exports.createPromoCode = onCall(async (request) => {
     );
   }
 
+  if (startsAt && Number.isNaN(startsAt.getTime())) {
+    throw new HttpsError("invalid-argument", "Invalid start date.");
+  }
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
     throw new HttpsError("invalid-argument", "Invalid expiration date.");
+  }
+  if (startsAt && expiresAt && expiresAt.getTime() <= startsAt.getTime()) {
+    throw new HttpsError("invalid-argument", "Expiration must be after the start date.");
   }
 
   const ref = db.doc(`promos/${code}`);
@@ -100,6 +168,9 @@ exports.createPromoCode = onCall(async (request) => {
     usedCount: 0,
     usageLimit,
     singleUsePerUser: true,
+    startsAt: startsAt
+      ? Timestamp.fromDate(startsAt)
+      : null,
     expiresAt: expiresAt
       ? Timestamp.fromDate(expiresAt)
       : null,
@@ -265,37 +336,22 @@ exports.redeemPromoCode = onCall(async (request) => {
   const snap = await ref.get();
 
   if (!snap.exists) {
-    throw new HttpsError("not-found", "Promo code is invalid.");
+    throw new HttpsError("not-found", "Invalid code, please try again.");
   }
 
   const promo = snap.data();
-  const expires =
-    promo.expiresAt && promo.expiresAt.toMillis
-      ? promo.expiresAt.toMillis()
-      : 0;
-  const usageLimit = Number(promo.usageLimit) || 1;
-  const usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
   const priorRedemption = await db
     .doc(`users/${request.auth.uid}/promoRedemptions/${code}`)
     .get();
+  assertPromoUsable(promo, priorRedemption.exists);
 
-  if (
-    promo.active !== true ||
-    promo.used === true ||
-    usedCount >= usageLimit ||
-    (promo.singleUsePerUser !== false && priorRedemption.exists) ||
-    (expires && expires <= Date.now())
-  ) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Promo code is disabled, expired, or already used."
-    );
-  }
-
+  const percent = Number(promo.percent) || 0;
+  const discountAmount = Number(promo.discountAmount) || 0;
   return {
     code,
-    percent: Number(promo.percent) || 0,
-    discountAmount: Number(promo.discountAmount) || 0,
+    percent,
+    discountAmount,
+    discountType: promo.discountType || (discountAmount > 0 && percent <= 0 ? "fixed" : "percent"),
     points: Number(promo.points) || 0,
     valid: true,
   };
@@ -514,6 +570,7 @@ exports.createOrder = onCall(async (request) => {
 
     return {
       productId: snapshot.id,
+      cartItemKey: String(inputItems[index].cartItemKey || ""),
       name: product.name || inputItems[index].name || "Product",
       quantity,
       price,
@@ -550,46 +607,27 @@ exports.createOrder = onCall(async (request) => {
        * cannot successfully use the same promo code.
        */
       if (promoCode) {
+        if (!request.auth) {
+          throw new HttpsError("unauthenticated", "Sign in to use a promo code.");
+        }
         promoRef = db.doc(`promos/${promoCode}`);
         const promoSnap = await transaction.get(promoRef);
 
         if (!promoSnap.exists) {
           throw new HttpsError(
             "not-found",
-            "Promo code is invalid."
+            "Invalid code, please try again."
           );
         }
 
         promo = promoSnap.data();
-
-        const expires =
-          promo.expiresAt && promo.expiresAt.toMillis
-            ? promo.expiresAt.toMillis()
-            : 0;
         usageLimit = Number(promo.usageLimit) || 1;
         usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
-
-        if (
-          promo.active !== true ||
-          promo.used === true ||
-          usedCount >= usageLimit ||
-          (expires && expires <= Date.now())
-        ) {
-          throw new HttpsError(
-            "failed-precondition",
-            "Promo code is invalid, expired, or already used."
-          );
-        }
-        if (!request.auth) {
-          throw new HttpsError("unauthenticated", "Sign in to use a promo code.");
-        }
         promoRedemptionRef = db.doc(`users/${request.auth.uid}/promoRedemptions/${promoCode}`);
         userRef = db.doc(`users/${request.auth.uid}`);
         const priorRedemption = await transaction.get(promoRedemptionRef);
         userSnap = await transaction.get(userRef);
-        if (promo.singleUsePerUser !== false && priorRedemption.exists) {
-          throw new HttpsError("failed-precondition", "This promo code was already used by this account.");
-        }
+        assertPromoUsable(promo, priorRedemption.exists);
       }
 
       if (useBalance) {
@@ -614,13 +652,11 @@ exports.createOrder = onCall(async (request) => {
         ? `220-${datePart}-${promoCode}-${orderNumberText}`
         : `220-${datePart}-${orderNumberText}`;
 
-      const discountPercent = promo ? Number(promo.percent) || 0 : 0;
-      const configuredDiscount = promo ? Number(promo.discountAmount) || 0 : 0;
-      const discount = promo
-        ? Math.min(total, promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0)
-          ? configuredDiscount
-          : Math.round(total * (discountPercent / 100)))
-        : 0;
+      const promoDiscount = promo
+        ? discountForSelectedItem(promo, items, data.appliedItemKey)
+        : { discount: 0, discountPercent: 0, appliedItemIndex: -1, appliedProductId: null, appliedProductName: null };
+      const discount = promoDiscount.discount;
+      const discountPercent = promoDiscount.discountPercent;
       const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
       const finalTotal = Math.max(0, total - discount - balanceUsed);
 
@@ -633,6 +669,10 @@ exports.createOrder = onCall(async (request) => {
         subtotal: total,
         discount,
         discountPercent,
+        appliedItemIndex: promoDiscount.appliedItemIndex,
+        appliedProductId: promoDiscount.appliedProductId,
+        appliedProductName: promoDiscount.appliedProductName,
+        discountType: promo ? promo.discountType || (Number(promo.discountAmount) > 0 && discountPercent <= 0 ? "fixed" : "percent") : null,
         balanceUsed,
         balanceRemaining: useBalance ? availableBalance - balanceUsed : null,
         promoCode: promoCode || null,
@@ -729,6 +769,10 @@ exports.createOrder = onCall(async (request) => {
         subtotal: total,
         discount,
         discountPercent,
+        appliedItemIndex: promoDiscount.appliedItemIndex,
+        appliedProductId: promoDiscount.appliedProductId,
+        appliedProductName: promoDiscount.appliedProductName,
+        discountType: order.discountType,
         balanceUsed,
         remainingBalance: useBalance ? availableBalance - balanceUsed : null,
         pointsEarned: promo ? Math.max(0, Math.floor(Number(promo.points) || 0)) : 0,

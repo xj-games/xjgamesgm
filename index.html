@@ -1642,6 +1642,8 @@ to { transform: translateX(120%); opacity: 0; }
 }
 
 .catalog-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto 20px}
+.catalog-view-controls{display:flex;justify-content:center;margin:0 auto 16px}
+.catalog-view-controls button{background:rgba(0,191,255,.12);border:1px solid rgba(0,191,255,.55);color:#dff8ff;border-radius:8px;padding:9px 15px;font-weight:600;cursor:pointer}
 .catalog-tools select,.xj-list-row button{background:#111827;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:8px}
 .xj-panel{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 .xj-panel.active{display:flex}.xj-panel-card{background:#111827;border:1px solid #00bfff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:85vh;overflow:auto}
@@ -1942,7 +1944,8 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 
 <!-- ================= PRODUCTS ================= -->
 <section id="products" class="products">
-<h2 class="section-title">Featured Products</h2>
+<h2 id="productsSectionTitle" class="section-title">Featured Products</h2>
+<div class="catalog-view-controls"><button type="button" id="catalogViewToggle" onclick="xjToggleCatalogView()" aria-pressed="false">View All Products</button></div>
 <div class="catalog-tools" aria-label="Product filters">
   <label>Category <select id="categoryFilter"><option value="">All categories</option><option value="playstation-consoles">PlayStation</option><option value="nintendo-consoles">Nintendo</option><option value="controllers">Controllers</option><option value="accessories">Accessories</option><option value="games">Games</option></select></label>
   <label>Availability <select id="stockFilter"><option value="">All stock</option><option value="in">In stock</option><option value="out">Out of stock</option></select></label>
@@ -2232,7 +2235,18 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       <div id="cartBalanceRow" style="display:none"><span>XJ Games Balance</span><span id="cartBalanceApplied">-0 GMD</span></div>
       <div class="cart-final-total"><span>Final Amount</span><span id="cartTotalPrice">0 GMD</span></div>
     </div>
-    <button onclick="checkoutCart()" class="checkout-btn">Checkout Order</button>
+    <button type="button" onclick="checkoutCart()" class="checkout-btn">Checkout Order</button>
+  </div>
+</div>
+
+<div id="promoItemModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="promoItemTitle" onclick="if(event.target===this)xjClosePromoItemPicker()">
+  <div class="modal-card" style="text-align:left;max-width:520px">
+    <button type="button" onclick="xjClosePromoItemPicker()" aria-label="Close discount selection" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
+    <h3 id="promoItemTitle" style="color:#00bfff;font-family:Orbitron;margin:0 30px 8px 0;font-size:19px">Choose one item</h3>
+    <p id="promoItemPrompt" style="color:#bbb;font-size:13px"></p>
+    <div id="promoItemChoices" class="promo-item-choices"></div>
+    <p id="promoItemError" role="alert" style="color:#ff8a94;font-size:12px;min-height:16px"></p>
+    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjApplyPromoItemChoice()">Apply discount to selected item</button>
   </div>
 </div>
 
@@ -2419,7 +2433,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
         <select id="promoDiscountType" onchange="xjSetPromoDiscountType()"><option value="percent">Percentage</option><option value="fixed">Fixed GMD</option></select>
         <input id="promoPercent" class="promo-percent-field" type="number" min="1" max="90" placeholder="Percent">
         <input id="promoAmount" class="promo-amount-field" type="number" min="1" placeholder="GMD off" style="display:none">
-        <input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Create discount code</button></div>
+        <input id="promoStartsAt" type="datetime-local" title="Start date (optional)"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Create discount code</button></div>
       <div id="adminPromoList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Discount codes will appear here.</div>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
@@ -3259,100 +3273,124 @@ window.addEventListener('resize', xjUpdateHeaderLayout);
 document.addEventListener('DOMContentLoaded', xjUpdateHeaderLayout);
 xjUpdateHeaderLayout();
 
+function xjCheckoutItemDetails(item) {
+  if (item.type === 'ps4') {
+    return [item.consoleType, (item.psControllers || 1) + ' Controller', item.games ? 'Games: ' + item.games : '', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
+  }
+  if (item.type === 'switch') {
+    return [item.consoleType, 'Nintendo Controller: ' + item.switchController, 'Dock: ' + item.switchDock, 'Joy-Con Grip: ' + item.switchGrip, item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
+  }
+  return ['Standard Edition', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
+}
+
+function xjWhatsAppCheckoutUrl(message) {
+  var number = (typeof XJ_WHATSAPP_NOTIFY_NUMBER !== 'undefined' && XJ_WHATSAPP_NOTIFY_NUMBER) ? XJ_WHATSAPP_NOTIFY_NUMBER : '2202164491';
+  return 'https://wa.me/' + number + '?text=' + encodeURIComponent(message);
+}
+
+function xjOpenWhatsAppCheckout(message) {
+  var url = xjWhatsAppCheckoutUrl(message);
+  var opened = window.open(url, '_blank');
+  if (!opened) {
+    window.location.href = url;
+  }
+  return opened;
+}
+
+function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
+  var customerName = customer && customer.name ? customer.name : 'Customer';
+  var lines = [
+    'Hello XJ Games, I want to place an order:',
+    '',
+    'Customer: ' + customerName,
+    ''
+  ];
+  var subtotal = 0;
+  cart.forEach(function(item, index) {
+    var quantity = item.quantity || 1;
+    var unitPrice = Number(item.finalPrice) || 0;
+    var lineTotal = unitPrice * quantity;
+    subtotal += lineTotal;
+    var details = xjCheckoutItemDetails(item);
+    lines.push((index + 1) + '. ' + item.name + ' (Quantity: ' + quantity + ') - ' + lineTotal.toLocaleString() + ' GMD');
+    if (details) lines.push('   ' + details);
+  });
+  var discount = promo ? Math.min(subtotal, Number(promo.discountAmount) || Math.round(subtotal * Number(promo.percent || 0) / 100)) : 0;
+  var availableBalance = (window.xjIsAuthenticated && xjIsAuthenticated()) ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
+  var balanceUsed = useBalance ? Math.min(Math.max(0, subtotal - discount), availableBalance) : 0;
+  var finalTotal = Math.max(0, subtotal - discount - balanceUsed);
+  if (promo) {
+    lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + discount.toLocaleString() + ' GMD');
+  }
+  if (balanceUsed) {
+    lines.push('XJ Games Balance: -' + balanceUsed.toLocaleString() + ' GMD');
+    lines.push('Remaining XJ Games Balance: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD');
+  }
+  lines.push('', 'Final total: ' + finalTotal.toLocaleString() + ' GMD');
+  return lines.join('\n');
+}
+
 async function checkoutCart() {
   if (xjCheckoutInProgress) return;
   if (cart.length === 0) {
     showToast('Empty Cart', 'Add items to your cart before checking out.', 'error');
     return;
   }
-  // Block checkout if any cart item is now out of stock
-  for (let i = 0; i < cart.length; i++) {
-    const item = cart[i];
-    const pid = item.productId || xjGetProductIdByName(item.name);
+  for (var i = 0; i < cart.length; i++) {
+    var item = cart[i];
+    var pid = item.productId || xjGetProductIdByName(item.name);
     if (pid && !xjIsProductInStock(pid)) {
       showToast('Out of Stock', item.name + ' is no longer available. Please remove it from your cart.', 'error');
       return;
     }
   }
-  if (!window.xjDb || !window.firebase || !firebase.functions) {
-    showToast('Checkout unavailable', 'Firebase checkout is not available. Please try again shortly.', 'error');
-    return;
-  }
 
-  const customer = xjGetCurrentUserDisplay();
-  const useBalance = !!document.getElementById('useXjBalance').checked;
+  var customer = xjGetCurrentUserDisplay();
+  var useBalanceEl = document.getElementById('useXjBalance');
+  var useBalance = !!(useBalanceEl && useBalanceEl.checked);
   if (useBalance && !xjIsAuthenticated()) {
     showToast('Sign in required', 'Please sign in to use your XJ Games balance.', 'error');
     return;
   }
-  const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-  const checkoutItems = cart.map(function(item) {
-    const details = item.type === 'ps4'
-      ? [item.consoleType, (item.psControllers || 1) + ' Controller', item.games ? 'Games: ' + item.games : '', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ')
-      : item.type === 'switch'
-        ? [item.consoleType, 'Nintendo Controller: ' + item.switchController, 'Dock: ' + item.switchDock, 'Joy-Con Grip: ' + item.switchGrip, item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ')
-        : ['Standard Edition', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
+  var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  var checkoutItems = cart.map(function(cartItem) {
     return {
-      productId: item.productId || xjGetProductIdByName(item.name) || item.name,
-      name: item.name,
-      quantity: item.quantity || 1,
+      productId: cartItem.productId || xjGetProductIdByName(cartItem.name) || cartItem.name,
+      name: cartItem.name,
+      quantity: cartItem.quantity || 1,
       options: {
-        consoleType: item.consoleType || "Console Only",
-        psControllers: item.psControllers || 1,
-        games: item.games || "",
-        switchController: item.switchController || "No",
-        switchDock: item.switchDock || "No",
-        switchGrip: item.switchGrip || "No",
-        delivery: item.delivery || "No",
-        address: item.address || ""
+        consoleType: cartItem.consoleType || "Console Only",
+        psControllers: cartItem.psControllers || 1,
+        games: cartItem.games || "",
+        switchController: cartItem.switchController || "No",
+        switchDock: cartItem.switchDock || "No",
+        switchGrip: cartItem.switchGrip || "No",
+        delivery: cartItem.delivery || "No",
+        address: cartItem.address || ""
       },
-      details: details
+      details: xjCheckoutItemDetails(cartItem)
     };
   });
 
   xjCheckoutInProgress = true;
+  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer, promo, useBalance));
+  showToast('Checkout ready', 'Your order is ready to send on WhatsApp.');
+  if (promo && window.xjRemovePromo) window.xjRemovePromo();
+  if (useBalanceEl) useBalanceEl.checked = false;
+  cart = [];
+  saveCart();
+
   try {
-    const result = await firebase.functions().httpsCallable('createOrder')({
-      customerName: customer ? customer.name : '',
-      items: checkoutItems,
-      promoCode: promo ? promo.code : '',
-      useBalance: useBalance,
-    });
-    const order = result.data;
-    const lines = [
-      'Hello XJ Games, I want to place an order:',
-      '',
-      'Order ID: ' + order.id,
-      'Customer: ' + (customer ? customer.name : 'Customer'),
-      ''
-    ];
-    order.items.forEach(function(item, index) {
-      lines.push((index + 1) + '. ' + item.name + ' (Quantity: ' + item.quantity + ') - ' + item.price.toLocaleString() + ' GMD');
-      if (checkoutItems[index] && checkoutItems[index].details) lines.push('   ' + checkoutItems[index].details);
-    });
-    if (promo) {
-      lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + order.discount.toLocaleString() + ' GMD');
+    if (window.xjDb && window.firebase && firebase.functions) {
+      await firebase.functions().httpsCallable('createOrder')({
+        customerName: customer ? customer.name : '',
+        items: checkoutItems,
+        promoCode: promo ? promo.code : '',
+        useBalance: useBalance,
+      });
     }
-    if (order.balanceUsed) lines.push('XJ Games Balance: -' + order.balanceUsed.toLocaleString() + ' GMD');
-    if (order.balanceUsed) lines.push('Remaining XJ Games Balance: ' + Number(order.remainingBalance).toLocaleString() + ' GMD');
-    if (order.pointsEarned) lines.push('Points earned: ' + order.pointsEarned);
-    lines.push('', 'Final total: ' + order.total.toLocaleString() + ' GMD');
-    window.open('https://wa.me/2202164491?text=' + encodeURIComponent(lines.join('\n')), '_blank');
-    showToast('Order created', 'Order ' + order.id + ' is ready to send on WhatsApp.');
-    if (promo && window.xjRemovePromo) window.xjRemovePromo();
-    document.getElementById('useXjBalance').checked = false;
-    cart = [];
-    saveCart();
   } catch (error) {
     console.error('Checkout order creation failed:', error);
-    if (promo && error && ['functions/not-found', 'functions/failed-precondition'].includes(error.code) && /promo|code/i.test(error.message || '')) {
-      if (window.xjRemovePromo) window.xjRemovePromo();
-      const promoMessage = document.getElementById('cartPromoMessage');
-      if (promoMessage) promoMessage.textContent = 'Invalid promo code. Please try again.';
-      showToast('Promo code', 'Invalid promo code. Please try again.', 'error');
-      return;
-    }
-    showToast('Checkout failed', error.message || 'Could not create your order. Please try again.', 'error');
   } finally {
     xjCheckoutInProgress = false;
   }

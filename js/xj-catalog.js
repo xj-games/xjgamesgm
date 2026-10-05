@@ -284,6 +284,48 @@ function xjGetAllProductIds() {
   });
 }
 
+var XJ_HOMEPAGE_PRODUCT_IDS = {
+  "ps4-slim": true,
+  "ps4-fat": true,
+  "ps4-pro": true,
+  "ps2": true,
+  "ps3": true,
+  "nintendo-switch": true,
+  "nintendo-switch-lite": true,
+  "ps4-controller": true,
+  "ps5-controller": true
+};
+
+function xjIsHomepageProduct(product) {
+  if (!product || xjIsProductHidden(product.id)) return false;
+  if (XJ_HOMEPAGE_PRODUCT_IDS[product.id]) return true;
+
+  var name = String(product.name || "").toLowerCase();
+  var haystack = product.id + " " + name;
+  var categories = product.categories || [];
+  var displayCategory = typeof xjGetProductDisplayCategory === "function"
+    ? xjGetProductDisplayCategory(product)
+    : product.displayCategory;
+
+  if (displayCategory === "nintendo-consoles") return true;
+
+  if (displayCategory === "controllers") {
+    return categories.indexOf("ps4") !== -1
+      || categories.indexOf("ps5") !== -1
+      || categories.indexOf("playstation") !== -1
+      || /ps[245]|playstation|dualshock|dualsense/.test(name);
+  }
+
+  if (displayCategory === "playstation-consoles") {
+    if (/(^|[^a-z])ps5([^a-z]|$)|playstation 5/.test(haystack) && !/controller/.test(name)) {
+      return false;
+    }
+    return /ps4 slim|ps4 fat|ps4 pro|playstation 4 slim|playstation 4 fat|playstation 4 pro|playstation 2|playstation 3|(^|[^a-z])ps2([^a-z]|$)|(^|[^a-z])ps3([^a-z]|$)/.test(haystack);
+  }
+
+  return false;
+}
+
 function xjSlugifyProductName(name) {
   return String(name || "")
     .toLowerCase()

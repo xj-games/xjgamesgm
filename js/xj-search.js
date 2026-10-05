@@ -184,24 +184,105 @@ function xjSearchProducts(query) {
   });
 }
 
-function xjShowAllProductCards() {
+var xjCatalogView = "featured";
+
+function xjIsShowingAllProducts() {
+  var input = document.getElementById("searchInput");
+  if (input && xjNormalizeSearchQuery(input.value)) return true;
+  return xjCatalogView === "all";
+}
+
+function xjSyncCatalogViewUi() {
+  var title = document.getElementById("productsSectionTitle");
+  var button = document.getElementById("catalogViewToggle");
+  var showingAll = xjCatalogView === "all";
+  if (title) title.textContent = showingAll ? "All Products" : "Featured Products";
+  if (button) {
+    button.textContent = showingAll ? "Show Featured Products" : "View All Products";
+    button.setAttribute("aria-pressed", showingAll ? "true" : "false");
+  }
+}
+
+function xjSetCatalogView(view, options) {
+  xjCatalogView = view === "all" ? "all" : "featured";
+  xjSyncCatalogViewUi();
+  if (!(options && options.skipHash)) {
+    var nextHash = xjCatalogView === "all" ? "#all-products" : "#products";
+    if (location.hash !== nextHash) {
+      if (history.replaceState) history.replaceState(null, "", nextHash);
+      else location.hash = nextHash;
+    }
+  }
+  xjApplyStorefrontVisibility();
+}
+
+function xjToggleCatalogView() {
+  xjSetCatalogView(xjCatalogView === "all" ? "featured" : "all");
+  var section = document.getElementById("products");
+  if (section && xjCatalogView === "all") {
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function xjApplyStorefrontVisibility() {
   var grid = document.getElementById("productGrid");
   if (!grid) return;
-  var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll(".card[data-product-id]"));
   xjGetPrioritySortedProductIds(cards.map(function(card) {
     return card.getAttribute("data-product-id");
   })).forEach(function(productId) {
-    var card = grid.querySelector('.card[data-product-id="' + productId + '"]');
-    if (card) grid.appendChild(card);
+    var ordered = grid.querySelector('.card[data-product-id="' + productId + '"]');
+    if (ordered) grid.appendChild(ordered);
   });
+
+  var input = document.getElementById("searchInput");
+  var query = input ? input.value : "";
+  var searching = !!xjNormalizeSearchQuery(query);
+  var matchingIds = searching ? xjSearchProducts(query) : [];
+  var matches = {};
+  matchingIds.forEach(function(id) { matches[id] = true; });
+
+  var categoryFilter = document.getElementById("categoryFilter");
+  var stockFilter = document.getElementById("stockFilter");
+  var category = categoryFilter ? categoryFilter.value : "";
+  var stock = stockFilter ? stockFilter.value : "";
+  var visibleCount = 0;
+
   cards.forEach(function(card) {
     var productId = card.getAttribute("data-product-id");
-    card.style.display = productId && xjIsProductHidden(productId) ? "none" : "block";
+    var product = typeof xjGetProductById === "function" ? xjGetProductById(productId) : null;
+    var show = !!(productId && !xjIsProductHidden(productId));
+
+    if (show && searching) {
+      show = !!matches[productId];
+    } else if (show && xjCatalogView !== "all") {
+      show = typeof xjIsHomepageProduct === "function" ? xjIsHomepageProduct(product) : true;
+    }
+
+    if (show && category) {
+      show = !!(product && (product.displayCategory === category || (product.categories || []).indexOf(category) >= 0));
+    }
+    if (show && stock === "in" && product && typeof xjGetProductStock === "function") {
+      show = !!xjGetProductStock(product.id);
+    }
+    if (show && stock === "out" && product && typeof xjGetProductStock === "function") {
+      show = !xjGetProductStock(product.id);
+    }
+
+    card.style.display = show ? "block" : "none";
+    if (show) visibleCount += 1;
   });
-  const noResults = document.getElementById("searchNoResults");
+
+  var noResults = document.getElementById("searchNoResults");
   if (noResults) {
-    noResults.style.display = "none";
+    noResults.style.display = visibleCount ? "none" : "block";
   }
+  xjSyncCatalogViewUi();
+}
+
+function xjShowAllProductCards() {
+  xjApplyStorefrontVisibility();
 }
 
 function xjClearSearch() {
@@ -220,18 +301,7 @@ function xjClearSearch() {
 function filterProducts() {
   const input = document.getElementById("searchInput");
   const query = input ? input.value : "";
-  const matchingIds = xjSearchProducts(query);
-  const matches = {};
-  matchingIds.forEach(function(id) { matches[id] = true; });
-  xjShowAllProductCards();
-  if (xjNormalizeSearchQuery(query)) {
-    document.querySelectorAll("#productGrid .card").forEach(function(card) {
-      var productId = card.getAttribute("data-product-id");
-      card.style.display = matches[productId] ? "block" : "none";
-    });
-    const noResults = document.getElementById("searchNoResults");
-    if (noResults) noResults.style.display = matchingIds.length ? "none" : "block";
-  }
+  xjApplyStorefrontVisibility();
   xjUpdateSearchSuggestions(query);
   const clearBtn = document.getElementById("searchClearBtn");
   if (clearBtn) {
@@ -317,6 +387,10 @@ function xjSelectSearchSuggestion(productId) {
   if (input && product) {
     input.value = product.name;
   }
+  if (product && typeof xjIsHomepageProduct === "function" && !xjIsHomepageProduct(product)) {
+    xjCatalogView = "all";
+    xjSyncCatalogViewUi();
+  }
 
   xjShowAllProductCards();
   const card = document.querySelector('#productGrid .card[data-product-id="' + productId + '"]');
@@ -332,6 +406,14 @@ function xjSelectSearchSuggestion(productId) {
 function xjInitSearchSuggestions() {
   const input = document.getElementById("searchInput");
   const panel = document.getElementById("searchSuggestions");
+  if (location.hash === "#all-products") {
+    xjCatalogView = "all";
+  }
+  xjSyncCatalogViewUi();
+  window.addEventListener("hashchange", function() {
+    if (location.hash === "#all-products") xjSetCatalogView("all", { skipHash: true });
+    else if (location.hash === "#products") xjSetCatalogView("featured", { skipHash: true });
+  });
   if (!input || !panel) return;
 
   if (panel.parentElement !== document.body) {

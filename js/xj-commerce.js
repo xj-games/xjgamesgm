@@ -79,16 +79,15 @@
     if (window.xjRefreshProductPrices) window.xjRefreshProductPrices();
   }
   window.xjFilterCategory = function () {
-    var category = document.getElementById("categoryFilter").value, stock = document.getElementById("stockFilter").value;
-    document.querySelectorAll("#productGrid .card[data-product-id]").forEach(function (card) {
-      var p = product(card.getAttribute("data-product-id")), ok = !category || (p && (p.displayCategory === category || (p.categories || []).indexOf(category) >= 0));
-      if (stock === "in" && p) ok = ok && xjGetProductStock(p.id); if (stock === "out" && p) ok = ok && !xjGetProductStock(p.id); card.style.display = ok ? "" : "none";
-    });
+    if (typeof xjApplyStorefrontVisibility === "function") xjApplyStorefrontVisibility();
   };
   function renderRecommendations() {
     var box = document.getElementById("recommendationItems"); if (!box) return;
     var ids = xjGetAllProductIds().filter(function (id) {
-      return xjGetProductStock(id) && !(window.xjIsProductHidden && xjIsProductHidden(id));
+      var item = product(id);
+      return xjGetProductStock(id)
+        && !(window.xjIsProductHidden && xjIsProductHidden(id))
+        && (!window.xjIsHomepageProduct || xjIsHomepageProduct(item));
     }).slice(0, 4);
     box.classList.add("product-grid");
     var cards = ids.map(function (id) {
