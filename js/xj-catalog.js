@@ -10,7 +10,6 @@ const XJ_DEFAULT_CATEGORY_ORDER = [
   "games"
 ];
 var xjCategoryOrder = XJ_DEFAULT_CATEGORY_ORDER.slice();
-var xjFeaturedProductIds = [];
 
 const XJ_PRODUCT_CATALOG = {
   "ps4-slim": {
@@ -61,7 +60,7 @@ const XJ_PRODUCT_CATALOG = {
     displayCategory: "playstation-consoles",
     categories: ["ps5", "consoles", "playstation"],
     price: 35000,
-    inStock: false,
+    inStock: true,
     type: "ps4",
     extraControllerPrice: 4000,
     hasModal: true,
@@ -116,7 +115,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "nintendo-consoles",
     categories: ["nintendo", "consoles", "switch"],
-    price: 8500,
+    price: 8000,
     inStock: false,
     type: "switch",
     hasModal: true,
@@ -169,7 +168,7 @@ const XJ_PRODUCT_CATALOG = {
     displayCategory: "controllers",
     categories: ["controllers", "ps5", "accessories"],
     price: 4000,
-    inStock: false,
+    inStock: true,
     type: "standalone",
     hasModal: false,
     image: "ps5-controller.png",
@@ -279,15 +278,52 @@ function xjGetPrioritySortedProductIds(ids) {
   });
 }
 
-function xjGetAllProductIds(includeHidden) {
+function xjGetAllProductIds() {
   return Object.keys(XJ_PRODUCT_CATALOG).filter(function(id) {
-    return includeHidden === true || !xjIsProductHidden(id);
+    return !xjIsProductHidden(id);
   });
 }
 
+var XJ_HOMEPAGE_PRODUCT_IDS = {
+  "ps4-slim": true,
+  "ps4-fat": true,
+  "ps4-pro": true,
+  "ps2": true,
+  "ps3": true,
+  "nintendo-switch": true,
+  "nintendo-switch-lite": true,
+  "ps4-controller": true,
+  "ps5-controller": true
+};
+
 function xjIsHomepageProduct(product) {
   if (!product || xjIsProductHidden(product.id)) return false;
-  return xjFeaturedProductIds.indexOf(product.id) !== -1;
+  if (XJ_HOMEPAGE_PRODUCT_IDS[product.id]) return true;
+
+  var name = String(product.name || "").toLowerCase();
+  var haystack = product.id + " " + name;
+  var categories = product.categories || [];
+  var displayCategory = typeof xjGetProductDisplayCategory === "function"
+    ? xjGetProductDisplayCategory(product)
+    : product.displayCategory;
+
+  if (displayCategory === "nintendo-consoles") return true;
+
+  if (displayCategory === "controllers") {
+    return categories.indexOf("ps4") !== -1
+      || categories.indexOf("ps5") !== -1
+      || categories.indexOf("playstation") !== -1
+      || /ps[245]|playstation|dualshock|dualsense/.test(name);
+  }
+
+  if (displayCategory === "playstation-consoles") {
+    if (/(^|[^a-z])ps5([^a-z]|$)|playstation 5/.test(haystack) && !/controller/.test(name)) {
+      return false;
+    }
+    return /ps4 slim|ps4 fat|ps4 pro|playstation 4 slim|playstation 4 fat|playstation 4 pro|playstation 2|playstation 3|(^|[^a-z])ps2([^a-z]|$)|(^|[^a-z])ps3([^a-z]|$)/.test(haystack);
+  }
+
+  return false;
 }
 
 function xjSlugifyProductName(name) {
@@ -298,31 +334,10 @@ function xjSlugifyProductName(name) {
     .slice(0, 48) || "product";
 }
 
-function xjSanitizeProductMediaReference(value, extensionPattern, allowHttp) {
-  var reference = String(value || "").trim();
-  if (/^https?:\/\//i.test(reference)) {
-    try {
-      var url = new URL(reference);
-      var allowedProtocol = url.protocol === "https:" || (allowHttp && url.protocol === "http:");
-      return allowedProtocol && url.hostname && !url.username && !url.password ? reference : "";
-    } catch (error) {
-      return "";
-    }
-  }
-
-  var parts = reference.split("/");
-  if (!reference || parts.some(function(part) {
-    return !/^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(part);
-  }) || !extensionPattern.test(reference)) {
+function xjSanitizeImageFileName(name) {
+  var base = String(name || "").trim().replace(/\\/g, "/").split("/").pop();
+  if (!base || !/^[A-Za-z0-9._-]+\.(png|jpe?g|webp|gif|svg)$/i.test(base)) {
     return "";
   }
-  return reference;
-}
-
-function xjSanitizeImageReference(value) {
-  return xjSanitizeProductMediaReference(value, /\.(png|jpe?g|webp|gif|svg)$/i, true);
-}
-
-function xjSanitizeVideoReference(value) {
-  return xjSanitizeProductMediaReference(value, /\.(mp4|webm)$/i, false);
+  return base;
 }

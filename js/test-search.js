@@ -3,12 +3,19 @@
  */
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const catalogSrc = fs.readFileSync(path.join(__dirname, 'xj-catalog.js'), 'utf8');
 const searchSrc = fs.readFileSync(path.join(__dirname, 'xj-search.js'), 'utf8');
 
-eval(catalogSrc);
-eval(searchSrc.replace(/document\./g, '({}).'));
+const searchContext = vm.createContext({
+  console: console,
+  document: {},
+  window: {},
+  location: { hash: '' },
+  history: {}
+});
+vm.runInContext(catalogSrc + '\n' + searchSrc, searchContext);
 
 const TESTS = [
   { query: 'PS4', expect: ['ps4-slim', 'ps4-fat'] },
@@ -32,7 +39,7 @@ let passed = 0;
 let failed = 0;
 
 TESTS.forEach(function(test) {
-  const results = xjSearchProducts(test.query);
+  const results = searchContext.xjSearchProducts(test.query);
   const topResults = test.expect.filter(function(id) {
     return results.indexOf(id) !== -1;
   });

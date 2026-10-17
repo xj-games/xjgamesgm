@@ -182,19 +182,6 @@ width:140px;
 font-size:12px;
 }
 
-.search.xj-embedded-search{
-width:calc(100% - 24px);
-max-width:560px;
-margin:14px auto;
-}
-
-.search.xj-embedded-search input{
-flex:1;
-width:auto;
-min-width:0;
-font-size:14px;
-}
-
 .search-clear-btn{
 background:none;
 border:none;
@@ -659,12 +646,6 @@ font-size:13px;
 .admin-add-form > div{align-items:center}
 .admin-add-form > div input,.admin-add-form > div select{flex:1;min-width:0;width:auto}
 .admin-add-form > div button{flex:0 0 auto;white-space:nowrap}
-.admin-code-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:8px 0}
-.admin-code-field{min-width:0}
-.admin-code-field label{display:block;font-size:12px;color:#ddd;margin:0 0 5px}
-.admin-code-field input,.admin-code-field select{width:100%;min-height:40px}
-.admin-code-field small{display:block;font-size:10px;line-height:1.35;color:#888;margin-top:4px}
-.admin-code-submit{grid-column:1/-1;justify-self:start}
 .admin-help{ font-size:11px; color:#888; margin:6px 0 0; line-height:1.4; }
 details.admin-add-form{background:rgba(7,11,22,.72);border:1px solid rgba(0,191,255,.12);border-radius:14px;padding:12px 14px}
 details.admin-add-form summary{cursor:pointer;color:#00bfff;font-weight:700;padding:2px 0 6px}
@@ -812,8 +793,6 @@ border: 2px solid rgba(255,255,255,0.2);
 color: white;
 background: rgba(255,255,255,0.03);
 }
-.hero-all-products{border:1px solid #79eaff;background:linear-gradient(110deg,#00bfff,#087da4);color:#06111a;box-shadow:0 8px 24px rgba(0,191,255,.24)}
-.hero-all-products:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,191,255,.34)}
 
 .social-hero-btn:hover {
 border-color: #ff3040;
@@ -1459,13 +1438,6 @@ overflow-y: auto;
 transform: scale(1) translateY(0);
 }
 
-.website-guide-card{max-width:600px;text-align:left;padding:26px}
-.website-guide-list{padding-left:20px;margin:0;color:#ddd;font-size:12px;line-height:1.55}
-.website-guide-list li{margin:0 0 9px}
-.website-guide-list strong{color:#fff}
-.website-guide-dismiss{display:flex;align-items:center;gap:8px;color:#bbb;font-size:12px;margin:14px 0}
-.website-guide-dismiss input{width:16px;height:16px;accent-color:#00bfff}
-
 /* CUSTOMIZATION PILL BUTTONS */
 .option-pill {
 flex: 1;
@@ -1492,16 +1464,14 @@ box-shadow: 0 0 10px rgba(0, 170, 255, 0.4);
 /* TOAST NOTIFICATIONS */
 #toastContainer {
 position: fixed;
-top: max(12px, env(safe-area-inset-top));
+top: 100px;
 right: 25px;
-z-index: 100002;
+z-index: 10001;
 display: flex;
 flex-direction: column;
 gap: 15px;
 max-width: 380px;
 width: 90%;
-max-height: calc(100vh - 24px);
-overflow: visible;
 pointer-events: none;
 }
 
@@ -1551,10 +1521,6 @@ font-family: Orbitron;
 
 .toast-close {
 cursor: pointer;
-background: transparent;
-border: 0;
-color: inherit;
-padding: 0 3px;
 font-size: 18px;
 opacity: 0.7;
 transition: 0.2s;
@@ -1824,64 +1790,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 .toast.toast-info{border-left-color:var(--xj-cyan)}
 .xj-account-dropdown{background:#111b2a;border-color:var(--xj-border-strong);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.45)}
 .xj-account-dropdown button:hover{color:var(--xj-cyan)}
-.catalog-view-controls,.catalog-tools{display:flex;flex-wrap:wrap;align-items:end;justify-content:center;gap:10px;margin:14px auto;max-width:1050px}
-.catalog-view-controls a,.catalog-view-controls button,.catalog-tools button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 14px;border:1px solid rgba(0,191,255,.35);border-radius:9px;background:#101a29;color:#eaf1f8;text-decoration:none;font:inherit;cursor:pointer}
-.catalog-view-controls #catalogViewToggle{flex:1 1 100%;min-height:58px;max-width:1050px;padding:14px 20px;border:1px solid #66e4ff;border-radius:12px;background:linear-gradient(110deg,#00bfff,#087da4);box-shadow:0 10px 30px rgba(0,191,255,.24);color:#041018;font-size:20px;font-weight:800;letter-spacing:.02em;text-align:center}
-.catalog-view-controls #catalogViewToggle:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,191,255,.34)}
-.catalog-view-controls button{background:#101a29;color:#c4cfdd}
-.social-spotlight{display:flex;align-items:center;justify-content:space-between;gap:22px;width:min(1100px,90%);margin:0 auto 22px;padding:22px 26px;border:1px solid rgba(0,191,255,.3);border-radius:16px;background:radial-gradient(ellipse at right,rgba(0,191,255,.16),transparent 55%),linear-gradient(135deg,#111b2a,#0b1320);box-shadow:0 16px 38px rgba(0,0,0,.22)}
-.social-spotlight-copy{display:flex;align-items:center;gap:16px}
-.social-spotlight-actions{display:flex;flex-wrap:wrap;gap:10px}
-.social-spotlight-icon{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:14px;background:#070b16;border:1px solid rgba(0,242,254,.55);color:#fff;font-size:25px}
-.social-spotlight h2{margin:0 0 5px;color:#f2f7fc;font-size:20px}
-.social-spotlight p{margin:0;color:#b8c3d2;line-height:1.5}
-.social-spotlight a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border:1px solid #00f2fe;border-radius:10px;background:#070b16;color:#fff;font-weight:800;text-decoration:none;white-space:nowrap;box-shadow:0 0 22px rgba(0,242,254,.16)}
-.social-spotlight a:hover{border-color:#fe2c55;box-shadow:0 0 26px rgba(254,44,85,.25)}
-.social-spotlight .social-instagram{border-color:#e6683c;background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);box-shadow:0 0 22px rgba(220,39,67,.2)}
-.social-spotlight .social-instagram:hover{border-color:#ffb56c;box-shadow:0 0 26px rgba(240,148,51,.34)}
-.admin-price-editor{display:flex;flex-wrap:wrap;align-items:end;gap:8px;margin:8px 0}
-.admin-price-editor label{flex:1 1 150px}
-.admin-price-editor input{width:100%;padding:8px;border-radius:7px;background:#0b1320;color:#fff;border:1px solid var(--xj-border)}
-.admin-price-editor button{min-height:38px;padding:8px 12px}
-.social-hero-btn{border-color:rgba(0,242,254,.55);background:rgba(0,191,255,.1);color:#eafcff}
-.how-order-hero-btn{border:1px solid rgba(255,255,255,.28);color:#eaf1f8;background:rgba(255,255,255,.04)}
-.catalog-tools label{display:flex;flex-direction:column;gap:5px;color:#c4cfdd;font-size:12px;text-align:left}
-.catalog-tools select,.catalog-tools input,.checkout-summary-card select{min-height:40px;min-width:145px;padding:8px 10px;border:1px solid var(--xj-border-strong);border-radius:8px;background:#0b1320;color:#fff}
-.catalog-tools input{width:150px}
-.product-condition{display:inline-block;margin:6px 0;padding:4px 8px;border-radius:99px;background:rgba(0,191,255,.12);color:#a8eaff;font-size:12px}
-.policy-section{max-width:1100px;margin:auto;line-height:1.7}
-.policy-list{max-width:760px;margin:0 auto;padding-left:24px;color:#c4cfdd}
-.delivery-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin:18px 0}
-.delivery-zones div{display:flex;flex-direction:column;gap:6px;padding:14px;background:#0d1522;border:1px solid var(--xj-border);border-radius:10px;color:#c4cfdd}
-.delivery-zones strong{color:var(--xj-cyan)}
-#faq details{max-width:850px;margin:10px auto;padding:14px 16px;background:#0d1522;border:1px solid var(--xj-border);border-radius:10px;color:#c4cfdd}
-#faq summary{color:#eaf1f8;cursor:pointer;font-weight:600}
-.checkout-summary-card{width:min(620px,100%);max-height:88vh;overflow:auto;text-align:left}
-.checkout-summary-card label{display:block;margin:12px 0 5px;color:#c4cfdd}
-.checkout-summary-card select{width:100%}
-.checkout-order-summary{margin:16px 0;padding:14px;background:#0b1320;border-radius:10px;color:#d5dfeb}
-.checkout-order-summary .checkout-line{display:flex;justify-content:space-between;gap:12px;margin:7px 0}
-.checkout-order-summary .checkout-line span:last-child{text-align:right}
-.checkout-send-reminder{margin:12px 0 16px;color:#b7c4d5;font-size:13px}
-.checkout-summary-card .checkout-btn{width:100%;border:0}
-.modal-close{position:absolute;top:10px;right:14px;border:0;background:none;color:#aaa;font-size:28px;cursor:pointer}
-.admin-featured-selection{margin:14px 0;padding:14px;border:1px solid var(--xj-border);border-radius:10px}
-.admin-featured-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:10px 0}
-.admin-featured-list label{display:flex;gap:7px;align-items:center;color:#d5dfeb}
-.admin-product-description input,.admin-product-description select{display:block;width:100%;margin-top:5px;padding:8px;border-radius:7px;background:#0b1320;color:white;border:1px solid var(--xj-border)}
-html,body{max-width:100%;overflow-x:hidden}
-img,video{max-width:100%}
-.wishlist-row button,.related-products button{margin:4px;padding:7px 10px;border:1px solid var(--xj-border-strong);border-radius:7px;background:#111b2a;color:#eaf1f8}
-.wishlist-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--xj-border)}
-.wishlist-row span{flex:1 1 100%}
-.product-detail-media{display:flex;gap:10px;overflow-x:auto;padding:5px 0}
-.product-detail-media img,.product-detail-media video{flex:0 0 min(100%,320px);width:min(100%,320px);height:220px;object-fit:contain;background:#070b16;border-radius:9px}
-.related-products{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:18px}
-.related-products h4{flex-basis:100%}
-.product-availability{color:#a8eaff}
-.cart-unavailable,.admin-warning{padding:10px;border-radius:8px;background:rgba(255,80,80,.12);color:#ffaaaa}
-.footer-guides{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:16px}
-.footer-guides a{color:#9ce2bf}
 
 @media(max-width:700px){
   .brand-bar{padding:8px 12px;gap:7px;min-height:50px}
@@ -1930,17 +1838,6 @@ img,video{max-width:100%}
   .cart-header{padding:16px 18px}
   #cartItems{padding:14px}
   .cart-footer{padding:13px 15px calc(16px + env(safe-area-inset-bottom))}
-  .catalog-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
-  .catalog-tools label,.catalog-tools label select,.catalog-tools label input{width:100%;min-width:0}
-  .catalog-tools button{width:100%;padding:8px}
-  .catalog-view-controls>*{flex:1 1 42%}
-  .catalog-view-controls #catalogViewToggle{flex-basis:100%;font-size:17px}
-  .social-spotlight{align-items:stretch;flex-direction:column;padding:18px}
-  .social-spotlight-copy{align-items:flex-start}
-  .social-spotlight-actions{display:grid;grid-template-columns:1fr}
-  .social-spotlight a{width:100%}
-  .checkout-order-summary .checkout-line{align-items:flex-start}
-  .checkout-order-summary .checkout-line span:first-child{max-width:62%}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -1958,24 +1855,6 @@ img,video{max-width:100%}
 
 <div id="toastContainer"></div>
 
-<div id="websiteGuideModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="websiteGuideTitle" onclick="if(event.target===this)xjCloseWebsiteGuide()">
-  <div class="modal-card website-guide-card">
-    <h2 id="websiteGuideTitle" style="color:#00bfff;font-family:Orbitron;font-size:21px;margin:0 0 8px">Welcome to XJ Games</h2>
-    <p style="font-size:13px;color:#bbb;margin:0 0 14px">Here is a quick guide to shopping on the website.</p>
-    <ul class="website-guide-list">
-      <li><strong>Find products:</strong> Browse the categories or search by product name. Use “View All Products” to see the full catalog.</li>
-      <li><strong>Check a product:</strong> Open its description for details. Choose the options you want, then add it to your cart. Sign in if asked.</li>
-      <li><strong>Out of stock?</strong> Tap “Notify Me” to message XJ Games on WhatsApp about availability.</li>
-      <li><strong>Reduce Price:</strong> Open a console’s menu and use “Reduce price” to see the sharing progress and WhatsApp share option.</li>
-      <li><strong>Your cart:</strong> Change quantities with +/− or remove an item. Your total updates automatically.</li>
-      <li><strong>Place an order:</strong> Tap “Checkout Order” to open a prepared WhatsApp message. Check the products, options, delivery/pickup, and total, then tap Send.</li>
-      <li><strong>Your account:</strong> Sign in to manage your account. You can also leave a review, send a recommendation, or contact us from the website.</li>
-    </ul>
-    <label class="website-guide-dismiss"><input type="checkbox" id="websiteGuideDoNotShow"> Don’t show this guide again</label>
-    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjCloseWebsiteGuide()">Got it</button>
-  </div>
-</div>
-
 <nav>
   <div class="brand-bar">
     <a href="#" class="logo">
@@ -1983,7 +1862,13 @@ img,video{max-width:100%}
       XJ Games
     </a>
     <div id="authContainer" style="display:inline-block;"></div>
+    <button type="button" class="points-nav-btn" id="pointsNavButton" onclick="xjOpenPoints()" aria-label="View XJ Games balance">Balance: <span id="pointsNavBalance">0</span> GMD</button>
     <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">☰</button>
+  </div>
+  <div class="redeem-strip">
+    <strong>Have a promo code?</strong>
+    <input id="topPromoCode" type="text" maxlength="64" placeholder="XJ25OFF" aria-label="Promo code">
+    <button type="button" class="admin-action-btn" onclick="xjRedeemTopPromo()">Redeem</button>
   </div>
 
   <div class="scrollable-nav-container">
@@ -1996,16 +1881,13 @@ img,video{max-width:100%}
       <ul class="nav-links-list">
         <li><a href="#">Home</a></li>
         <li><a href="#products">Products</a></li>
-        <li><a href="all-products.html">View All Products</a></li>
-        <li><a href="#how-to-order">How to Order</a></li>
-        <li><a href="#delivery-information">Delivery</a></li>
-        <li><a href="#faq">FAQ</a></li>
         <li><a href="#about">About</a></li>
         <li><a href="#reviews">Reviews</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
 
       <button type="button" class="admin-toggle-btn" id="adminToggleBtn" onclick="openAdminPanel()" title="Manage Inventory">⚙ Admin</button>
+      <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('ordersPanel')">📦 Orders</button>
 
       <div class="cart" id="cartButton">
         🛒
@@ -2017,18 +1899,11 @@ img,video{max-width:100%}
 <div class="mobile-nav-menu" id="mobileNavMenu" aria-hidden="true">
   <a href="#" onclick="closeMobileMenu()">Home</a>
   <a href="#products" onclick="closeMobileMenu()">Products</a>
-  <a href="all-products.html" onclick="closeMobileMenu()">View All Products</a>
-  <a href="#how-to-order" onclick="closeMobileMenu()">How to Order</a>
-  <a href="#delivery-information" onclick="closeMobileMenu()">Delivery Information</a>
-  <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
   <a href="#about" onclick="closeMobileMenu()">About</a>
   <a href="#reviews" onclick="closeMobileMenu()">Reviews</a>
   <a href="#contact" onclick="closeMobileMenu()">Contact</a>
-  <a href="#" id="mobileAdminLink" style="display:none" onclick="closeMobileMenu(); openAdminPanel();">Admin</a>
-  <a href="#" id="mobileAccountLink" style="display:none" onclick="closeMobileMenu(); openAccountSettings();">Account settings</a>
-  <a href="#" id="mobileSignOutLink" style="display:none" onclick="closeMobileMenu(); xjConfirmSignOut();">Sign out</a>
-  <a href="#" id="mobileSignInLink" onclick="closeMobileMenu(); openAuthModal();">Sign in</a>
-  <a href="#" id="mobileCreateAccountLink" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
+  <a href="#" onclick="closeMobileMenu(); openAuthModal();">Account / Sign in</a>
+  <a href="#" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
 </div>
 
 <div id="searchSuggestions" class="search-suggestions" aria-hidden="true"></div>
@@ -2037,21 +1912,29 @@ img,video{max-width:100%}
 <div class="left">
 <h1>LEVEL UP <span>YOUR GAME</span></h1>
 <p>
-  PlayStation and Nintendo consoles with clear prices, delivery across The Gambia, and customer support during our listed business hours.<br><br>
+  Premium PlayStation and Nintendo consoles with fast delivery, affordable prices, trusted quality, and excellent customer support.<br><br>
   📍 <strong>Our location is at Turntable, Brusubi.</strong><br>
+  ⚙️ <strong>We do game installations—any game of your choice, we've got you covered!</strong>
 </p>
 <div class="buttons">
 <a href="#products" class="btn shop">SHOP NOW</a>
-<a href="all-products.html" class="btn hero-all-products">VIEW ALL PRODUCTS</a>
-<a href="#how-to-order" class="btn how-order-hero-btn">HOW TO ORDER · DELIVERY &amp; PICKUP</a>
-<a href="https://www.tiktok.com/@xj_games7?is_from_webapp=1&amp;sender_device=pc" target="_blank" rel="noopener noreferrer" class="btn social-hero-btn">FOLLOW XJ GAMES ON TIKTOK</a>
-<a href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer" class="btn social-hero-btn btn-instagram">FOLLOW XJ GAMES ON INSTAGRAM</a>
+<a href="#products" class="btn outline">VIEW DEALS</a>
+<a href="#footer-socials" class="btn social-hero-btn">📱 FOLLOW SOCIALS</a>
 <a href="#reviews" class="btn review-hero-btn">⭐ REVIEWS</a>
 </div>
 <div class="stats">
-<div><h2>PlayStation</h2><p>Console selection</p></div>
-<div><h2>Nintendo</h2><p>Console selection</p></div>
-<div><h2>WhatsApp</h2><p>Ordering &amp; support</p></div>
+<div>
+<h2>100+</h2>
+<p>Happy Customers</p>
+</div>
+<div>
+<h2>4.9★</h2>
+<p>Customer Rating</p>
+</div>
+<div>
+<h2>24/7</h2>
+<p>Support</p>
+</div>
 </div>
 </div>
 <div class="rightHero">
@@ -2059,30 +1942,13 @@ img,video{max-width:100%}
 </div>
 </section>
 
-<section class="social-spotlight" aria-label="Follow XJ Games on social media">
-  <div class="social-spotlight-copy">
-    <span class="social-spotlight-icon" aria-hidden="true">♪</span>
-    <div><h2>Stay connected with XJ Games</h2><p>Follow us on TikTok and Instagram for XJ Games updates in your feed.</p></div>
-  </div>
-  <div class="social-spotlight-actions">
-    <a href="https://www.tiktok.com/@xj_games7?is_from_webapp=1&amp;sender_device=pc" target="_blank" rel="noopener noreferrer">Follow on TikTok <span aria-hidden="true">↗</span></a>
-    <a class="social-instagram" href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer">Follow on Instagram <span aria-hidden="true">↗</span></a>
-  </div>
-</section>
-
 <!-- ================= PRODUCTS ================= -->
 <section id="products" class="products">
 <h2 id="productsSectionTitle" class="section-title">Featured Products</h2>
-<div class="catalog-view-controls"><a id="catalogViewToggle" href="all-products.html">BROWSE ALL PRODUCTS <span aria-hidden="true">→</span></a><button type="button" onclick="xjOpenWishlist()">My wishlist</button></div>
-<p id="featuredSelectionNotice" class="admin-warning" hidden>The homepage featured selection needs administrator attention. XJ Games must choose exactly six visible products.</p>
+<div class="catalog-view-controls"><button type="button" id="catalogViewToggle" onclick="xjToggleCatalogView()" aria-pressed="false">View All Products</button></div>
 <div class="catalog-tools" aria-label="Product filters">
-  <label>Category <select id="categoryFilter" onchange="xjApplyCatalogFilters()"><option value="">All categories</option><option value="playstation-consoles">PlayStation</option><option value="nintendo-consoles">Nintendo</option><option value="controllers">Controllers</option><option value="accessories">Accessories</option><option value="games">Games</option></select></label>
-  <label>Console / model <select id="consoleModelFilter" onchange="xjApplyCatalogFilters()"><option value="">All models</option><option value="ps2">PlayStation 2</option><option value="ps3">PlayStation 3</option><option value="ps4fat">PlayStation 4 Fat</option><option value="ps4slim">PlayStation 4 Slim</option><option value="ps4pro">PlayStation 4 Pro</option><option value="ps5">PlayStation 5</option><option value="nintendoswitchlite">Nintendo Switch Lite</option><option value="nintendoswitch">Nintendo Switch</option><option value="controllers">PlayStation Controllers</option></select></label>
-  <label>Condition <select id="conditionFilter" onchange="xjApplyCatalogFilters()"><option value="">All conditions</option><option>New</option><option>Fairly Used</option><option>Used — Good Condition</option><option>Refurbished</option><option>Tested &amp; Working</option></select></label>
-  <label>Availability <select id="stockFilter" onchange="xjApplyCatalogFilters()"><option value="">All stock</option><option value="in">In stock</option><option value="out">Out of stock</option></select></label>
-  <label>Minimum price (GMD) <input id="minimumPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="No minimum"></label>
-  <label>Maximum price (GMD) <input id="maximumPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="No maximum"></label>
-  <button type="button" onclick="xjApplyCatalogFilters()">Apply filters</button><button type="button" onclick="xjResetCatalogFilters()">Reset filters</button>
+  <label>Category <select id="categoryFilter"><option value="">All categories</option><option value="playstation-consoles">PlayStation</option><option value="nintendo-consoles">Nintendo</option><option value="controllers">Controllers</option><option value="accessories">Accessories</option><option value="games">Games</option></select></label>
+  <label>Availability <select id="stockFilter"><option value="">All stock</option><option value="in">In stock</option><option value="out">Out of stock</option></select></label>
 </div>
 <!-- Stock: change the span text to "● Out of Stock" or add class "out-of-stock". The page turns the badge red and switches the button to WhatsApp notify. -->
 <div class="product-grid" id="productGrid">
@@ -2128,7 +1994,7 @@ img,video{max-width:100%}
 </div>
 
 <div class="card" data-product-id="ps5" data-name="playstation 5" data-category="ps5,consoles">
-  <span class="stock">● Out of Stock</span>
+  <span class="stock">● In Stock</span>
   <img src="ps5.png" alt="PlayStation 5">
   <h3>PlayStation 5</h3>
   <p class="desc">Next-generation 4K gaming with ultra-fast loading, stunning graphics, and DualSense immersive gameplay.</p>
@@ -2186,9 +2052,9 @@ img,video{max-width:100%}
   <img src="nintendo-switch.png" alt="Nintendo Switch">
   <h3>Nintendo Switch</h3>
   <p class="desc">Play at home on the TV or on the go. The ultimate hybrid console designed for versatile, family-friendly fun anywhere.</p>
-  <p class="price">8,500 GMD</p>
+  <p class="price">8,000 GMD</p>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8500, 'switch')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8000, 'switch')">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2235,7 +2101,7 @@ img,video{max-width:100%}
 </div>
 
 <div class="card" data-product-id="ps5-controller" data-name="ps5 controller" data-category="controllers,ps5,accessories">
-  <span class="stock">● Out of Stock</span>
+  <span class="stock">● In Stock</span>
   <img src="ps5-controller.png" alt="PS5 Controller">
   <h3>PS5 Controller</h3>
   <p class="desc">Next-gen DualSense wireless controller with adaptive triggers, haptic feedback, and a built-in microphone for immersive PlayStation 5 gaming.</p>
@@ -2263,13 +2129,13 @@ img,video{max-width:100%}
 <div class="feature-card">
 <h1>🚚</h1>
 <h3>Fast Delivery</h3>
-<p>Delivery service across The Gambia.</p>
+<p>Quick delivery across The Gambia using JJ delivery service.</p>
 </div>
 
 <div class="feature-card">
 <h1>🛡️</h1>
 <h3>Warranty</h3>
-<p>One-week warranty on applicable consoles.</p>
+<p>3 day warranty on all tested consoles.</p>
 </div>
 
 <div class="feature-card">
@@ -2280,8 +2146,8 @@ img,video{max-width:100%}
 
 <div class="feature-card">
 <h1>💬</h1>
-<h3>WhatsApp Support</h3>
-<p>Contact us during the business hours listed below.</p>
+<h3>24/7 Support</h3>
+<p>Contact us anytime on WhatsApp.</p>
 </div>
 
 <div class="feature-card">
@@ -2309,8 +2175,6 @@ img,video{max-width:100%}
 
 <div class="add-review-box">
   <h3>Leave a Review</h3>
-  <label for="reviewProduct">Product reviewed</label>
-  <select id="reviewProduct"><option value="">Choose a product</option></select>
   <label>Rating</label>
   <select id="reviewRating">
     <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
@@ -2340,94 +2204,14 @@ img,video{max-width:100%}
 <!-- ================= CONTACT ================= -->
 <section id="contact" class="contact">
 <h2 class="section-title">Contact Us</h2>
-<p>Customer support, product enquiries, delivery and pickup: message XJ Games on WhatsApp.</p>
+<p>Ready to order or need help? Message us on WhatsApp.</p>
 <div class="contact-buttons">
 <a class="whatsapp-btn" href="https://wa.me/2202164491" target="_blank">Chat on WhatsApp (2164491)</a>
-<a class="whatsapp-btn" href="https://wa.me/2202487543" target="_blank">Alternate WhatsApp contact (2487543)</a>
+<a class="whatsapp-btn" href="https://wa.me/2202487543" target="_blank">Chat on WhatsApp (2487543)</a>
 </div>
-<h3>Business hours</h3><p>Monday–Friday: 4:00 PM–8:00 PM<br>Saturday: 12:00 PM–8:00 PM<br>Sunday: Closed</p>
 </section>
-
-<section id="how-to-order" class="features policy-section">
-  <h2 class="section-title">How to Order</h2>
-  <ol class="policy-list">
-    <li>Browse the available products or search the catalog.</li>
-    <li>Select a product and review its condition and price.</li>
-    <li>Choose the available product options and quantity.</li>
-    <li>Add the product to your cart.</li>
-    <li>Select delivery or pickup during checkout.</li>
-    <li>If you choose delivery, select or enter your location.</li>
-    <li>Review the order summary and any confirmed charges.</li>
-    <li>Open WhatsApp and tap <strong>Send</strong> to submit your order.</li>
-    <li>Wait for XJ Games to confirm the order.</li>
-  </ol>
-</section>
-
-<section id="delivery-information" class="features policy-section">
-  <h2 class="section-title">Delivery &amp; Pickup Information</h2>
-  <p>Delivery is available within The Gambia only. Choose pickup or delivery at checkout. Confirm stock on WhatsApp before travelling or paying. Where a listed delivery range is ambiguous, the fee must be confirmed on WhatsApp; no uncertain amount is added to the total.</p>
-  <div class="delivery-zones">
-    <div><strong>D150</strong><span>Fajara, Cape Point, Pipeline, Jeshwang</span></div>
-    <div><strong>D200</strong><span>Old Jeshwang, Jimpex Industry, Westfield, Baboon Faty, Kotu, Manjai, Kololi, Churchill Town Main Road, Senegambia</span></div>
-    <div><strong>D225/D250</strong><span>Kerr Sering, Bijilo, Bakoteh, Sanchaba Sulay, Bundung, Tallinding, Brusubi 1 and 2, Wullingkama</span></div>
-    <div><strong>D250/D275</strong><span>Turntable or beyond — confirm the exact fee on WhatsApp</span></div>
-    <div><strong>D300/D325</strong><span>Coastal Road, Yarambamba, Paradise Estate, Brufut, Ghana Town, Sukuta Deep, Airport Junction — confirm the exact fee</span></div>
-    <div><strong>D350–D400</strong><span>Lamin, Abuko, Tanji, New Yundum, Banjullinding, Ghana Town, Batokunku — confirm the exact fee</span></div>
-    <div><strong>D400</strong><span>Banjul</span></div>
-  </div>
-  <p><strong>Note:</strong> Ghana Town is listed in two delivery zones. Confirm its fee on WhatsApp. Alternative prices are not guessed.</p>
-</section>
-
-<section id="warranty" class="features policy-section">
-  <h2 class="section-title">Warranty &amp; Returns</h2>
-  <p><strong>Applicable consoles:</strong> One week (seven days). If a console develops a fault during this period and the fault was not caused by the customer, XJ Games will offer a repair. Customer-caused faults or damage are not covered. Change-of-mind returns are not accepted. This console policy does not state warranty terms for accessories.</p>
-</section>
-
-<section id="faq" class="features policy-section">
-  <h2 class="section-title">Frequently Asked Questions</h2>
-  <details><summary>How do I order?</summary><p>Choose products, options and quantities, add them to your cart, review the checkout summary, then open WhatsApp and tap Send. Wait for XJ Games to confirm.</p></details>
-  <details><summary>Where do you deliver and what does it cost?</summary><p>Delivery is available within The Gambia to the locations and price ranges shown in Delivery &amp; Pickup Information. Exact fees for ambiguous ranges or duplicate locations must be confirmed on WhatsApp.</p></details>
-  <details><summary>Can I pick up my order?</summary><p>Yes. Select Pickup during checkout. Pickup has no delivery fee. The existing website location is Turntable, Brusubi; message XJ Games to confirm arrangements before travelling.</p></details>
-  <details><summary>What do product conditions mean?</summary><p>Condition is shown only when supplied by the admin. If no condition is shown, please ask XJ Games.</p></details>
-  <details><summary>Is a product in stock?</summary><p>Availability can change. Confirm stock on WhatsApp before travelling or paying. Use Notify Me on an out-of-stock product to enquire.</p></details>
-  <details><summary>What is the console warranty?</summary><p>Applicable consoles have a one-week warranty for eligible faults not caused by the customer. The remedy is repair.</p></details>
-  <details><summary>Are customer-caused faults or change-of-mind returns covered?</summary><p>Customer-caused faults or damage are not covered. Change-of-mind returns are not accepted.</p></details>
-  <details><summary>How do I contact XJ Games?</summary><p>Use the WhatsApp contact button on this page or open WhatsApp checkout.</p></details>
-  <details><summary>How do I confirm a delivery fee?</summary><p>Send your selected delivery location with your order on WhatsApp. We do not add an unconfirmed ambiguous fee to the displayed total.</p></details>
-</section>
-
-<div id="wishlistModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="wishlistTitle">
-  <div class="modal-card checkout-summary-card"><button type="button" class="modal-close" onclick="document.getElementById('wishlistModal').classList.remove('active')" aria-label="Close wishlist">&times;</button><h2 id="wishlistTitle">My wishlist</h2><div id="wishlistContent"></div></div>
-</div>
 
 <!-- ================= SHOPPING CART PANEL ================= -->
-<div id="checkoutSummaryModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="checkoutSummaryTitle">
-  <div class="modal-card checkout-summary-card">
-    <button type="button" class="modal-close" onclick="xjCloseCheckoutSummary()" aria-label="Close checkout summary">&times;</button>
-    <h2 id="checkoutSummaryTitle">Review your order</h2>
-    <label for="checkoutDeliveryMethod">Delivery or pickup</label>
-    <select id="checkoutDeliveryMethod" onchange="xjUpdateCheckoutSummary()">
-      <option value="pickup">Pickup</option>
-      <option value="delivery">Delivery</option>
-    </select>
-    <div id="checkoutLocationWrap" hidden>
-      <label for="checkoutDeliveryLocation">Delivery location</label>
-      <select id="checkoutDeliveryLocation" onchange="xjUpdateCheckoutSummary()">
-        <option value="">Choose your location</option>
-        <optgroup label="D150"><option value="Fajara|150">Fajara</option><option value="Cape Point|150">Cape Point</option><option value="Pipeline|150">Pipeline</option><option value="Jeshwang|150">Jeshwang</option></optgroup>
-        <optgroup label="D200"><option value="Old Jeshwang|200">Old Jeshwang</option><option value="Jimpex Industry|200">Jimpex Industry</option><option value="Westfield|200">Westfield</option><option value="Baboon Faty|200">Baboon Faty</option><option value="Kotu|200">Kotu</option><option value="Manjai|200">Manjai</option><option value="Kololi|200">Kololi</option><option value="Churchill Town Main Road|200">Churchill Town Main Road</option><option value="Senegambia|200">Senegambia</option></optgroup>
-        <optgroup label="D225/D250 — confirm exact fee"><option value="Kerr Sering|confirm">Kerr Sering</option><option value="Bijilo|confirm">Bijilo</option><option value="Bakoteh|confirm">Bakoteh</option><option value="Sanchaba Sulay|confirm">Sanchaba Sulay</option><option value="Bundung|confirm">Bundung</option><option value="Tallinding|confirm">Tallinding</option><option value="Brusubi 1 and 2|confirm">Brusubi 1 and 2</option><option value="Wullingkama|confirm">Wullingkama</option></optgroup>
-        <optgroup label="D250/D275 — confirm exact fee"><option value="Turntable or beyond|confirm">Turntable or beyond</option></optgroup>
-        <optgroup label="D300/D325 — confirm exact fee"><option value="Coastal Road|confirm">Coastal Road</option><option value="Yarambamba|confirm">Yarambamba</option><option value="Paradise Estate|confirm">Paradise Estate</option><option value="Brufut|confirm">Brufut</option><option value="Ghana Town (D300/D325 zone)|confirm">Ghana Town</option><option value="Sukuta Deep|confirm">Sukuta Deep</option><option value="Airport Junction|confirm">Airport Junction</option></optgroup>
-        <optgroup label="D350–D400 — confirm exact fee"><option value="Lamin|confirm">Lamin</option><option value="Abuko|confirm">Abuko</option><option value="Tanji|confirm">Tanji</option><option value="New Yundum|confirm">New Yundum</option><option value="Banjullinding|confirm">Banjullinding</option><option value="Ghana Town (D350–D400 zone)|confirm">Ghana Town</option><option value="Batokunku|confirm">Batokunku</option></optgroup>
-        <optgroup label="D400"><option value="Banjul|400">Banjul</option></optgroup>
-      </select>
-    </div>
-    <div id="checkoutOrderSummary" class="checkout-order-summary"></div>
-    <p class="checkout-send-reminder">WhatsApp only opens a prepared message. Tap <strong>Send</strong> in WhatsApp to submit your order. Stock and any unconfirmed delivery fee must be confirmed by XJ Games.</p>
-    <button type="button" id="confirmOrderWhatsApp" class="checkout-btn" onclick="xjConfirmOrderOnWhatsApp()">Confirm Order on WhatsApp</button>
-  </div>
-</div>
 <div class="cart-panel" id="cartPanel">
   <div class="cart-header">
     <h2>Your Cart</h2>
@@ -2437,11 +2221,32 @@ img,video{max-width:100%}
     <div class="empty-cart">Your cart is empty</div>
   </div>
   <div class="cart-footer">
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <input id="cartPromoCode" type="text" maxlength="64" placeholder="Discount code" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
+      <button type="button" class="admin-action-btn" onclick="xjRedeemPromo()">Apply</button>
+    </div>
+    <p id="cartPromoMessage" style="font-size:12px;color:#00ff88;margin:0 0 8px;"></p>
+    <button type="button" onclick="xjRemovePromo()" style="display:block;background:none;border:0;color:#aaa;font-size:12px;padding:0;margin:-2px 0 8px;cursor:pointer;">Remove promo code</button>
+    <label class="cart-balance-toggle"><input id="useXjBalance" type="checkbox" onchange="updateCartUI()"><span>Use XJ Games balance</span></label>
+    <p id="cartBalanceMessage" style="font-size:11px;color:#aaa;margin:0 0 8px;"></p>
     <div class="cart-totals" id="cartTotals">
       <div><span>Subtotal</span><span id="cartSubtotal">0 GMD</span></div>
-      <div class="cart-final-total"><span>Order Total</span><span id="cartTotalPrice">0 GMD</span></div>
+      <div id="cartDiscountRow" style="display:none"><span>Discount</span><span id="cartDiscount">-0 GMD</span></div>
+      <div id="cartBalanceRow" style="display:none"><span>XJ Games Balance</span><span id="cartBalanceApplied">-0 GMD</span></div>
+      <div class="cart-final-total"><span>Final Amount</span><span id="cartTotalPrice">0 GMD</span></div>
     </div>
     <button type="button" onclick="checkoutCart()" class="checkout-btn">Checkout Order</button>
+  </div>
+</div>
+
+<div id="promoItemModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="promoItemTitle" onclick="if(event.target===this)xjClosePromoItemPicker()">
+  <div class="modal-card" style="text-align:left;max-width:520px">
+    <button type="button" onclick="xjClosePromoItemPicker()" aria-label="Close discount selection" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
+    <h3 id="promoItemTitle" style="color:#00bfff;font-family:Orbitron;margin:0 30px 8px 0;font-size:19px">Choose one item</h3>
+    <p id="promoItemPrompt" style="color:#bbb;font-size:13px"></p>
+    <div id="promoItemChoices" class="promo-item-choices"></div>
+    <p id="promoItemError" role="alert" style="color:#ff8a94;font-size:12px;min-height:16px"></p>
+    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjApplyPromoItemChoice()">Apply discount to selected item</button>
   </div>
 </div>
 
@@ -2514,7 +2319,15 @@ img,video{max-width:100%}
 
     <!-- DELIVERY (Shared) -->
     <div style="margin-bottom:25px;">
-      <p style="font-size:13px;color:#aaa">Choose delivery or pickup and provide your delivery location during checkout. Location-based fees are calculated there; uncertain fees are confirmed on WhatsApp.</p>
+      <label style="font-size:13px; font-weight:600; color:white; display:block; margin-bottom:8px;">Do you need delivery? (+300) *</label>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button type="button" class="option-pill delivery-btn" data-val="No" onclick="selectDeliveryOption(this, 'No')">No</button>
+        <button type="button" class="option-pill delivery-btn" data-val="Yes" onclick="selectDeliveryOption(this, 'Yes')">Yes</button>
+      </div>
+      <div id="addressFieldContainer" style="display:none; margin-top:10px;">
+        <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">Where are you staying? *</label>
+        <input type="text" id="customAddressInput" placeholder="Enter your address / location" style="width:100%; background:#070B16; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px; color:white; outline:none; font-size:13px;">
+      </div>
     </div>
 
     <!-- Buttons -->
@@ -2611,7 +2424,17 @@ img,video{max-width:100%}
     <span onclick="closeAdminPanel()" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
     <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
-    <details class="admin-add-form" style="margin-bottom:14px;"><summary>Store tools &amp; backup</summary>
+    <details class="admin-add-form" style="margin-bottom:14px;"><summary>Promotions &amp; backup</summary>
+      <h4 style="margin:8px 0;color:#00ff88">XJ Points Codes</h4>
+      <label>Balance value (GMD)</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="pointsCodeValue" type="number" min="1" step="1" placeholder="e.g. 1000"><input id="pointsCodeUses" type="number" min="1" step="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminCreatePointsCode()">Generate points code</button></div>
+      <div id="adminPointsCodeList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Points codes will appear here.</div>
+      <h4 style="margin:8px 0;color:#00bfff">Discount Codes</h4>
+      <label>Code</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="64" placeholder="e.g. XJ10OFF">
+        <select id="promoDiscountType" onchange="xjSetPromoDiscountType()"><option value="percent">Percentage</option><option value="fixed">Fixed GMD</option></select>
+        <input id="promoPercent" class="promo-percent-field" type="number" min="1" max="90" placeholder="Percent">
+        <input id="promoAmount" class="promo-amount-field" type="number" min="1" placeholder="GMD off" style="display:none">
+        <input id="promoStartsAt" type="datetime-local" title="Start date (optional)"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Create discount code</button></div>
+      <div id="adminPromoList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Discount codes will appear here.</div>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
     </details>
@@ -2631,6 +2454,7 @@ img,video{max-width:100%}
   </div>
 
 </div>
+<div id="ordersPanel" class="xj-panel" onclick="if(event.target===this)xjCloseCommercePanel('ordersPanel')"><div class="xj-panel-card"><h3>📦 Order History</h3><div id="orderHistoryItems"></div><button class="checkout-btn" onclick="xjCloseCommercePanel('ordersPanel')">Close</button></div></div>
 <div id="xjDescriptionModal" class="modal-overlay xj-description-modal" onclick="if(event.target===this)xjCloseFeatureModal('xjDescriptionModal')"><div class="modal-card xj-feature-modal-card"><button class="feature-close" onclick="xjCloseFeatureModal('xjDescriptionModal')" aria-label="Close">&times;</button><div id="xjDescriptionContent"></div></div></div>
 <div id="xjReduceModal" class="modal-overlay xj-reduce-modal" onclick="if(event.target===this)xjCloseFeatureModal('xjReduceModal')"><div class="modal-card xj-feature-modal-card"><button class="feature-close" onclick="xjCloseFeatureModal('xjReduceModal')" aria-label="Close">&times;</button><div id="xjReduceContent"></div></div></div>
 
@@ -2698,6 +2522,25 @@ img,video{max-width:100%}
   </div>
 </div>
 
+<div id="pointsModal" class="modal-overlay" onclick="if(event.target===this)xjClosePoints()">
+  <div class="modal-card" style="text-align:left;max-width:520px">
+    <button type="button" onclick="xjClosePoints()" aria-label="Close points" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
+    <h3 style="color:#00ff88;font-family:Orbitron;margin-bottom:8px">Points &amp; Rewards</h3>
+    <div id="pointsSignedOut" style="display:none;color:#bbb;font-size:13px;padding:14px 0">Please sign in to redeem an XJ Points code and view your XJ Games balance.</div>
+    <div id="pointsSignedIn">
+      <div class="points-summary"><span>XJ Games Balance</span><strong><span id="pointsModalBalance">0</span> <small style="font:500 12px Poppins;color:#aaa">GMD</small></strong></div>
+      <h4 style="margin-top:18px">Available rewards</h4>
+      <p id="pointsRewards" style="font-size:12px;color:#aaa;margin-top:7px">No rewards are currently available.</p>
+      <h4 style="margin-top:18px">Redeem XJ Points Code</h4>
+      <div class="points-redeem"><input id="pointsCodeInput" type="text" maxlength="32" placeholder="Enter your XJ Points code" autocomplete="off"><button type="button" class="admin-action-btn" onclick="xjRedeemPointsCode()">Redeem</button></div>
+      <p id="pointsCodeMessage" style="min-height:18px;font-size:12px;margin-top:6px;color:#aaa"></p>
+      <h4 style="margin-top:18px">Points history</h4>
+      <ul id="pointsHistory" class="points-history"><li>No points activity yet.</li></ul>
+    </div>
+    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjClosePoints()">Close</button>
+  </div>
+</div>
+
 <!-- ================= FOOTER ================= -->
 <footer id="footer-socials">
 <h2>XJ GAMES</h2>
@@ -2707,14 +2550,13 @@ img,video{max-width:100%}
   <a href="https://www.tiktok.com/@xj_games7?is_from_webapp=1&sender_device=pc" target="_blank" class="social-link-btn btn-tiktok">
     🎵 TikTok
   </a>
-  <a href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer" class="social-link-btn btn-instagram">
+  <a href="https://www.instagram.com" target="_blank" class="social-link-btn btn-instagram">
     📷 Instagram
   </a>
   <a href="https://wa.me/2202164491" target="_blank" class="social-link-btn btn-whatsapp">
     💬 WhatsApp
   </a>
 </div>
-<div class="footer-guides"><a href="all-products.html">View All Products</a><a href="#how-to-order">How to Order</a><a href="#delivery-information">Delivery</a><a href="#warranty">Warranty &amp; Returns</a><a href="#faq">FAQ</a></div>
 <p style="font-size:12px; color:#666; margin-top:20px;">&copy; 2026 XJ Games. All rights reserved.</p>
 </footer>
 
@@ -2723,14 +2565,13 @@ img,video{max-width:100%}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <script src="js/firebase-config.js?v=20260822d"></script>
-<script src="js/xj-catalog.js?v=20261017c"></script>
+<script src="js/xj-catalog.js?v=20261002a"></script>
 <script src="js/xj-search.js?v=20260822d"></script>
 <script src="js/xj-auth.js?v=20261002b"></script>
 <script src="js/xj-profile.js?v=20261002b"></script>
-<script src="js/xj-inventory.js?v=20261017a"></script>
-<script src="js/xj-customer-tools.js?v=20261017a"></script>
+<script src="js/xj-inventory.js?v=20261002c"></script>
 <script src="js/xj-reviews.js?v=20261002a"></script>
-<script src="js/xj-commerce.js?v=20261017a"></script>
+<script src="js/xj-commerce.js?v=20261002g"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
@@ -2764,17 +2605,11 @@ let isRegisterMode = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   Promise.resolve(xjInitFirebase()).finally(() => {
-    xjInitCustomerTools();
     xjInitStockSystem();
     xjInitReviews();
   });
   updateCartUI();
-  xjRepriceCartFromCatalog();
   xjInitProductCarousels();
-  document.querySelectorAll('#productGrid img').forEach(function(image) {
-    image.loading = 'lazy';
-    image.decoding = 'async';
-  });
   xjEnhanceStaticProductCards();
   xjRefreshProductPrices();
   xjInitSearchSuggestions();
@@ -2867,37 +2702,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function xjOpenDescription(id) {
     const p = xjProductFromCard(id); if (!p) return;
     xjCloseFeatureModal('xjReduceModal');
-    const images = p.images && p.images.length ? p.images : (p.image ? [p.image] : []);
-    const media = images.map(function(image, index) {
-      return '<img loading="lazy" src="' + xjEscapeHtml(image) + '" alt="' + xjEscapeHtml(p.name) + ' photo ' + (index + 1) + '">';
-    }).join('');
-    const videos = (p.videoUrls || []).map(function(url) {
-      return '<video controls preload="none" playsinline src="' + xjEscapeHtml(url) + '"></video>';
-    }).join('');
-    const condition = p.condition ? '<p class="product-condition">' + xjEscapeHtml(p.condition) + '</p>' : '';
-    const related = Object.keys(XJ_PRODUCT_CATALOG).map(function(productId) { return XJ_PRODUCT_CATALOG[productId]; }).filter(function(product) {
-      return product.id !== id && xjGetProductDisplayCategory(product) === xjGetProductDisplayCategory(p) && !xjIsProductHidden(product.id);
-    }).slice(0, 3);
-    const relatedHtml = related.length ? '<section class="related-products"><h4>More from this category</h4>' + related.map(function(product) {
-      return '<button type="button" onclick="xjOpenDescription(\'' + xjEscapeHtml(product.id) + '\')">' + xjEscapeHtml(product.name) + ' — GMD ' + Number(product.price).toLocaleString() + '</button>';
-    }).join('') + '</section>' : '';
-    const inStock = xjGetProductStock(id);
-    document.getElementById('xjDescriptionContent').innerHTML =
-      '<div class="product-detail-media">' + media + videos + '</div><h3>' + xjEscapeHtml(p.name) + '</h3>' +
-      condition + '<p class="product-availability">' + (inStock ? 'In stock — confirm availability before travelling or paying.' : 'Out of stock') + '</p>' +
-      '<p>' + xjEscapeHtml(p.description || 'No description available.') + '</p>' +
-      '<p class="feature-price">' + xjProductPrice(id, p.price).toLocaleString() + ' GMD</p>' +
-      '<button type="button" id="xjDescriptionAddToCart">' + (inStock ? 'Add to Cart' : 'Notify Me on WhatsApp') + '</button>' + relatedHtml;
-    document.getElementById('xjDescriptionAddToCart').onclick = function() {
-      if (!xjGetProductStock(id)) {
-        const card = document.querySelector('#productGrid .card[data-product-id="' + id + '"]');
-        if (card) xjOpenStockNotifyWhatsApp(card);
-      } else if (p.hasModal) {
-        openCustomizationModal(p.name, p.price, p.type);
-      } else {
-        directAddToCart(p.name, p.price);
-      }
-    };
+    document.getElementById('xjDescriptionContent').innerHTML = '<img src="' + (p.image || '') + '" alt="' + xjEscapeHtml(p.name) + '"><h3>' + xjEscapeHtml(p.name) + '</h3><p>' + xjEscapeHtml(p.description || 'No description available.') + '</p><p class="feature-price">' + xjProductPrice(id, p.price).toLocaleString() + ' GMD</p>';
     document.getElementById('xjDescriptionModal').classList.add('active');
   }
   function xjOpenReducePrice(id) {
@@ -2929,13 +2734,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function xjRefreshProductPrices() {
     document.querySelectorAll('#productGrid .card[data-product-id]').forEach(function(card) {
       const p = xjProductFromCard(card.getAttribute('data-product-id')), el = card.querySelector('.price');
-      if (!p || !el) return;
-      const currentPrice = xjCurrentProductBasePrice(p.id, p.price);
-      if (currentPrice < Number(p.price)) {
-        el.innerHTML = '<s style="color:#888;font-size:12px">' + Number(p.price).toLocaleString() + ' GMD</s> <strong>' + currentPrice.toLocaleString() + ' GMD</strong>';
-      } else {
-        el.textContent = Number(p.price).toLocaleString() + ' GMD';
-      }
+      if (p && el && xjReduceStateFor(p.id).unlocked) el.innerHTML = '<s style="color:#888;font-size:12px">' + Number(p.price).toLocaleString() + ' GMD</s> <strong>' + xjProductPrice(p.id, p.price).toLocaleString() + ' GMD</strong>';
     });
   }
   window.xjProductPrice = xjProductPrice;
@@ -3016,46 +2815,20 @@ function xjBuildProductCarousel(container) {
 
 function showToast(title, body, type = 'success') {
   const container = document.getElementById('toastContainer');
-  if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
-  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
-  const header = document.createElement('div');
-  header.className = 'toast-header';
-  const heading = document.createElement('span');
-  heading.className = 'title';
-  heading.textContent = '🎮 ' + String(title || '');
-  const close = document.createElement('button');
-  close.type = 'button';
-  close.className = 'toast-close';
-  close.setAttribute('aria-label', 'Dismiss notification');
-  close.textContent = '×';
-  close.addEventListener('click', function() { toast.remove(); });
-  header.append(heading, close);
-  const message = document.createElement('div');
-  message.className = 'toast-body';
-  const bodyText = String(body || '');
-  message.textContent = /internal/i.test(bodyText)
-    ? 'Something went wrong. Please try again.'
-    : bodyText;
-  toast.append(header, message);
+  toast.innerHTML = `
+    <div class="toast-header">
+      <span class="title">🎮 ${title}</span>
+      <span class="toast-close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+    </div>
+    <div class="toast-body">${body}</div>
+  `;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('hide');
     setTimeout(() => toast.remove(), 400);
-  }, 6000);
-}
-
-function xjCurrentProductBasePrice(productId, fallbackPrice) {
-  const product = productId && xjGetProductById(productId);
-  let price = Number(product && product.price) || Number(fallbackPrice) || 0;
-  if (window.xjGetFlashSalePrice) {
-    price = window.xjGetFlashSalePrice(productId, price);
-  }
-  return window.xjProductPrice
-    ? window.xjProductPrice(productId, price)
-    : price;
+  }, 4000);
 }
 
 // ================= DIRECT ADD TO CART (Switch Lite, PS4 Controller) =================
@@ -3064,7 +2837,7 @@ function directAddToCart(name, price) {
   const productId = xjGetProductIdByName(name);
   if (productId && !xjGuardInStock(productId, name)) return;
 
-  const finalPrice = xjCurrentProductBasePrice(productId, price);
+  const finalPrice = xjProductPrice(productId, price);
   xjAddCartItem({
     name: name,
     productId: productId,
@@ -3085,6 +2858,11 @@ function updateModalPrice() {
   if (currentCustomProduct.consoleType === 'Full Set') {
     finalPrice += 500;
   }
+  // Shared: Delivery
+  if (currentCustomProduct.delivery === 'Yes') {
+    finalPrice += 300;
+  }
+
   // Type specific calculation
   if (currentCustomProduct.type === 'ps4') {
     const extraControllerPrice = currentCustomProduct.extraControllerPrice || 1500;
@@ -3120,7 +2898,7 @@ function openCustomizationModal(name, basePrice, type) {
   currentCustomProduct = { 
     name, 
     productId: productId,
-    basePrice: xjCurrentProductBasePrice(productId, basePrice),
+    basePrice: xjProductPrice(productId, basePrice),
     type,
     extraControllerPrice: (productId && XJ_PRODUCT_CATALOG[productId] && XJ_PRODUCT_CATALOG[productId].extraControllerPrice) || 1500,
     consoleType: 'Console Only', 
@@ -3336,7 +3114,14 @@ function updateCartUI() {
   if (cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
     document.getElementById('cartSubtotal').textContent = '0 GMD';
+    document.getElementById('cartDiscountRow').style.display = 'none';
+    document.getElementById('cartBalanceRow').style.display = 'none';
     cartTotalPrice.innerText = '0 GMD';
+    const emptyCartPromo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+    document.getElementById('cartPromoMessage').textContent = emptyCartPromo
+      ? 'Discount code ' + emptyCartPromo.code + ' applied. Add items to see the discount.'
+      : '';
+    document.getElementById('cartBalanceMessage').textContent = '';
     return;
   }
 
@@ -3347,28 +3132,28 @@ function updateCartUI() {
     total += item.finalPrice * item.quantity;
     
     // Construct variations text dynamically based on product type
-    let detailsHTML = `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Option: ${xjEscapeHtml(item.consoleType)}</p>`;
+    let detailsHTML = `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Option: ${item.consoleType}</p>`;
     
     if (item.type === 'ps4') {
       detailsHTML += `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Controllers: ${item.psControllers}</p>`;
-      if(item.games)       detailsHTML += `<p style="font-size:12px; color:#00ff88;">Games: ${xjEscapeHtml(item.games)}</p>`;
+      if(item.games) detailsHTML += `<p style="font-size:12px; color:#00ff88;">Games: ${item.games}</p>`;
     } else if (item.type === 'switch') {
-      detailsHTML += `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Nintendo Controller: ${xjEscapeHtml(item.switchController)} | Dock: ${xjEscapeHtml(item.switchDock)} | Grip: ${xjEscapeHtml(item.switchGrip)}</p>`;
+      detailsHTML += `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Nintendo Controller: ${item.switchController} | Dock: ${item.switchDock} | Grip: ${item.switchGrip}</p>`;
     }
-    var productId = item.productId || xjGetProductIdByName(item.name);
-    var product = productId && xjGetProductById(productId);
-    var unavailable = !product || xjIsProductHidden(productId) || !xjGetProductStock(productId);
+
+    if (item.delivery === 'Yes') {
+      detailsHTML += `<p style="font-size:12px; color:#00bfff;">Delivery to: ${item.address} (+300)</p>`;
+    }
 
     html += `
-      <div data-cart-index="${index}" style="background:#070B16; padding:15px; border-radius:12px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.08); position:relative;">
+      <div style="background:#070B16; padding:15px; border-radius:12px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.08); position:relative;">
         <span onclick="removeFromCart(${index})" style="position:absolute; top:10px; right:12px; color:#ff3040; cursor:pointer; font-weight:bold;">&times;</span>
-        <h4 style="font-size:15px; font-family:Orbitron; margin-bottom:4px;">${xjEscapeHtml(item.name)}</h4>
+        <h4 style="font-size:15px; font-family:Orbitron; margin-bottom:4px;">${item.name}</h4>
         <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
           <button type="button" onclick="changeCartQuantity(${index}, -1)" style="padding:2px 9px;">-</button>
           <span>Qty: ${item.quantity}</span>
           <button type="button" onclick="changeCartQuantity(${index}, 1)" style="padding:2px 9px;">+</button>
         </div>
-        ${unavailable ? `<p class="cart-unavailable">Currently unavailable. Remove this item or confirm its availability with XJ Games.</p>` : ""}
         ${item.type === 'standalone' ? `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Standard Edition</p>` : detailsHTML}
         <p style="font-size:14px; font-weight:bold; color:#00bfff; margin-top:8px;">${(item.finalPrice * item.quantity).toLocaleString()} GMD</p>
       </div>
@@ -3376,8 +3161,28 @@ function updateCartUI() {
   });
 
   cartItemsContainer.innerHTML = html;
+  const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  const discount = promo ? Math.min(total, Number(promo.discountAmount) || Math.round(total * Number(promo.percent || 0) / 100)) : 0;
+  const signedIn = !!(window.xjAuth && xjAuth.currentUser);
+  const availableBalance = signedIn ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
+  const useBalance = !!(document.getElementById('useXjBalance') && document.getElementById('useXjBalance').checked && signedIn);
+  const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
+  const finalTotal = Math.max(0, total - discount - balanceUsed);
   document.getElementById('cartSubtotal').textContent = total.toLocaleString() + ' GMD';
-  cartTotalPrice.textContent = total.toLocaleString() + ' GMD';
+  document.getElementById('cartDiscountRow').style.display = discount ? 'flex' : 'none';
+  document.getElementById('cartDiscount').textContent = '-' + discount.toLocaleString() + ' GMD';
+  document.getElementById('cartBalanceRow').style.display = balanceUsed ? 'flex' : 'none';
+  document.getElementById('cartBalanceApplied').textContent = '-' + balanceUsed.toLocaleString() + ' GMD';
+  document.getElementById('cartBalanceMessage').textContent = !signedIn && document.getElementById('useXjBalance').checked
+    ? 'Please sign in to use your XJ Games balance.'
+    : signedIn ? 'Available XJ Games balance: ' + availableBalance.toLocaleString() + ' GMD' + (useBalance ? ' · Remaining after order: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD' : '') : '';
+  const promoMessage = document.getElementById('cartPromoMessage');
+  if (promoMessage) {
+    promoMessage.textContent = promo
+      ? 'Discount code ' + promo.code + ' applied: ' + discount.toLocaleString() + ' GMD off.'
+      : '';
+  }
+  cartTotalPrice.textContent = finalTotal.toLocaleString() + ' GMD';
 }
 
 function xjRepriceCartFromCatalog(productId) {
@@ -3385,15 +3190,12 @@ function xjRepriceCartFromCatalog(productId) {
     var id = item.productId || xjGetProductIdByName(item.name);
     if (!id || (productId && productId !== id)) return;
     var product = xjGetProductById(id);
-    if (!product || xjIsProductHidden(id)) {
-      item.unavailable = true;
-      return;
-    }
-    item.unavailable = !xjGetProductStock(id);
-    var basePrice = xjCurrentProductBasePrice(id, product.price);
+    if (!product) return;
+    var basePrice = window.xjProductPrice ? xjProductPrice(id, product.price) : Number(product.price) || 0;
     var finalPrice = basePrice;
     if (item.type === 'ps4' || item.type === 'switch') {
       if (item.consoleType === 'Full Set') finalPrice += 500;
+      if (item.delivery === 'Yes') finalPrice += 300;
       if (item.type === 'ps4') {
         if (Number(item.psControllers) === 2) finalPrice += Number(product.extraControllerPrice) || 1500;
         if (id !== 'ps5' && item.games) finalPrice += String(item.games).split(',').map(function(game) { return game.trim(); }).filter(Boolean).length * 1500;
@@ -3467,47 +3269,18 @@ function closeMobileMenu() {
   if (toggle) toggle.setAttribute('aria-expanded', 'false');
 }
 
-function xjShowWebsiteGuideIfNeeded() {
-  try {
-    if (localStorage.getItem('xj_website_guide_dismissed') === 'true') return;
-  } catch (error) {
-    console.warn('Could not read the guide preference:', error);
-  }
-  var modal = document.getElementById('websiteGuideModal');
-  if (modal) modal.classList.add('active');
-}
-
-function xjCloseWebsiteGuide() {
-  var checkbox = document.getElementById('websiteGuideDoNotShow');
-  if (checkbox && checkbox.checked) {
-    try {
-      localStorage.setItem('xj_website_guide_dismissed', 'true');
-    } catch (error) {
-      console.warn('Could not save the guide preference:', error);
-    }
-  }
-  var modal = document.getElementById('websiteGuideModal');
-  if (modal) modal.classList.remove('active');
-}
-
 window.addEventListener('resize', xjUpdateHeaderLayout);
-document.addEventListener('DOMContentLoaded', function() {
-  xjUpdateHeaderLayout();
-  xjShowWebsiteGuideIfNeeded();
-});
+document.addEventListener('DOMContentLoaded', xjUpdateHeaderLayout);
 xjUpdateHeaderLayout();
 
 function xjCheckoutItemDetails(item) {
-  var productId = item.productId || xjGetProductIdByName(item.name);
-  var product = productId ? xjGetProductById(productId) : null;
-  var condition = product && product.condition ? product.condition : "";
   if (item.type === 'ps4') {
-    return [condition, item.consoleType, (item.psControllers || 1) + ' Controller', item.games ? 'Games: ' + item.games : ''].filter(Boolean).join(', ');
+    return [item.consoleType, (item.psControllers || 1) + ' Controller', item.games ? 'Games: ' + item.games : '', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
   }
   if (item.type === 'switch') {
-    return [condition, item.consoleType, 'Nintendo Controller: ' + item.switchController, 'Dock: ' + item.switchDock, 'Joy-Con Grip: ' + item.switchGrip].filter(Boolean).join(', ');
+    return [item.consoleType, 'Nintendo Controller: ' + item.switchController, 'Dock: ' + item.switchDock, 'Joy-Con Grip: ' + item.switchGrip, item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
   }
-  return [condition, 'Standard Edition'].filter(Boolean).join(', ');
+  return ['Standard Edition', item.delivery === 'Yes' ? 'Delivery: ' + item.address : ''].filter(Boolean).join(', ');
 }
 
 function xjWhatsAppCheckoutUrl(message) {
@@ -3524,45 +3297,40 @@ function xjOpenWhatsAppCheckout(message) {
   return opened;
 }
 
-function xjBuildLocalCheckoutMessage(customer, order) {
+function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
   var customerName = customer && customer.name ? customer.name : 'Customer';
   var lines = [
-    'XJ GAMES ORDER',
-    order && order.id ? 'Order reference: ' + order.id : '',
+    'Hello XJ Games, I want to place an order:',
     '',
     'Customer: ' + customerName,
-    customer && customer.email ? 'Email: ' + customer.email : '',
-    customer && customer.phone ? 'Phone: ' + customer.phone : '',
-    '',
-    'Products:'
+    ''
   ];
-  var items = order && Array.isArray(order.items) ? order.items : [];
-  items.forEach(function(item, index) {
-    var quantity = Number(item.quantity) || 1;
-    var unitPrice = Number(item.price) || 0;
+  var subtotal = 0;
+  cart.forEach(function(item, index) {
+    var quantity = item.quantity || 1;
+    var unitPrice = Number(item.finalPrice) || 0;
     var lineTotal = unitPrice * quantity;
-    var details = item.details || '';
-    lines.push((index + 1) + '. ' + item.name + ' x' + quantity + ' — GMD ' + unitPrice.toLocaleString() + ' each (GMD ' + lineTotal.toLocaleString() + ')');
+    subtotal += lineTotal;
+    var details = xjCheckoutItemDetails(item);
+    lines.push((index + 1) + '. ' + item.name + ' (Quantity: ' + quantity + ') - ' + lineTotal.toLocaleString() + ' GMD');
     if (details) lines.push('   ' + details);
   });
-  var subtotal = Number(order && order.subtotal) || 0;
-  lines.push('', 'Subtotal: GMD ' + subtotal.toLocaleString());
-  lines.push('', 'Delivery/Pickup: ' + order.delivery.method);
-  if (order.delivery.method === 'Delivery') {
-    lines.push('Location: ' + order.delivery.location);
-    if (order.delivery.fee === null) {
-      lines.push('Delivery fee: To be confirmed on WhatsApp', 'Final Total: Not final — delivery fee is not included.');
-    } else {
-      lines.push('Delivery fee: GMD ' + order.delivery.fee.toLocaleString(), 'Final Total: GMD ' + (subtotal + order.delivery.fee).toLocaleString());
-    }
-  } else {
-    lines.push('Delivery fee: GMD 0', 'Final Total: GMD ' + subtotal.toLocaleString());
+  var discount = promo ? Math.min(subtotal, Number(promo.discountAmount) || Math.round(subtotal * Number(promo.percent || 0) / 100)) : 0;
+  var availableBalance = (window.xjIsAuthenticated && xjIsAuthenticated()) ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
+  var balanceUsed = useBalance ? Math.min(Math.max(0, subtotal - discount), availableBalance) : 0;
+  var finalTotal = Math.max(0, subtotal - discount - balanceUsed);
+  if (promo) {
+    lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + discount.toLocaleString() + ' GMD');
   }
-  lines.push('', 'Please confirm my order.');
+  if (balanceUsed) {
+    lines.push('XJ Games Balance: -' + balanceUsed.toLocaleString() + ' GMD');
+    lines.push('Remaining XJ Games Balance: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD');
+  }
+  lines.push('', 'Final total: ' + finalTotal.toLocaleString() + ' GMD');
   return lines.join('\n');
 }
 
-function checkoutCart() {
+async function checkoutCart() {
   if (xjCheckoutInProgress) return;
   if (cart.length === 0) {
     showToast('Empty Cart', 'Add items to your cart before checking out.', 'error');
@@ -3571,101 +3339,61 @@ function checkoutCart() {
   for (var i = 0; i < cart.length; i++) {
     var item = cart[i];
     var pid = item.productId || xjGetProductIdByName(item.name);
-    if (!pid || !xjGetProductById(pid) || xjIsProductHidden(pid) || !xjIsProductInStock(pid)) {
-      showToast('Product unavailable', item.name + ' is no longer available. Please remove it from your cart or confirm stock with XJ Games.', 'error');
+    if (pid && !xjIsProductInStock(pid)) {
+      showToast('Out of Stock', item.name + ' is no longer available. Please remove it from your cart.', 'error');
       return;
     }
   }
 
-  document.getElementById("checkoutDeliveryMethod").value = "pickup";
-  document.getElementById("checkoutDeliveryLocation").value = "";
-  document.getElementById("checkoutSummaryModal").classList.add("active");
-  xjUpdateCheckoutSummary();
-}
-
-function xjCloseCheckoutSummary() {
-  document.getElementById("checkoutSummaryModal").classList.remove("active");
-}
-
-function xjUpdateCheckoutSummary() {
-  var method = document.getElementById("checkoutDeliveryMethod").value;
-  var locationControl = document.getElementById("checkoutDeliveryLocation");
-  var locationWrap = document.getElementById("checkoutLocationWrap");
-  var summary = document.getElementById("checkoutOrderSummary");
-  locationWrap.hidden = method !== "delivery";
-  var subtotal = cart.reduce(function(total, item) {
-    return total + (Number(item.finalPrice) || 0) * (Number(item.quantity) || 1);
-  }, 0);
-  var chosen = locationControl.value.split("|");
-  var selectedLocation = chosen[0] || "";
-  var fee = chosen[1] && chosen[1] !== "confirm" ? Number(chosen[1]) : null;
-  var html = cart.map(function(item) {
-    var quantity = Number(item.quantity) || 1;
-    var unitPrice = Number(item.finalPrice) || 0;
-    var details = xjCheckoutItemDetails(item);
-    return '<div class="checkout-line"><span>' + xjEscapeHtml(item.name) + ' × ' + quantity +
-      (details ? '<small><br>' + xjEscapeHtml(details) + '</small>' : '') +
-      '</span><span>GMD ' + unitPrice.toLocaleString() + ' each<br>GMD ' + (unitPrice * quantity).toLocaleString() + ' total</span></div>';
-  }).join("");
-  html += '<hr><div class="checkout-line"><strong>Products subtotal</strong><strong>GMD ' + subtotal.toLocaleString() + '</strong></div>';
-  if (method === "pickup") {
-    html += '<div class="checkout-line"><span>Pickup</span><span>No delivery fee</span></div><div class="checkout-line"><strong>Final total</strong><strong>GMD ' + subtotal.toLocaleString() + '</strong></div>';
-  } else if (!selectedLocation) {
-    html += '<p>Select a delivery location to see whether its fee is known or requires confirmation.</p>';
-  } else if (fee === null) {
-    html += '<div class="checkout-line"><span>Delivery fee</span><span>Confirm on WhatsApp</span></div><p>Final total is not yet known; the delivery fee is excluded until XJ Games confirms it.</p>';
-  } else {
-    html += '<div class="checkout-line"><span>Delivery fee</span><span>GMD ' + fee.toLocaleString() + '</span></div><div class="checkout-line"><strong>Final total</strong><strong>GMD ' + (subtotal + fee).toLocaleString() + '</strong></div>';
-  }
-  summary.innerHTML = html;
-}
-
-function xjConfirmOrderOnWhatsApp() {
-  if (xjCheckoutInProgress || !cart.length) return;
-  var method = document.getElementById("checkoutDeliveryMethod").value;
-  var selection = document.getElementById("checkoutDeliveryLocation").value.split("|");
-  if (method === "delivery" && !selection[0]) {
-    showToast("Delivery location needed", "Choose your delivery location to continue.", "error");
+  var customer = xjGetCurrentUserDisplay();
+  var useBalanceEl = document.getElementById('useXjBalance');
+  var useBalance = !!(useBalanceEl && useBalanceEl.checked);
+  if (useBalance && !xjIsAuthenticated()) {
+    showToast('Sign in required', 'Please sign in to use your XJ Games balance.', 'error');
     return;
   }
-  for (var i = 0; i < cart.length; i++) {
-    var id = cart[i].productId || xjGetProductIdByName(cart[i].name);
-    if (!id || !xjGetProductById(id) || xjIsProductHidden(id) || !xjIsProductInStock(id)) {
-      showToast("Product unavailable", cart[i].name + " is no longer available. Please remove it from your cart or confirm stock with XJ Games.", "error");
-      return;
-    }
-  }
-  var subtotal = cart.reduce(function(sum, item) {
-    return sum + (Number(item.finalPrice) || 0) * (Number(item.quantity) || 1);
-  }, 0);
-  var fee = selection[1] && selection[1] !== "confirm" ? Number(selection[1]) : null;
-  var order = {
-    subtotal: subtotal,
-    delivery: {
-      method: method === "delivery" ? "Delivery" : "Pickup",
-      location: method === "delivery" ? selection[0] : "",
-      fee: method === "delivery" ? fee : 0
-    },
-    items: cart.map(function(item) {
-      return {
-        name: item.name,
-        price: Number(item.finalPrice) || 0,
-        quantity: Number(item.quantity) || 1,
-        details: xjCheckoutItemDetails(item)
-      };
-    })
-  };
-  var whatsappMessage = xjBuildLocalCheckoutMessage(xjGetCurrentUserDisplay(), order);
+  var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  var checkoutItems = cart.map(function(cartItem) {
+    return {
+      productId: cartItem.productId || xjGetProductIdByName(cartItem.name) || cartItem.name,
+      name: cartItem.name,
+      quantity: cartItem.quantity || 1,
+      options: {
+        consoleType: cartItem.consoleType || "Console Only",
+        psControllers: cartItem.psControllers || 1,
+        games: cartItem.games || "",
+        switchController: cartItem.switchController || "No",
+        switchDock: cartItem.switchDock || "No",
+        switchGrip: cartItem.switchGrip || "No",
+        delivery: cartItem.delivery || "No",
+        address: cartItem.address || ""
+      },
+      details: xjCheckoutItemDetails(cartItem)
+    };
+  });
+
   xjCheckoutInProgress = true;
-  var whatsappWindow = xjOpenWhatsAppCheckout(whatsappMessage);
-  if (whatsappWindow) {
-    whatsappWindow.opener = null;
-    showToast("WhatsApp checkout", "Your message is ready. Tap Send in WhatsApp to submit your order.");
-  } else {
-    showToast("WhatsApp checkout", "The WhatsApp tab may have been blocked. Please allow pop-ups and try again.", "error");
+  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer, promo, useBalance));
+  showToast('Checkout ready', 'Your order is ready to send on WhatsApp.');
+  if (promo && window.xjRemovePromo) window.xjRemovePromo();
+  if (useBalanceEl) useBalanceEl.checked = false;
+  cart = [];
+  saveCart();
+
+  try {
+    if (window.xjDb && window.firebase && firebase.functions) {
+      await firebase.functions().httpsCallable('createOrder')({
+        customerName: customer ? customer.name : '',
+        items: checkoutItems,
+        promoCode: promo ? promo.code : '',
+        useBalance: useBalance,
+      });
+    }
+  } catch (error) {
+    console.error('Checkout order creation failed:', error);
+  } finally {
+    xjCheckoutInProgress = false;
   }
-  xjCheckoutInProgress = false;
-  xjCloseCheckoutSummary();
 }
 </script>
 
