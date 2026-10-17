@@ -15,7 +15,10 @@ const searchContext = vm.createContext({
   location: { hash: '' },
   history: {}
 });
-vm.runInContext(catalogSrc + '\n' + searchSrc, searchContext);
+vm.runInContext(
+  catalogSrc + '\n' + searchSrc + '\nglobalThis.XJ_PRODUCT_CATALOG_FOR_TEST = XJ_PRODUCT_CATALOG;',
+  searchContext
+);
 
 const TESTS = [
   { query: 'PS4', expect: ['ps4-slim', 'ps4-fat'] },
@@ -58,6 +61,55 @@ TESTS.forEach(function(test) {
     console.log('  Got:', results.join(', '));
   }
 });
+
+const catalog = searchContext.XJ_PRODUCT_CATALOG_FOR_TEST;
+const requiredHomepageIds = [
+  'ps4-slim',
+  'ps4-fat',
+  'ps2',
+  'ps3',
+  'nintendo-switch',
+  'nintendo-switch-lite',
+  'ps4-controller',
+  'ps5-controller'
+];
+const defaultHomepageIds = Object.keys(catalog).filter(function(id) {
+  return searchContext.xjIsHomepageProduct(catalog[id]);
+});
+const remotePs4Pro = {
+  id: 'ps4-pro',
+  name: 'PlayStation 4 Pro',
+  displayCategory: 'playstation-consoles',
+  categories: ['ps4', 'consoles', 'playstation']
+};
+if (!requiredHomepageIds.every(function(id) { return defaultHomepageIds.indexOf(id) !== -1; }) ||
+    !searchContext.xjIsHomepageProduct(remotePs4Pro) ||
+    searchContext.xjIsHomepageProduct({
+      id: 'custom-racing-ps2-cd',
+      name: 'Racing Game (PS2 CD)',
+      category: 'accessories',
+      displayCategory: 'playstation-consoles',
+      categories: ['accessories'],
+      type: 'standalone'
+    }) ||
+    defaultHomepageIds.indexOf('ps5') !== -1 ||
+    defaultHomepageIds.some(function(id) {
+      return searchContext.xjGetProductDisplayCategory(catalog[id]) === 'games';
+    })) {
+  console.error('FAIL: homepage product eligibility does not match the curated catalog');
+  failed++;
+} else {
+  console.log('PASS: curated homepage products exclude non-featured consoles and games');
+}
+
+searchContext.xjFeaturedProductIds = ['ps4-slim', 'ps4-fat', 'ps2', 'ps3', 'nintendo-switch', 'ps4-controller'];
+if (!searchContext.xjIsHomepageProduct(catalog['ps4-slim']) ||
+    searchContext.xjIsHomepageProduct(catalog['nintendo-switch-lite'])) {
+  console.error('FAIL: saved homepage selection was not respected');
+  failed++;
+} else {
+  console.log('PASS: saved homepage selection limits featured products');
+}
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed > 0 ? 1 : 0);

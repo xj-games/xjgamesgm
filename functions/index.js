@@ -98,7 +98,7 @@ function discountForSelectedItem(promo, items, appliedItemKey) {
   }
 
   const selectedItem = items[targetIndex];
-  const selectedTotal = (Number(selectedItem.price) || 0) * (Number(selectedItem.quantity) || 1);
+  const selectedTotal = Number(selectedItem.price) || 0;
   const discountPercent = Number(promo.percent) || 0;
   const configuredDiscount = Number(promo.discountAmount) || 0;
   const isFixed = promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0 && discountPercent <= 0);

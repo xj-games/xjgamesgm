@@ -10,6 +10,7 @@ const XJ_DEFAULT_CATEGORY_ORDER = [
   "games"
 ];
 var xjCategoryOrder = XJ_DEFAULT_CATEGORY_ORDER.slice();
+var xjFeaturedProductIds = [];
 
 const XJ_PRODUCT_CATALOG = {
   "ps4-slim": {
@@ -115,7 +116,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "nintendo-consoles",
     categories: ["nintendo", "consoles", "switch"],
-    price: 8000,
+    price: 8500,
     inStock: false,
     type: "switch",
     hasModal: true,
@@ -168,7 +169,7 @@ const XJ_PRODUCT_CATALOG = {
     displayCategory: "controllers",
     categories: ["controllers", "ps5", "accessories"],
     price: 4000,
-    inStock: true,
+    inStock: false,
     type: "standalone",
     hasModal: false,
     image: "ps5-controller.png",
@@ -296,16 +297,18 @@ var XJ_HOMEPAGE_PRODUCT_IDS = {
   "ps5-controller": true
 };
 
-function xjIsHomepageProduct(product) {
+function xjIsAllowedHomepageProduct(product) {
   if (!product || xjIsProductHidden(product.id)) return false;
-  if (XJ_HOMEPAGE_PRODUCT_IDS[product.id]) return true;
-
   var name = String(product.name || "").toLowerCase();
   var haystack = product.id + " " + name;
   var categories = product.categories || [];
   var displayCategory = typeof xjGetProductDisplayCategory === "function"
     ? xjGetProductDisplayCategory(product)
     : product.displayCategory;
+  if (product.type === "game" || product.category === "games" || displayCategory === "games" || /\b(cd|disc)\b/.test(name)) {
+    return false;
+  }
+  if (XJ_HOMEPAGE_PRODUCT_IDS[product.id]) return true;
 
   if (displayCategory === "nintendo-consoles") return true;
 
@@ -324,6 +327,11 @@ function xjIsHomepageProduct(product) {
   }
 
   return false;
+}
+
+function xjIsHomepageProduct(product) {
+  if (!xjIsAllowedHomepageProduct(product)) return false;
+  return xjFeaturedProductIds.length !== 6 || xjFeaturedProductIds.indexOf(product.id) !== -1;
 }
 
 function xjSlugifyProductName(name) {

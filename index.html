@@ -1643,7 +1643,31 @@ to { transform: translateX(120%); opacity: 0; }
 
 .catalog-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto 20px}
 .catalog-view-controls{display:flex;justify-content:center;margin:0 auto 16px}
-.catalog-view-controls button{background:rgba(0,191,255,.12);border:1px solid rgba(0,191,255,.55);color:#dff8ff;border-radius:8px;padding:9px 15px;font-weight:600;cursor:pointer}
+.catalog-view-controls button{background:linear-gradient(110deg,#00bfff,#087da4);border:1px solid #79eaff;color:#06111a;border-radius:10px;padding:13px 24px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 24px rgba(0,191,255,.24);transition:transform .2s,box-shadow .2s}
+.catalog-view-controls button:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,191,255,.34)}
+.catalog-view-controls button:focus-visible,.hero-all-products:focus-visible,.how-order-hero-btn:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.hero-all-products{border:1px solid #79eaff;background:linear-gradient(110deg,#00bfff,#087da4);color:#06111a;box-shadow:0 8px 24px rgba(0,191,255,.24);font-weight:800}
+.hero-all-products:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,191,255,.34)}
+.how-order-hero-btn{border:2px solid #52c5e8;color:#dff8ff;background:rgba(82,197,232,.08)}
+.social-spotlight{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;width:min(1100px,90%);margin:0 auto 22px;padding:22px 26px;border:1px solid rgba(0,191,255,.3);border-radius:16px;background:radial-gradient(ellipse at right,rgba(0,191,255,.16),transparent 55%),linear-gradient(135deg,#111b2a,#0b1320);box-shadow:0 16px 38px rgba(0,0,0,.22)}
+.social-spotlight-copy{display:flex;align-items:center;gap:16px}
+.social-spotlight-actions{display:flex;flex-wrap:wrap;gap:10px}
+.social-spotlight-icon{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:14px;background:#070b16;border:1px solid rgba(0,242,254,.55);color:#fff;font-size:25px}
+.social-spotlight h2{margin:0 0 5px;color:#f2f7fc;font-size:20px}
+.social-spotlight p{margin:0;color:#b8c3d2;line-height:1.5}
+.social-spotlight a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border:1px solid #00f2fe;border-radius:10px;background:#070b16;color:#fff;font-weight:800;text-decoration:none;white-space:nowrap;box-shadow:0 0 22px rgba(0,242,254,.16)}
+.social-spotlight a:hover{border-color:#fe2c55;box-shadow:0 0 26px rgba(254,44,85,.25)}
+.social-spotlight .social-instagram{border-color:#e6683c;background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);box-shadow:0 0 22px rgba(220,39,67,.2)}
+.social-spotlight .social-instagram:hover{border-color:#ffb56c;box-shadow:0 0 26px rgba(240,148,51,.34)}
+.policy-section{max-width:1100px;margin:auto;line-height:1.7}
+.policy-list{max-width:760px;margin:0 auto;padding-left:24px;color:#c4cfdd}
+.delivery-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin:18px 0}
+.delivery-zones div{display:flex;flex-direction:column;gap:6px;padding:14px;background:#0d1522;border:1px solid var(--xj-border);border-radius:10px;color:#c4cfdd}
+.delivery-zones strong{color:var(--xj-cyan)}
+.promo-item-choices{display:grid;gap:9px;margin:14px 0}
+.promo-item-choice{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#0b1320;color:#eaf1f8;cursor:pointer}
+.promo-item-choice:focus-within{border-color:#00bfff;background:rgba(0,191,255,.1)}
+.promo-item-choice input{margin-top:4px;accent-color:#00bfff}
 .catalog-tools select,.xj-list-row button{background:#111827;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:8px}
 .xj-panel{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 .xj-panel.active{display:flex}.xj-panel-card{background:#111827;border:1px solid #00bfff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:85vh;overflow:auto}
@@ -1914,12 +1938,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <p>
   Premium PlayStation and Nintendo consoles with fast delivery, affordable prices, trusted quality, and excellent customer support.<br><br>
   📍 <strong>Our location is at Turntable, Brusubi.</strong><br>
-  ⚙️ <strong>We do game installations—any game of your choice, we've got you covered!</strong>
 </p>
 <div class="buttons">
 <a href="#products" class="btn shop">SHOP NOW</a>
-<a href="#products" class="btn outline">VIEW DEALS</a>
+<a href="all-products.html" class="btn hero-all-products">VIEW ALL PRODUCTS</a>
+<a href="#how-to-order" class="btn how-order-hero-btn">HOW TO ORDER · DELIVERY &amp; PICKUP</a>
 <a href="#footer-socials" class="btn social-hero-btn">📱 FOLLOW SOCIALS</a>
+<a href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer" class="btn social-hero-btn btn-instagram">FOLLOW XJ GAMES ON INSTAGRAM</a>
 <a href="#reviews" class="btn review-hero-btn">⭐ REVIEWS</a>
 </div>
 <div class="stats">
@@ -1940,6 +1965,17 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <div class="rightHero">
  <img src="xj-games-logo.png" alt="XJ Games Hero Logo">
 </div>
+</section>
+
+<section class="social-spotlight" aria-label="Follow XJ Games on social media">
+  <div class="social-spotlight-copy">
+    <span class="social-spotlight-icon" aria-hidden="true">♪</span>
+    <div><h2>Stay connected with XJ Games</h2><p>Follow us on TikTok and Instagram for XJ Games updates in your feed.</p></div>
+  </div>
+  <div class="social-spotlight-actions">
+    <a href="https://www.tiktok.com/@xj_games7?is_from_webapp=1&amp;sender_device=pc" target="_blank" rel="noopener noreferrer">Follow on TikTok <span aria-hidden="true">↗</span></a>
+    <a class="social-instagram" href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer">Follow on Instagram <span aria-hidden="true">↗</span></a>
+  </div>
 </section>
 
 <!-- ================= PRODUCTS ================= -->
@@ -1994,7 +2030,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 </div>
 
 <div class="card" data-product-id="ps5" data-name="playstation 5" data-category="ps5,consoles">
-  <span class="stock">● In Stock</span>
+  <span class="stock">● Out of Stock</span>
   <img src="ps5.png" alt="PlayStation 5">
   <h3>PlayStation 5</h3>
   <p class="desc">Next-generation 4K gaming with ultra-fast loading, stunning graphics, and DualSense immersive gameplay.</p>
@@ -2052,9 +2088,9 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <img src="nintendo-switch.png" alt="Nintendo Switch">
   <h3>Nintendo Switch</h3>
   <p class="desc">Play at home on the TV or on the go. The ultimate hybrid console designed for versatile, family-friendly fun anywhere.</p>
-  <p class="price">8,000 GMD</p>
+  <p class="price">8,500 GMD</p>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8000, 'switch')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8500, 'switch')">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2095,13 +2131,14 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps4-controller')">View Description</button>
+        <button type="button" onclick="xjOpenReducePrice('ps4-controller')">Reduce price</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="card" data-product-id="ps5-controller" data-name="ps5 controller" data-category="controllers,ps5,accessories">
-  <span class="stock">● In Stock</span>
+  <span class="stock">● Out of Stock</span>
   <img src="ps5-controller.png" alt="PS5 Controller">
   <h3>PS5 Controller</h3>
   <p class="desc">Next-gen DualSense wireless controller with adaptive triggers, haptic feedback, and a built-in microphone for immersive PlayStation 5 gaming.</p>
@@ -2112,6 +2149,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps5-controller')">View Description</button>
+        <button type="button" onclick="xjOpenReducePrice('ps5-controller')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -2129,7 +2167,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <div class="feature-card">
 <h1>🚚</h1>
 <h3>Fast Delivery</h3>
-<p>Quick delivery across The Gambia using JJ delivery service.</p>
+<p>Quick delivery service is available across The Gambia.</p>
 </div>
 
 <div class="feature-card">
@@ -2163,6 +2201,29 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 </div>
 
 </div>
+</section>
+
+<section id="how-to-order" class="features policy-section">
+  <h2 class="section-title">How to Order</h2>
+  <ol class="policy-list">
+    <li>Browse the available products or search the catalog.</li>
+    <li>Select a product and review its condition, price, and options.</li>
+    <li>Choose the product quantity and add it to your cart.</li>
+    <li>Choose whether you need delivery and provide your location, or arrange pickup.</li>
+    <li>Review the order summary and any confirmed charges.</li>
+    <li>Open WhatsApp and tap <strong>Send</strong> to submit your order.</li>
+    <li>Wait for XJ Games to confirm the order.</li>
+  </ol>
+</section>
+
+<section id="delivery-information" class="features policy-section">
+  <h2 class="section-title">Delivery &amp; Pickup Information</h2>
+  <p>Delivery is available across The Gambia. Choose delivery and enter your location when customizing a product; the current checkout adds GMD 300 per delivered unit. Confirm the exact fee and delivery arrangements on WhatsApp before paying.</p>
+  <div class="delivery-zones">
+    <div><strong>Delivery</strong><span>Select “Yes” and enter your address in the product options. Confirm timing and any location-specific fee with XJ Games.</span></div>
+    <div><strong>Pickup</strong><span>Select “No” for delivery. Pickup is at Turntable, Brusubi; message XJ Games to confirm arrangements before travelling.</span></div>
+  </div>
+  <p>Confirm product availability on WhatsApp before travelling or paying.</p>
 </section>
 
 <!-- ================= REVIEWS ================= -->
@@ -2550,7 +2611,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <a href="https://www.tiktok.com/@xj_games7?is_from_webapp=1&sender_device=pc" target="_blank" class="social-link-btn btn-tiktok">
     🎵 TikTok
   </a>
-  <a href="https://www.instagram.com" target="_blank" class="social-link-btn btn-instagram">
+  <a href="https://www.instagram.com/xj_gamez/" target="_blank" rel="noopener noreferrer" class="social-link-btn btn-instagram">
     📷 Instagram
   </a>
   <a href="https://wa.me/2202164491" target="_blank" class="social-link-btn btn-whatsapp">
@@ -2565,16 +2626,17 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <script src="js/firebase-config.js?v=20260822d"></script>
-<script src="js/xj-catalog.js?v=20261002a"></script>
-<script src="js/xj-search.js?v=20260822d"></script>
+<script src="js/xj-catalog.js?v=20261017a"></script>
+<script src="js/xj-search.js?v=20261017a"></script>
 <script src="js/xj-auth.js?v=20261002b"></script>
 <script src="js/xj-profile.js?v=20261002b"></script>
-<script src="js/xj-inventory.js?v=20261002c"></script>
+<script src="js/xj-inventory.js?v=20261017a"></script>
 <script src="js/xj-reviews.js?v=20261002a"></script>
-<script src="js/xj-commerce.js?v=20261002g"></script>
+<script src="js/xj-commerce.js?v=20261017a"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
+window.xjGetCartItems = function() { return cart; };
 let xjCheckoutInProgress = false;
 const XJ_REDUCE_KEY = 'xj_reduce_price_state';
 let xjReduceState = JSON.parse(localStorage.getItem(XJ_REDUCE_KEY) || '{}');
@@ -2631,9 +2693,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function xjReduceStateFor(id) { return xjReduceState[id] || { shares: 0, unlocked: false, used: false }; }
   function xjEligibleForReduce(p) {
-    if (!p) return false;
-    if (p.displayCategory) return p.displayCategory === 'playstation-consoles' || p.displayCategory === 'nintendo-consoles';
-    return /playstation|ps[2-5]|nintendo switch/i.test(p.name || '') && !/controller|game|accessor|headset/i.test(p.name || '');
+    return !!(p && p.id);
   }
   function xjProductPrice(id, fallback) { const p = xjReduceStateFor(id); return p.unlocked ? Math.max(0, Number(fallback) - 500) : Number(fallback); }
   function xjProductActionHtml(id, action, label) {
@@ -3098,6 +3158,12 @@ function sendRecommendation() {
 function saveCart() {
   localStorage.setItem('xj_cart', JSON.stringify(cart));
   updateCartUI();
+  var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  if (promo && cart.length && !cart.some(function(item) {
+    return typeof xjCartItemKey === "function" && xjCartItemKey(item) === promo.appliedItemKey;
+  }) && window.xjOpenPromoItemPicker) {
+    window.xjOpenPromoItemPicker();
+  }
 }
 
 function updateCartUI() {
@@ -3119,7 +3185,7 @@ function updateCartUI() {
     cartTotalPrice.innerText = '0 GMD';
     const emptyCartPromo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
     document.getElementById('cartPromoMessage').textContent = emptyCartPromo
-      ? 'Discount code ' + emptyCartPromo.code + ' applied. Add items to see the discount.'
+      ? 'Code ' + emptyCartPromo.code + ' verified. Add items, then choose one product for the discount.'
       : '';
     document.getElementById('cartBalanceMessage').textContent = '';
     return;
@@ -3162,7 +3228,10 @@ function updateCartUI() {
 
   cartItemsContainer.innerHTML = html;
   const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-  const discount = promo ? Math.min(total, Number(promo.discountAmount) || Math.round(total * Number(promo.percent || 0) / 100)) : 0;
+  const promoDetails = window.xjGetPromoDiscountDetails
+    ? window.xjGetPromoDiscountDetails(promo, cart)
+    : { amount: 0, item: null };
+  const discount = promoDetails.amount;
   const signedIn = !!(window.xjAuth && xjAuth.currentUser);
   const availableBalance = signedIn ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
   const useBalance = !!(document.getElementById('useXjBalance') && document.getElementById('useXjBalance').checked && signedIn);
@@ -3178,9 +3247,12 @@ function updateCartUI() {
     : signedIn ? 'Available XJ Games balance: ' + availableBalance.toLocaleString() + ' GMD' + (useBalance ? ' · Remaining after order: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD' : '') : '';
   const promoMessage = document.getElementById('cartPromoMessage');
   if (promoMessage) {
-    promoMessage.textContent = promo
-      ? 'Discount code ' + promo.code + ' applied: ' + discount.toLocaleString() + ' GMD off.'
-      : '';
+    promoMessage.textContent = !promo
+      ? ''
+      : promoDetails.item
+        ? 'Discount code ' + promo.code + ' applied to ' + promoDetails.item.name + ': -' + discount.toLocaleString() +
+          ' GMD. Discounted unit price: ' + Math.max(0, Number(promoDetails.item.finalPrice) - discount).toLocaleString() + ' GMD.'
+        : 'Choose one cart item to apply discount code ' + promo.code + '.';
   }
   cartTotalPrice.textContent = finalTotal.toLocaleString() + ' GMD';
 }
@@ -3288,8 +3360,12 @@ function xjWhatsAppCheckoutUrl(message) {
   return 'https://wa.me/' + number + '?text=' + encodeURIComponent(message);
 }
 
-function xjOpenWhatsAppCheckout(message) {
+function xjOpenWhatsAppCheckout(message, openedWindow) {
   var url = xjWhatsAppCheckoutUrl(message);
+  if (openedWindow && !openedWindow.closed) {
+    openedWindow.location.href = url;
+    return openedWindow;
+  }
   var opened = window.open(url, '_blank');
   if (!opened) {
     window.location.href = url;
@@ -3300,11 +3376,13 @@ function xjOpenWhatsAppCheckout(message) {
 function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
   var customerName = customer && customer.name ? customer.name : 'Customer';
   var lines = [
-    'Hello XJ Games, I want to place an order:',
+    'XJ GAMES ORDER',
     '',
     'Customer: ' + customerName,
-    ''
   ];
+  if (customer && customer.email) lines.push('Email: ' + customer.email);
+  if (customer && customer.phone) lines.push('Phone: ' + customer.phone);
+  lines.push('', 'Products:');
   var subtotal = 0;
   cart.forEach(function(item, index) {
     var quantity = item.quantity || 1;
@@ -3312,21 +3390,42 @@ function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
     var lineTotal = unitPrice * quantity;
     subtotal += lineTotal;
     var details = xjCheckoutItemDetails(item);
-    lines.push((index + 1) + '. ' + item.name + ' (Quantity: ' + quantity + ') - ' + lineTotal.toLocaleString() + ' GMD');
+    lines.push('• ' + item.name + ' x' + quantity + ' — GMD ' + lineTotal.toLocaleString());
     if (details) lines.push('   ' + details);
   });
-  var discount = promo ? Math.min(subtotal, Number(promo.discountAmount) || Math.round(subtotal * Number(promo.percent || 0) / 100)) : 0;
+  lines.push('', 'Subtotal: GMD ' + subtotal.toLocaleString());
+  var deliveryModes = Array.from(new Set(cart.map(function(item) {
+    return item.delivery === 'Yes' ? 'Delivery' : 'Pickup';
+  })));
+  lines.push('Delivery/Pickup: ' + deliveryModes.join(' and '));
+  var locations = Array.from(new Set(cart.filter(function(item) {
+    return item.delivery === 'Yes' && item.address;
+  }).map(function(item) { return item.address; })));
+  if (locations.length) lines.push('Location: ' + locations.join(', '));
+  var promoDetails = window.xjGetPromoDiscountDetails
+    ? window.xjGetPromoDiscountDetails(promo, cart)
+    : { amount: 0, item: null, percent: 0 };
+  var discount = promoDetails.amount;
   var availableBalance = (window.xjIsAuthenticated && xjIsAuthenticated()) ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
   var balanceUsed = useBalance ? Math.min(Math.max(0, subtotal - discount), availableBalance) : 0;
   var finalTotal = Math.max(0, subtotal - discount - balanceUsed);
-  if (promo) {
-    lines.push('', 'Promo code: ' + promo.code, 'Discount: ' + discount.toLocaleString() + ' GMD');
+  if (promo && promoDetails.item) {
+    lines.push(
+      '',
+      'Discount Code: ' + promo.code,
+      'Applied To: ' + promoDetails.item.name,
+      'Discount: ' + (promo.discountType === 'fixed' ? 'Fixed amount' : promoDetails.percent + '%'),
+      'Discount Amount: -GMD ' + discount.toLocaleString(),
+      'Discounted Unit Price: GMD ' + Math.max(0, Number(promoDetails.item.finalPrice) - discount).toLocaleString()
+    );
+  } else if (promo) {
+    lines.push('', 'Discount Code: ' + promo.code, 'No discount applied — select one item in the cart.');
   }
   if (balanceUsed) {
     lines.push('XJ Games Balance: -' + balanceUsed.toLocaleString() + ' GMD');
     lines.push('Remaining XJ Games Balance: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD');
   }
-  lines.push('', 'Final total: ' + finalTotal.toLocaleString() + ' GMD');
+  lines.push('', 'Final Total: GMD ' + finalTotal.toLocaleString(), '', 'Please confirm my order.');
   return lines.join('\n');
 }
 
@@ -3353,9 +3452,22 @@ async function checkoutCart() {
     return;
   }
   var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+  if (promo) {
+    var promoSelectionExists = cart.some(function(cartItem) {
+      return xjCartItemKey(cartItem) === promo.appliedItemKey;
+    });
+    if (!promoSelectionExists) {
+      if (window.xjOpenPromoItemPicker) window.xjOpenPromoItemPicker();
+      promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
+      if (!promo || !cart.some(function(cartItem) {
+        return xjCartItemKey(cartItem) === promo.appliedItemKey;
+      })) return;
+    }
+  }
   var checkoutItems = cart.map(function(cartItem) {
     return {
       productId: cartItem.productId || xjGetProductIdByName(cartItem.name) || cartItem.name,
+      cartItemKey: xjCartItemKey(cartItem),
       name: cartItem.name,
       quantity: cartItem.quantity || 1,
       options: {
@@ -3373,7 +3485,34 @@ async function checkoutCart() {
   });
 
   xjCheckoutInProgress = true;
-  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer, promo, useBalance));
+  var whatsappWindow = null;
+  if (promo) {
+    whatsappWindow = window.open("about:blank", "_blank");
+    if (!whatsappWindow) {
+      xjCheckoutInProgress = false;
+      showToast("WhatsApp checkout", "Allow pop-ups to open the verified order message.", "error");
+      return;
+    }
+    try {
+      var verifiedPromo = await firebase.functions().httpsCallable('redeemPromoCode')({ code: promo.code });
+      promo = Object.assign({}, promo, verifiedPromo.data, { uid: promo.uid, appliedItemKey: promo.appliedItemKey });
+      var currentUser = window.xjAuth && xjAuth.currentUser;
+      if (currentUser) localStorage.setItem('xj_redeemed_promo_' + currentUser.uid, JSON.stringify(promo));
+    } catch (error) {
+      if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
+      xjCheckoutInProgress = false;
+      var invalidPromo = error && ["functions/not-found", "functions/failed-precondition", "functions/invalid-argument"].includes(error.code);
+      if (invalidPromo) {
+        if (window.xjRemovePromo) window.xjRemovePromo();
+        showToast("Promo code", "Invalid code, please try again.", "error");
+      } else {
+        console.error("Promo validation failed before checkout:", error);
+        showToast("WhatsApp checkout", error && error.message ? error.message : "Could not verify the discount code.", "error");
+      }
+      return;
+    }
+  }
+  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer, promo, useBalance), whatsappWindow);
   showToast('Checkout ready', 'Your order is ready to send on WhatsApp.');
   if (promo && window.xjRemovePromo) window.xjRemovePromo();
   if (useBalanceEl) useBalanceEl.checked = false;
@@ -3386,11 +3525,13 @@ async function checkoutCart() {
         customerName: customer ? customer.name : '',
         items: checkoutItems,
         promoCode: promo ? promo.code : '',
+        appliedItemKey: promo ? promo.appliedItemKey : '',
         useBalance: useBalance,
       });
     }
   } catch (error) {
     console.error('Checkout order creation failed:', error);
+    showToast('Order record failed', 'WhatsApp is open, but the website could not save the order record. Send the message and wait for XJ Games to confirm.', 'error');
   } finally {
     xjCheckoutInProgress = false;
   }

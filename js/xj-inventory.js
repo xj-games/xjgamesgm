@@ -55,7 +55,9 @@ function xjInitInventory() {
 function xjValidateFeaturedProductIds() {
   if (xjInventoryReady) {
     xjFeaturedProductIds = xjFeaturedProductIds.filter(function(id) {
-      return !!XJ_PRODUCT_CATALOG[id] && !xjIsProductHidden(id);
+      return !!XJ_PRODUCT_CATALOG[id]
+        && !xjIsProductHidden(id)
+        && xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
     });
   }
 }
@@ -178,21 +180,22 @@ function xjHasRemoteProductFields(data) {
 function xjProductFromRemote(productId, data) {
   var name = data.name || "New Product";
   var nameLower = name.toLowerCase();
+  var gameProduct = /\b(game|games|disc|cd)\b/i.test(nameLower);
   var controller = /controller|dualshock|dualsense/.test(nameLower);
-  var playStationConsole = !controller && /(playstation\s*[2345]|(^|[^a-z])ps[2345]([^a-z]|$))/i.test(name);
-  var switchConsole = !controller && /nintendo switch/i.test(name);
-  var inferredCategory = playStationConsole || switchConsole ? "consoles" : /game|disc/.test(nameLower) ? "games" : controller ? "accessories" : "accessories";
-  var category = data.category || inferredCategory;
-  var inferredType = playStationConsole ? "ps4" : switchConsole ? "switch" : controller ? "controller" : category === "games" ? "game" : "standalone";
-  var type = data.type || inferredType;
-  var categories = Array.isArray(data.categories) ? data.categories.slice() : [category];
-  if (!Array.isArray(data.categories)) {
+  var playStationConsole = !gameProduct && !controller && /(playstation\s*[2345]|(^|[^a-z])ps[2345]([^a-z]|$))/i.test(name);
+  var switchConsole = !gameProduct && !controller && /nintendo switch/i.test(name);
+  var inferredCategory = gameProduct ? "games" : playStationConsole || switchConsole ? "consoles" : controller ? "accessories" : "accessories";
+  var category = gameProduct ? "games" : data.category || inferredCategory;
+  var inferredType = gameProduct ? "game" : playStationConsole ? "ps4" : switchConsole ? "switch" : controller ? "controller" : "standalone";
+  var type = gameProduct ? "game" : data.type || inferredType;
+  var categories = gameProduct ? ["games"] : Array.isArray(data.categories) ? data.categories.slice() : [category];
+  if (!gameProduct && !Array.isArray(data.categories)) {
     if (playStationConsole) categories = ["playstation", "consoles", "ps" + (name.match(/(?:ps|playstation\s*)([2345])/i) || [])[1]];
     else if (switchConsole) categories = ["nintendo", "switch", "consoles"];
     else if (controller) categories = ["controllers", "accessories"];
     else if (category === "games") categories = ["games"];
   }
-  var displayCategory = data.displayCategory || (playStationConsole
+  var displayCategory = gameProduct ? "games" : data.displayCategory || (playStationConsole
     ? "playstation-consoles"
     : switchConsole
       ? "nintendo-consoles"
@@ -276,7 +279,7 @@ function xjBuildProductCardHtml(product) {
   var action = product.hasModal
     ? "openCustomizationModal('" + jsName + "', " + Number(product.price) + ", '" + (product.type === "switch" ? "switch" : "ps4") + "')"
     : "directAddToCart('" + jsName + "', " + Number(product.price) + ")";
-  var eligible = product.displayCategory === "playstation-consoles" || product.displayCategory === "nintendo-consoles";
+  var eligible = !!product.id;
 
   return (
     '<div class="card" data-product-id="' + xjEscapeHtml(product.id) + '" data-name="' + safeSlug + '" data-category="' + safeCats + '">' +
@@ -453,6 +456,9 @@ function xjRenderAdminInventoryPanel() {
     "</div>";
   var productIds = xjGetAllProductIds();
   var adminProductIds = xjGetAllProductIds(true);
+  var homepageProductIds = productIds.filter(function(id) {
+    return xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
+  });
   var availableCount = productIds.filter(function(id) { return !!XJ_PRODUCT_CATALOG[id]; }).length;
   var inStockCount = productIds.filter(function(id) { return !!xjGetProductStock(id); }).length;
   html += '<div class="admin-dashboard-summary"><strong>Catalog stock overview:</strong> ' +
@@ -470,10 +476,10 @@ function xjRenderAdminInventoryPanel() {
   if (xjFeaturedProductIds.length !== 6) {
     html += '<p class="admin-warning">No valid six-product featured selection is currently active. Choose exactly six products and save.</p>';
   }
-  if (availableCount < 6) {
-    html += '<p class="admin-warning">Only ' + availableCount + ' products are available. Add products before selecting the six homepage features.</p>';
+  if (homepageProductIds.length < 6) {
+    html += '<p class="admin-warning">Only ' + homepageProductIds.length + ' eligible homepage products are available. Add eligible products before selecting six homepage features.</p>';
   }
-  productIds.forEach(function(productId) {
+  homepageProductIds.forEach(function(productId) {
     var product = XJ_PRODUCT_CATALOG[productId];
     if (!product) return;
     var checked = xjFeaturedProductIds.indexOf(productId) !== -1;
@@ -660,7 +666,11 @@ async function xjSaveFeaturedProducts() {
     showToast("Select six products", "Choose exactly six existing products before saving.", "error");
     return;
   }
-  if (selected.some(function(id) { return !XJ_PRODUCT_CATALOG[id] || xjIsProductHidden(id); })) {
+  if (selected.some(function(id) {
+    return !XJ_PRODUCT_CATALOG[id]
+      || xjIsProductHidden(id)
+      || !xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
+  })) {
     showToast("Homepage selection", "A selected product is no longer available. Refresh the list and choose again.", "error");
     return;
   }

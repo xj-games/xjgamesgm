@@ -20,10 +20,93 @@
     try { redeemedPromo = JSON.parse(localStorage.getItem(key) || "null"); } catch (error) { redeemedPromo = null; }
     return redeemedPromo && redeemedPromo.uid === user().uid ? redeemedPromo : null;
   };
+  function saveRedeemedPromo() {
+    var key = promoStorageKey();
+    if (key && redeemedPromo) localStorage.setItem(key, JSON.stringify(redeemedPromo));
+  }
+  window.xjGetPromoDiscountDetails = function (promo, items) {
+    if (!promo || !promo.appliedItemKey || !Array.isArray(items)) {
+      return { amount: 0, item: null, percent: Number(promo && promo.percent) || 0 };
+    }
+    var selectedItem = items.find(function (item) {
+      return typeof xjCartItemKey === "function" && xjCartItemKey(item) === promo.appliedItemKey;
+    });
+    if (!selectedItem) {
+      return { amount: 0, item: null, percent: Number(promo.percent) || 0 };
+    }
+    var unitPrice = Math.max(0, Number(selectedItem.finalPrice) || 0);
+    var percent = Number(promo.percent) || 0;
+    var configuredAmount = Number(promo.discountAmount) || 0;
+    var fixed = promo.discountType === "fixed" || (!promo.discountType && configuredAmount > 0 && percent <= 0);
+    var amount = fixed ? configuredAmount : Math.round(unitPrice * percent / 100);
+    return {
+      amount: Math.min(unitPrice, Math.max(0, amount)),
+      item: selectedItem,
+      percent: percent
+    };
+  };
+  function getCartItems() {
+    return typeof window.xjGetCartItems === "function" ? window.xjGetCartItems() : [];
+  }
+  window.xjOpenPromoItemPicker = function () {
+    redeemedPromo = window.xjGetRedeemedPromo();
+    var items = getCartItems();
+    if (!redeemedPromo || !items.length) return false;
+    if (items.length === 1) {
+      redeemedPromo.appliedItemKey = xjCartItemKey(items[0]);
+      saveRedeemedPromo();
+      if (window.updateCartUI) updateCartUI();
+      return true;
+    }
+    var choices = document.getElementById("promoItemChoices");
+    var prompt = document.getElementById("promoItemPrompt");
+    var modal = document.getElementById("promoItemModal");
+    var error = document.getElementById("promoItemError");
+    if (!choices || !prompt || !modal) {
+      console.error("Promo item picker markup is missing.");
+      showToast("Promo code", "Could not open the item selector. Please refresh and try again.", "error");
+      return false;
+    }
+    if (error) error.textContent = "";
+    prompt.textContent = "Which item would you like to apply your " +
+      (redeemedPromo.discountType === "fixed"
+        ? Number(redeemedPromo.discountAmount || 0).toLocaleString() + " GMD"
+        : (Number(redeemedPromo.percent) || 0) + "%") + " discount to?";
+    choices.innerHTML = items.map(function (item) {
+      var key = xjCartItemKey(item);
+      var checked = key === redeemedPromo.appliedItemKey ? " checked" : "";
+      return '<label class="promo-item-choice"><input type="radio" name="promoItemChoice" value="' +
+        xjEscapeHtml(key) + '"' + checked + '><span>' + xjEscapeHtml(item.name) +
+        ' · ' + Number(item.finalPrice || 0).toLocaleString() + ' GMD each' +
+        (Number(item.quantity) > 1 ? ' · Qty ' + Number(item.quantity) : '') +
+        '</span></label>';
+    }).join("");
+    modal.classList.add("active");
+    return true;
+  };
+  window.xjClosePromoItemPicker = function () {
+    var modal = document.getElementById("promoItemModal");
+    if (modal) modal.classList.remove("active");
+  };
+  window.xjApplyPromoItemChoice = function () {
+    redeemedPromo = window.xjGetRedeemedPromo();
+    var selected = document.querySelector('input[name="promoItemChoice"]:checked');
+    var error = document.getElementById("promoItemError");
+    if (!redeemedPromo || !selected) {
+      if (error) error.textContent = "Choose one product to apply the discount.";
+      return;
+    }
+    redeemedPromo.appliedItemKey = selected.value;
+    saveRedeemedPromo();
+    window.xjClosePromoItemPicker();
+    if (window.updateCartUI) updateCartUI();
+    showToast("Promo applied", "The discount is applied to one selected product only.", "success");
+  };
   window.xjRemovePromo = function () {
     var key = promoStorageKey();
     if (key) localStorage.removeItem(key);
     redeemedPromo = null;
+    window.xjClosePromoItemPicker();
     var message = document.getElementById("cartPromoMessage");
     if (message) message.textContent = "";
     if (window.updateCartUI) updateCartUI();
@@ -83,12 +166,15 @@
   };
   function renderRecommendations() {
     var box = document.getElementById("recommendationItems"); if (!box) return;
+    var eligibleCategories = ["playstation-consoles", "nintendo-consoles", "controllers", "games"];
     var ids = xjGetAllProductIds().filter(function (id) {
       var item = product(id);
       return xjGetProductStock(id)
         && !(window.xjIsProductHidden && xjIsProductHidden(id))
-        && (!window.xjIsHomepageProduct || xjIsHomepageProduct(item));
-    }).slice(0, 4);
+        && eligibleCategories.indexOf(xjGetProductDisplayCategory(item)) !== -1;
+    }).sort(function (a, b) {
+      return Number(product(b).price || 0) - Number(product(a).price || 0);
+    }).slice(0, 3);
     box.classList.add("product-grid");
     var cards = ids.map(function (id) {
       var source = document.querySelector('#productGrid .card[data-product-id="' + id + '"]');
@@ -148,6 +234,7 @@
     var percent = discountType === "percent" ? Number(document.getElementById("promoPercent").value) : 0;
     var discountAmount = discountType === "fixed" ? Number(document.getElementById("promoAmount").value) : 0;
     var usageLimit = Number(document.getElementById("promoUsageLimit").value) || 1;
+    var startsValue = document.getElementById("promoStartsAt").value;
     var expiresValue = document.getElementById("promoExpiresAt").value;
     if (!/^[A-Z0-9]{3,64}$/.test(code) || (discountType === "percent" && (percent < 1 || percent > 90)) || (discountType === "fixed" && discountAmount < 1)) {
       return showToast("Discount code", "Enter a valid code and discount amount.", "error");
@@ -159,10 +246,11 @@
         percent: percent,
         discountAmount: discountAmount,
         usageLimit: usageLimit,
+        startsAt: startsValue ? new Date(startsValue).toISOString() : null,
         expiresAt: expiresValue ? new Date(expiresValue).toISOString() : null
       });
       document.getElementById("promoCode").value = "";
-      showToast("Discount code created", code + " is active.");
+      showToast("Discount code created", code + " was saved.");
     } catch (error) {
       console.error("Discount code creation failed:", error);
       showToast("Discount code", error.message || "The code could not be saved.", "error");
@@ -319,25 +407,34 @@
     }
     var code = input.value.trim().toUpperCase();
     if (!code) {
-      if (message) message.textContent = "Invalid promo code. Please try again.";
-      return showToast("Promo code", "Invalid promo code. Please try again.", "error");
+      if (message) message.textContent = "Invalid code, please try again.";
+      return showToast("Promo code", "Invalid code, please try again.", "error");
     }
     try {
       var result = await firebase.functions().httpsCallable("redeemPromoCode")({ code: code });
       redeemedPromo = Object.assign({}, result.data, { uid: user().uid });
       localStorage.setItem(promoStorageKey(), JSON.stringify(redeemedPromo));
-      if (message) message.textContent = redeemedPromo.discountAmount
-        ? redeemedPromo.discountAmount.toLocaleString() + " GMD discount applied at checkout."
-        : redeemedPromo.percent + "% discount applied at checkout.";
-      if (window.updateCartUI) updateCartUI();
-      showToast("Promo applied", "The discount will be verified again when your order is created.", "success");
-    } catch (error) {
-      if (!error || !["functions/not-found", "functions/failed-precondition", "functions/invalid-argument"].includes(error.code)) {
-        console.error("Promo redemption failed:", error);
+      var items = getCartItems();
+      if (items.length) {
+        window.xjOpenPromoItemPicker();
+      } else if (message) {
+        message.textContent = "Code verified. Add products, then choose one item for the discount.";
       }
-      window.xjRemovePromo();
-      if (message) message.textContent = "Invalid promo code. Please try again.";
-      showToast("Promo code", "Invalid promo code. Please try again.", "error");
+      if (window.updateCartUI) updateCartUI();
+      showToast("Promo verified", items.length === 1
+        ? "The discount is applied to your only cart item."
+        : items.length ? "Choose one product for this discount." : "Add products, then choose one for this discount.", "success");
+    } catch (error) {
+      var invalidCode = error && ["functions/not-found", "functions/failed-precondition", "functions/invalid-argument"].includes(error.code);
+      if (invalidCode) {
+        window.xjRemovePromo();
+        if (message) message.textContent = "Invalid code, please try again.";
+        showToast("Promo code", "Invalid code, please try again.", "error");
+        return;
+      }
+      console.error("Promo redemption failed:", error);
+      if (message) message.textContent = "Could not verify the code. Please try again.";
+      showToast("Promo code", error && error.message ? error.message : "Could not verify the code. Please try again.", "error");
     }
   };
   window.xjRedeemTopPromo = function () {
