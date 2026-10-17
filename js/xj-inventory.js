@@ -6,6 +6,8 @@ var xjStockObserver = null;
 var xjApplyingStock = false;
 var xjAdminFormOpen = false;
 var xjCategoryOrderUnsubscribe = null;
+var xjFeaturedProductsUnsubscribe = null;
+var xjInventoryReady = false;
 var XJ_WHATSAPP_NOTIFY_NUMBER = "2202164491";
 var XJ_NOTIFY_BUTTON_LABEL = "Notify Me";
 
@@ -17,6 +19,7 @@ function xjInitInventory() {
   if (xjDb && xjIsFirebaseConfigured()) {
     xjSubscribeToInventory();
     xjSubscribeToCategoryOrder();
+    xjSubscribeToFeaturedProducts();
   }
 
   function xjSubscribeToCategoryOrder() {
@@ -29,6 +32,30 @@ function xjInitInventory() {
       }
     }, function(error) {
       console.error("Category order listener error:", error);
+    });
+  }
+
+  function xjSubscribeToFeaturedProducts() {
+    if (xjFeaturedProductsUnsubscribe) xjFeaturedProductsUnsubscribe();
+    xjFeaturedProductsUnsubscribe = xjDb.collection("config").doc("featuredProducts").onSnapshot(function(snapshot) {
+      var ids = snapshot.exists && Array.isArray(snapshot.data().productIds) ? snapshot.data().productIds : [];
+      xjFeaturedProductIds = ids.filter(function(id, index) {
+        return typeof id === "string" && ids.indexOf(id) === index;
+      });
+      xjValidateFeaturedProductIds();
+      xjShowAllProductCards();
+      xjRenderAdminInventoryPanel();
+    }, function(error) {
+      console.error("Featured products listener error:", error);
+      showToast("Homepage selection", "Could not load featured products. Please refresh and try again.", "error");
+    });
+  }
+}
+
+function xjValidateFeaturedProductIds() {
+  if (xjInventoryReady) {
+    xjFeaturedProductIds = xjFeaturedProductIds.filter(function(id) {
+      return !!XJ_PRODUCT_CATALOG[id] && !xjIsProductHidden(id);
     });
   }
 }
@@ -70,6 +97,8 @@ function xjSubscribeToInventory() {
     snapshot.forEach(function(doc) {
       xjApplyRemoteProduct(doc.id, doc.data() || {});
     });
+    xjInventoryReady = true;
+    xjValidateFeaturedProductIds();
     xjApplyAllStockStates();
     xjRenderAdminInventoryPanel();
     if (typeof xjShowAllProductCards === "function") {
@@ -82,9 +111,16 @@ function xjSubscribeToInventory() {
 
 function xjApplyRemoteProduct(productId, data) {
   if (data.hidden) {
+    if (data.isCustom || (!XJ_PRODUCT_CATALOG[productId] && xjHasRemoteProductFields(data))) {
+      XJ_PRODUCT_CATALOG[productId] = xjProductFromRemote(productId, data);
+    }
     xjHideProduct(productId);
     var hiddenCard = document.querySelector('#productGrid .card[data-product-id="' + productId + '"]');
     if (hiddenCard) hiddenCard.style.display = "none";
+    xjFeaturedProductIds = xjFeaturedProductIds.filter(function(id) { return id !== productId; });
+    if (window.xjRepriceCartFromCatalog) window.xjRepriceCartFromCatalog(productId);
+    if (typeof xjShowAllProductCards === "function") xjShowAllProductCards();
+    if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
     return;
   }
 
@@ -98,9 +134,18 @@ function xjApplyRemoteProduct(productId, data) {
     if (typeof data.description === "string") {
       existingProduct.description = data.description;
     }
+    if (typeof data.condition === "string") existingProduct.condition = data.condition;
+    if (Array.isArray(data.images)) {
+      existingProduct.images = data.images.filter(function(url) { return typeof url === "string"; });
+      existingProduct.image = existingProduct.images[0] || "";
+    }
+    if (typeof data.image === "string") existingProduct.image = data.image;
+    if (Array.isArray(data.videoUrls)) existingProduct.videoUrls = data.videoUrls.filter(function(url) { return typeof url === "string"; });
+    if (data.storageCapacity !== undefined) existingProduct.storageCapacity = data.storageCapacity;
+    if (data.includedAccessories !== undefined) existingProduct.includedAccessories = data.includedAccessories;
   }
 
-  if (data.isCustom) {
+  if (data.isCustom || (!existingProduct && xjHasRemoteProductFields(data))) {
     var customProduct = xjProductFromRemote(productId, data);
     xjRegisterProduct(customProduct);
     if (!document.querySelector('#productGrid .card[data-product-id="' + productId + '"]')) {
@@ -123,19 +168,43 @@ function xjApplyRemoteProduct(productId, data) {
   }
   if (window.xjRepriceCartFromCatalog) window.xjRepriceCartFromCatalog(productId);
   if (window.xjRefreshCommerceProducts) window.xjRefreshCommerceProducts();
+  if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
+}
+
+function xjHasRemoteProductFields(data) {
+  return !!(data && typeof data.name === "string" && data.name.trim() && Number(data.price) > 0);
 }
 
 function xjProductFromRemote(productId, data) {
   var name = data.name || "New Product";
-  var type = data.type || "standalone";
-  var category = data.category || (type === "standalone" ? "accessories" : "consoles");
-  var categories = Array.isArray(data.categories) ? data.categories : [category];
+  var nameLower = name.toLowerCase();
+  var controller = /controller|dualshock|dualsense/.test(nameLower);
+  var playStationConsole = !controller && /(playstation\s*[2345]|(^|[^a-z])ps[2345]([^a-z]|$))/i.test(name);
+  var switchConsole = !controller && /nintendo switch/i.test(name);
+  var inferredCategory = playStationConsole || switchConsole ? "consoles" : /game|disc/.test(nameLower) ? "games" : controller ? "accessories" : "accessories";
+  var category = data.category || inferredCategory;
+  var inferredType = playStationConsole ? "ps4" : switchConsole ? "switch" : controller ? "controller" : category === "games" ? "game" : "standalone";
+  var type = data.type || inferredType;
+  var categories = Array.isArray(data.categories) ? data.categories.slice() : [category];
+  if (!Array.isArray(data.categories)) {
+    if (playStationConsole) categories = ["playstation", "consoles", "ps" + (name.match(/(?:ps|playstation\s*)([2345])/i) || [])[1]];
+    else if (switchConsole) categories = ["nintendo", "switch", "consoles"];
+    else if (controller) categories = ["controllers", "accessories"];
+    else if (category === "games") categories = ["games"];
+  }
+  var displayCategory = data.displayCategory || (playStationConsole
+    ? "playstation-consoles"
+    : switchConsole
+      ? "nintendo-consoles"
+      : controller
+        ? "controllers"
+        : category === "games" ? "games" : "accessories");
   return {
     id: productId,
     name: name,
     slug: (data.slug || name).toLowerCase(),
     category: category,
-    displayCategory: data.displayCategory || (category === "games" ? "games" : null),
+    displayCategory: displayCategory,
     categories: categories,
     price: Number(data.price) || 0,
     inStock: data.inStock !== false,
@@ -143,6 +212,11 @@ function xjProductFromRemote(productId, data) {
     extraControllerPrice: Number(data.extraControllerPrice) || 1500,
     hasModal: type === "ps4" || type === "switch",
     image: data.image || "",
+    images: Array.isArray(data.images) ? data.images : (data.image ? [data.image] : []),
+    videoUrls: Array.isArray(data.videoUrls) ? data.videoUrls : [],
+    condition: typeof data.condition === "string" ? data.condition : "",
+    storageCapacity: data.storageCapacity,
+    includedAccessories: data.includedAccessories,
     description: data.description || "",
     aliases: Array.isArray(data.aliases) && data.aliases.length ? data.aliases : [name.toLowerCase()],
     createdAt: data.createdAt && typeof data.createdAt.toMillis === "function" ? data.createdAt.toMillis() : Number(data.createdAt) || 0,
@@ -177,6 +251,17 @@ function xjRefreshProductCard(product) {
     img.src = product.image;
     img.alt = product.name;
   }
+  var conditionBadge = card.querySelector(".product-condition");
+  if (product.condition) {
+    if (!conditionBadge) {
+      conditionBadge = document.createElement("span");
+      conditionBadge.className = "product-condition";
+      card.insertBefore(conditionBadge, card.querySelector("h3"));
+    }
+    conditionBadge.textContent = product.condition;
+  } else if (conditionBadge) {
+    conditionBadge.remove();
+  }
 }
 
 function xjBuildProductCardHtml(product) {
@@ -184,6 +269,7 @@ function xjBuildProductCardHtml(product) {
   var safeName = xjEscapeHtml(product.name);
   var safeDesc = xjEscapeHtml(product.description || "");
   var safeImage = xjEscapeHtml(product.image || "xj-games-logo.png");
+  var safeCondition = xjEscapeHtml(product.condition || "");
   var safeSlug = xjEscapeHtml(product.slug || product.name.toLowerCase());
   var safeCats = xjEscapeHtml((product.categories || []).join(","));
   var jsName = String(product.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
@@ -195,7 +281,8 @@ function xjBuildProductCardHtml(product) {
   return (
     '<div class="card" data-product-id="' + xjEscapeHtml(product.id) + '" data-name="' + safeSlug + '" data-category="' + safeCats + '">' +
       '<span class="stock' + (inStock ? "" : " out-of-stock") + '">● ' + (inStock ? "In Stock" : "Out of Stock") + "</span>" +
-      '<img src="' + safeImage + '" alt="' + safeName + '">' +
+      '<img loading="lazy" decoding="async" src="' + safeImage + '" alt="' + safeName + '">' +
+      (safeCondition ? '<span class="product-condition">' + safeCondition + "</span>" : "") +
       "<h3>" + safeName + "</h3>" +
       '<p class="desc">' + safeDesc + "</p>" +
       '<p class="price">' + Number(product.price).toLocaleString() + " GMD</p>" +
@@ -342,7 +429,6 @@ function openAdminPanel() {
   }
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
-  if (window.xjLoadAdminCodeLists) window.xjLoadAdminCodeLists();
   document.getElementById("adminModal").classList.add("active");
 }
 
@@ -365,6 +451,13 @@ function xjRenderAdminInventoryPanel() {
       '<button type="button" class="admin-action-btn" onclick="xjSaveCategoryOrder()">Save category order</button>' +
       '<button type="button" class="admin-action-btn" onclick="xjSyncCanonicalProductPrices()">Sync PS4 prices</button>' +
     "</div>";
+  var productIds = xjGetAllProductIds();
+  var adminProductIds = xjGetAllProductIds(true);
+  var availableCount = productIds.filter(function(id) { return !!XJ_PRODUCT_CATALOG[id]; }).length;
+  var inStockCount = productIds.filter(function(id) { return !!xjGetProductStock(id); }).length;
+  html += '<div class="admin-dashboard-summary"><strong>Catalog stock overview:</strong> ' +
+    availableCount + ' products · ' + inStockCount + ' in stock · ' + (availableCount - inStockCount) +
+    ' out of stock.<p class="admin-help">Order and completed-sale metrics are not displayed here. WhatsApp checkout opens a draft only and is not counted as a sale.</p></div>';
   html += '<div class="admin-category-order"><label>Category priority (top to bottom)</label><div id="adminCategoryOrder">';
   xjCategoryOrder.forEach(function(category, index) {
     html += '<div class="admin-category-row">' +
@@ -373,6 +466,20 @@ function xjRenderAdminInventoryPanel() {
       '<button type="button" class="admin-action-btn" onclick="xjMoveCategory(' + index + ',1)">Down</button></div>';
   });
   html += '</div><p class="admin-help">New products are placed automatically using this category.</p></div>';
+  html += '<section class="admin-featured-selection"><h4>Homepage featured products</h4><p class="admin-help">Select exactly six existing products. No products are selected automatically.</p><div class="admin-featured-list">';
+  if (xjFeaturedProductIds.length !== 6) {
+    html += '<p class="admin-warning">No valid six-product featured selection is currently active. Choose exactly six products and save.</p>';
+  }
+  if (availableCount < 6) {
+    html += '<p class="admin-warning">Only ' + availableCount + ' products are available. Add products before selecting the six homepage features.</p>';
+  }
+  productIds.forEach(function(productId) {
+    var product = XJ_PRODUCT_CATALOG[productId];
+    if (!product) return;
+    var checked = xjFeaturedProductIds.indexOf(productId) !== -1;
+    html += '<label><input type="checkbox" class="admin-featured-checkbox" value="' + xjEscapeHtml(productId) + '"' + (checked ? " checked" : "") + '> ' + xjEscapeHtml(product.name) + '</label>';
+  });
+  html += '</div><button id="saveFeaturedProducts" type="button" class="admin-action-btn" onclick="xjSaveFeaturedProducts()" disabled>Select exactly six products</button></section>';
 
   if (xjAdminFormOpen) {
     html +=
@@ -383,9 +490,11 @@ function xjRenderAdminInventoryPanel() {
         '<input id="adminProductPrice" type="number" min="1" max="999999" step="1" placeholder="e.g. 15000" required>' +
         '<label>Description</label>' +
         '<textarea id="adminProductDesc" rows="3" maxlength="280" placeholder="Short product description"></textarea>' +
-        '<label>Image file name</label>' +
-        '<input id="adminProductImage" type="text" maxlength="120" placeholder="e.g. xbox-series-s.png" required>' +
-        '<p class="admin-help">Upload that image file to GitHub in the same folder as the website. Use the exact file name.</p>' +
+        '<label>Condition (leave blank if not verified)</label>' +
+        '<select id="adminProductCondition"><option value="">Not specified</option>' + xjConditionOptions("") + '</select>' +
+        '<label>Image repository path or image URL</label>' +
+        '<input id="adminProductImage" type="text" maxlength="200" placeholder="e.g. product-images/xbox-series-s.png" required>' +
+        '<p class="admin-help">Add the image file to the website repository and publish it separately, then enter its exact relative path here. Browser uploads to GitHub are not supported.</p>' +
         '<label>Product type</label>' +
         '<select id="adminProductType">' +
           '<option value="controller">Controller</option>' +
@@ -400,18 +509,25 @@ function xjRenderAdminInventoryPanel() {
       "</form>";
   }
 
-  xjGetAllProductIds().forEach(function(productId) {
+  adminProductIds.forEach(function(productId) {
     var product = XJ_PRODUCT_CATALOG[productId];
     if (!product) return;
     var inStock = xjGetProductStock(productId);
+    var hidden = xjIsProductHidden(productId);
     html +=
       '<div class="admin-inventory-row">' +
         '<div class="admin-inventory-info">' +
           "<strong>" + xjEscapeHtml(product.name) + "</strong>" +
+          '<div class="admin-price-editor"><label>Price (GMD)<input id="adminPrice-' + xjEscapeHtml(productId) + '" type="number" min="1" max="999999" step="1" value="' + xjEscapeHtml(product.price) + '"></label>' +
+          '<button type="button" class="admin-action-btn" onclick="xjAdminSaveProductPrice(\'' + productId + '\')">Save price</button></div>' +
           '<label class="admin-product-description">Description<textarea id="adminDescription-' + xjEscapeHtml(productId) + '" maxlength="2000" rows="3">' + xjEscapeHtml(product.description || "") + '</textarea></label>' +
-          '<button type="button" class="admin-action-btn" onclick="xjAdminSaveDescription(\'' + productId + '\')">Save description</button>' +
-          '<span class="admin-inventory-status ' + (inStock ? "in-stock-label" : "out-stock-label") + '">' +
-            (inStock ? "IN STOCK" : "OUT OF STOCK") +
+          '<label class="admin-product-description">Condition<select id="adminCondition-' + xjEscapeHtml(productId) + '"><option value="">Not specified</option>' + xjConditionOptions(product.condition || "") + '</select></label>' +
+          '<label class="admin-product-description">Photo repository paths or image URLs (comma-separated)<input id="adminImages-' + xjEscapeHtml(productId) + '" value="' + xjEscapeHtml((product.images || (product.image ? [product.image] : [])).join(", ")) + '" maxlength="2000"></label>' +
+          '<label class="admin-product-description">Video repository paths or HTTPS URLs (comma-separated)<input id="adminVideos-' + xjEscapeHtml(productId) + '" value="' + xjEscapeHtml((product.videoUrls || []).join(", ")) + '" maxlength="2000"></label>' +
+          '<p class="admin-help">Add media files to the website repository and publish them separately before saving their paths here. Browser uploads to GitHub are not supported. Large videos can significantly increase repository size and bandwidth, so local video hosting is optional.</p>' +
+          '<button type="button" class="admin-action-btn" onclick="xjAdminSaveProductDetails(\'' + productId + '\')">Save product details</button>' +
+          '<span class="admin-inventory-status ' + (hidden ? "out-stock-label" : inStock ? "in-stock-label" : "out-stock-label") + '">' +
+            (hidden ? "HIDDEN FROM STORE" : inStock ? "IN STOCK" : "OUT OF STOCK") +
           "</span>" +
         "</div>" +
         '<div class="admin-row-actions">' +
@@ -419,20 +535,92 @@ function xjRenderAdminInventoryPanel() {
             '<input type="checkbox" ' + (inStock ? "checked" : "") + ' onchange="xjAdminToggleStock(\'' + productId + "', this.checked)\">" +
             "<span>Available</span>" +
           "</label>" +
-          '<button type="button" class="admin-remove-btn" onclick="xjAdminRemoveProduct(\'' + productId + "')\">Remove product</button>" +
+          (hidden
+            ? '<button type="button" class="admin-action-btn" onclick="xjAdminRestoreProduct(\'' + productId + "')\">Restore product</button>"
+            : '<button type="button" class="admin-remove-btn" onclick="xjAdminRemoveProduct(\'' + productId + "')\">Hide product</button>") +
         "</div>" +
       "</div>";
   });
 
   container.innerHTML = html;
+  var featuredCheckboxes = container.querySelectorAll(".admin-featured-checkbox");
+  Array.prototype.forEach.call(featuredCheckboxes, function(checkbox) {
+    checkbox.addEventListener("change", xjUpdateFeaturedSelectionControls);
+  });
+  xjUpdateFeaturedSelectionControls();
 }
 
-async function xjAdminSaveDescription(productId) {
+function xjUpdateFeaturedSelectionControls() {
+  var checkboxes = Array.prototype.slice.call(document.querySelectorAll(".admin-featured-checkbox"));
+  var selectedCount = checkboxes.filter(function(checkbox) { return checkbox.checked; }).length;
+  checkboxes.forEach(function(checkbox) {
+    checkbox.disabled = !checkbox.checked && selectedCount >= 6;
+  });
+  var saveButton = document.getElementById("saveFeaturedProducts");
+  if (!saveButton) return;
+  saveButton.disabled = selectedCount !== 6;
+  saveButton.textContent = selectedCount === 6
+    ? "Save six featured products"
+    : "Select exactly six products (" + selectedCount + "/6)";
+}
+
+function xjConditionOptions(selected) {
+  return ["New", "Fairly Used", "Used — Good Condition", "Refurbished", "Tested & Working"].map(function(condition) {
+    return '<option value="' + xjEscapeHtml(condition) + '"' + (selected === condition ? " selected" : "") + ">" + xjEscapeHtml(condition) + "</option>";
+  }).join("");
+}
+
+async function xjAdminSaveProductPrice(productId) {
+  if (!xjIsAdmin() || !xjDb) {
+    showToast("Price update", "Sign in as an administrator before saving prices.", "error");
+    return;
+  }
+  var product = XJ_PRODUCT_CATALOG[productId];
+  var input = document.getElementById("adminPrice-" + productId);
+  if (!product || !input) return;
+  var price = Number(input.value);
+  if (!Number.isSafeInteger(price) || price < 1 || price > 999999) {
+    showToast("Invalid price", "Enter a whole-number price between GMD 1 and GMD 999,999.", "error");
+    return;
+  }
+
+  try {
+    await xjDb.collection("products").doc(productId).set({
+      price: price,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    product.price = price;
+    xjRefreshProductCard(product);
+    if (window.xjRefreshProductPrices) window.xjRefreshProductPrices();
+    if (window.xjRepriceCartFromCatalog) window.xjRepriceCartFromCatalog(productId);
+    if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
+    showToast("Price updated", product.name + " is now GMD " + price.toLocaleString() + ".");
+  } catch (error) {
+    console.error("Failed to update product price:", error);
+    showToast("Price not saved", "Could not save this price to Firebase. Please try again.", "error");
+  }
+}
+window.xjAdminSaveProductPrice = xjAdminSaveProductPrice;
+
+async function xjAdminSaveProductDetails(productId) {
   if (!xjIsAdmin() || !xjDb) return;
   var product = XJ_PRODUCT_CATALOG[productId];
   var input = document.getElementById("adminDescription-" + productId);
-  if (!product || !input) return;
+  var conditionInput = document.getElementById("adminCondition-" + productId);
+  var imagesInput = document.getElementById("adminImages-" + productId);
+  var videosInput = document.getElementById("adminVideos-" + productId);
+  if (!product || !input || !conditionInput || !imagesInput || !videosInput) return;
   var description = input.value.trim();
+  var images = imagesInput.value.split(",").map(function(value) { return value.trim(); }).filter(Boolean);
+  var videoUrls = videosInput.value.split(",").map(function(value) { return value.trim(); }).filter(Boolean);
+  if (images.some(function(value) { return !xjSanitizeImageReference(value); })) {
+    showToast("Product media", "Use image URLs or safe repository-relative image paths such as product-images/console.png.", "error");
+    return;
+  }
+  if (videoUrls.some(function(value) { return !xjSanitizeVideoReference(value); })) {
+    showToast("Product media", "Use HTTPS video URLs or safe repository-relative MP4/WebM paths.", "error");
+    return;
+  }
   if (description.length > 2000) {
     showToast("Description", "Descriptions must be 2,000 characters or fewer.", "error");
     return;
@@ -440,18 +628,56 @@ async function xjAdminSaveDescription(productId) {
   try {
     await xjDb.collection("products").doc(productId).set({
       description: description,
+      condition: conditionInput.value,
+      images: images,
+      image: images[0] || "",
+      videoUrls: videoUrls,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     product.description = description;
+    product.condition = conditionInput.value;
+    product.images = images;
+    product.videoUrls = videoUrls;
+    product.image = images[0] || "";
     xjRefreshProductCard(product);
-    showToast("Description saved", product.name + " was updated.");
+    showToast("Product details saved", product.name + " was updated.");
   } catch (error) {
     console.error("Failed to update product description:", error);
     showToast("Description not saved", "Could not save this description to Firebase.", "error");
   }
 }
+window.xjAdminSaveProductDetails = xjAdminSaveProductDetails;
 
-window.xjAdminSaveDescription = xjAdminSaveDescription;
+async function xjSaveFeaturedProducts() {
+  if (!xjIsAdmin() || !xjDb) {
+    showToast("Homepage selection", "Sign in as an administrator before saving.", "error");
+    return;
+  }
+  var selected = Array.prototype.slice.call(document.querySelectorAll(".admin-featured-checkbox:checked")).map(function(input) {
+    return input.value;
+  });
+  if (selected.length !== 6) {
+    showToast("Select six products", "Choose exactly six existing products before saving.", "error");
+    return;
+  }
+  if (selected.some(function(id) { return !XJ_PRODUCT_CATALOG[id] || xjIsProductHidden(id); })) {
+    showToast("Homepage selection", "A selected product is no longer available. Refresh the list and choose again.", "error");
+    return;
+  }
+  try {
+    await xjDb.collection("config").doc("featuredProducts").set({
+      productIds: selected,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    xjFeaturedProductIds = selected;
+    xjShowAllProductCards();
+    showToast("Homepage updated", "The six selected products are now featured.");
+  } catch (error) {
+    console.error("Failed to save featured products:", error);
+    showToast("Homepage selection", "Could not save the featured selection in Firebase.", "error");
+  }
+}
+window.xjSaveFeaturedProducts = xjSaveFeaturedProducts;
 
 async function xjSyncCanonicalProductPrices() {
   if (!xjIsAdmin() || !firebase.functions) return showToast("Price update", "Admin backend is not available.", "error");
@@ -491,6 +717,7 @@ async function xjAdminToggleStock(productId, inStock) {
     }
   }
   showToast("Inventory Updated", XJ_PRODUCT_CATALOG[productId].name + " is now " + (inStock ? "IN STOCK" : "OUT OF STOCK") + ".");
+  if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
 }
 
 async function xjAdminAddProduct(event) {
@@ -500,7 +727,8 @@ async function xjAdminAddProduct(event) {
   var name = document.getElementById("adminProductName").value.trim();
   var price = parseInt(document.getElementById("adminProductPrice").value, 10);
   var description = document.getElementById("adminProductDesc").value.trim();
-  var image = xjSanitizeImageFileName(document.getElementById("adminProductImage").value);
+  var condition = document.getElementById("adminProductCondition").value;
+  var image = xjSanitizeImageReference(document.getElementById("adminProductImage").value);
   var type = document.getElementById("adminProductType").value;
   var inStock = document.getElementById("adminProductInStock").checked;
 
@@ -513,7 +741,7 @@ async function xjAdminAddProduct(event) {
     return;
   }
   if (!image) {
-    showToast("Error", "Use a valid image file name such as product.png", "error");
+    showToast("Error", "Use an image URL or a safe repository-relative image path such as product-images/product.png.", "error");
     return;
   }
 
@@ -555,6 +783,7 @@ async function xjAdminAddProduct(event) {
     hasModal: type === "ps4" || type === "switch",
     image: image,
     description: description,
+    condition: condition,
     aliases: [name.toLowerCase()],
     createdAt: Date.now(),
     isCustom: true
@@ -579,6 +808,9 @@ async function xjAdminAddProduct(event) {
         extraControllerPrice: product.extraControllerPrice,
         image: image,
         description: description,
+        condition: condition,
+        images: [image],
+        videoUrls: [],
         aliases: product.aliases,
         createdAt: product.createdAt,
         isCustom: true,
@@ -595,7 +827,8 @@ async function xjAdminAddProduct(event) {
 
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
-  showToast("Product added", name + " is now on the website. Upload " + image + " to GitHub if it is not there yet.");
+  if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
+  showToast("Product added", name + " is now on the website. Make sure " + image + " exists in the published website repository.");
 }
 
 function xjCategoryLabel(category) {
@@ -659,5 +892,27 @@ async function xjAdminRemoveProduct(productId) {
   }
 
   xjRenderAdminInventoryPanel();
+  if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
   showToast("Product removed", label + " has been removed from the store.");
+}
+
+async function xjAdminRestoreProduct(productId) {
+  if (!xjIsAdmin() || !xjDb) return;
+  var product = XJ_PRODUCT_CATALOG[productId];
+  if (!product) return;
+  try {
+    await xjDb.collection("products").doc(productId).set({
+      hidden: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    xjUnhideProduct(productId);
+    if (!document.querySelector('#productGrid .card[data-product-id="' + productId + '"]')) xjInsertProductCard(product);
+    xjShowAllProductCards();
+    xjRenderAdminInventoryPanel();
+    if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
+    showToast("Product restored", product.name + " is visible in the catalog.");
+  } catch (error) {
+    console.error("Failed to restore product:", error);
+    showToast("Product restore", "Could not restore this product in Firebase.", "error");
+  }
 }

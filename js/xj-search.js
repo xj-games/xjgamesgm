@@ -184,24 +184,151 @@ function xjSearchProducts(query) {
   });
 }
 
-function xjShowAllProductCards() {
+var xjCatalogView = "featured";
+
+function xjIsShowingAllProducts() {
+  var input = document.getElementById("searchInput");
+  if (input && xjNormalizeSearchQuery(input.value)) return true;
+  return xjCatalogView === "all";
+}
+
+function xjGetCatalogPrice(product) {
+  if (!product) return 0;
+  var price = Number(product.price) || 0;
+  if (window.xjGetFlashSalePrice) price = window.xjGetFlashSalePrice(product.id, price);
+  if (window.xjProductPrice) price = window.xjProductPrice(product.id, price);
+  return Number(price) || 0;
+}
+
+function xjSyncCatalogViewUi() {
+  var title = document.getElementById("productsSectionTitle");
+  var button = document.getElementById("catalogViewToggle");
+  var showingAll = xjCatalogView === "all";
+  if (title) title.textContent = showingAll ? "All Products" : "Featured Products";
+  if (button) button.textContent = "View All Products";
+}
+
+function xjSetCatalogView(view, options) {
+  xjCatalogView = view === "all" ? "all" : "featured";
+  xjSyncCatalogViewUi();
+  if (!(options && options.skipHash)) {
+    var nextHash = xjCatalogView === "all" ? "#all-products" : "#products";
+    if (location.hash !== nextHash) {
+      if (history.replaceState) history.replaceState(null, "", nextHash);
+      else location.hash = nextHash;
+    }
+  }
+  xjApplyStorefrontVisibility();
+}
+
+function xjToggleCatalogView() {
+  xjSetCatalogView(xjCatalogView === "all" ? "featured" : "all");
+  var section = document.getElementById("products");
+  if (section && xjCatalogView === "all") {
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function xjApplyStorefrontVisibility() {
   var grid = document.getElementById("productGrid");
   if (!grid) return;
-  var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll(".card[data-product-id]"));
   xjGetPrioritySortedProductIds(cards.map(function(card) {
     return card.getAttribute("data-product-id");
   })).forEach(function(productId) {
-    var card = grid.querySelector('.card[data-product-id="' + productId + '"]');
-    if (card) grid.appendChild(card);
+    var ordered = grid.querySelector('.card[data-product-id="' + productId + '"]');
+    if (ordered) grid.appendChild(ordered);
   });
+
+  var input = document.getElementById("searchInput");
+  var query = input ? input.value : "";
+  var searching = !!xjNormalizeSearchQuery(query);
+  var matchingIds = searching ? xjSearchProducts(query) : [];
+  var matches = {};
+  matchingIds.forEach(function(id) { matches[id] = true; });
+
+  var categoryFilter = document.getElementById("categoryFilter");
+  var stockFilter = document.getElementById("stockFilter");
+  var consoleFilter = document.getElementById("consoleModelFilter");
+  var conditionFilter = document.getElementById("conditionFilter");
+  var minimumPrice = document.getElementById("minimumPrice");
+  var maximumPrice = document.getElementById("maximumPrice");
+  var category = categoryFilter ? categoryFilter.value : "";
+  var stock = stockFilter ? stockFilter.value : "";
+  var consoleModel = consoleFilter ? consoleFilter.value : "";
+  var condition = conditionFilter ? conditionFilter.value : "";
+  var minPrice = minimumPrice && minimumPrice.value !== "" ? Number(minimumPrice.value) : null;
+  var maxPrice = maximumPrice && maximumPrice.value !== "" ? Number(maximumPrice.value) : null;
+  var visibleCount = 0;
+
   cards.forEach(function(card) {
     var productId = card.getAttribute("data-product-id");
-    card.style.display = productId && xjIsProductHidden(productId) ? "none" : "block";
+    var product = typeof xjGetProductById === "function" ? xjGetProductById(productId) : null;
+    var show = !!(productId && !xjIsProductHidden(productId));
+
+    if (show && xjCatalogView !== "all") {
+      show = typeof xjIsHomepageProduct === "function" ? xjIsHomepageProduct(product) : true;
+    }
+    if (show && searching) {
+      show = !!matches[productId];
+    }
+
+    if (show && category) {
+      show = !!(product && (product.displayCategory === category || (product.categories || []).indexOf(category) >= 0));
+    }
+    if (show && stock === "in" && product && typeof xjGetProductStock === "function") {
+      show = !!xjGetProductStock(product.id);
+    }
+    if (show && stock === "out" && product && typeof xjGetProductStock === "function") {
+      show = !xjGetProductStock(product.id);
+    }
+    if (show && condition) show = !!(product && product.condition === condition);
+    if (show && minPrice !== null) show = !!(product && xjGetCatalogPrice(product) >= minPrice);
+    if (show && maxPrice !== null) show = !!(product && xjGetCatalogPrice(product) <= maxPrice);
+    if (show && consoleModel) {
+      var searchableModel = product ? String(product.id + " " + product.name + " " + (product.categories || []).join(" ")).toLowerCase().replace(/[^a-z0-9]+/g, "") : "";
+      var modelAliases = {
+        ps2: ["ps2", "playstation2"],
+        ps3: ["ps3", "playstation3"],
+        ps4fat: ["ps4fat", "playstation4fat"],
+        ps4slim: ["ps4slim", "playstation4slim"],
+        ps4pro: ["ps4pro", "playstation4pro"],
+        ps5: ["ps5", "playstation5"],
+        nintendoswitchlite: ["nintendoswitchlite", "switchlite"],
+        nintendoswitch: ["nintendoswitch", "switch"]
+      };
+      show = consoleModel === "controllers"
+        ? xjGetProductDisplayCategory(product) === "controllers"
+        : !!(modelAliases[consoleModel] && modelAliases[consoleModel].some(function(alias) { return searchableModel.indexOf(alias) !== -1; }));
+      if (show && consoleModel === "nintendoswitch") {
+        show = searchableModel.indexOf("switchlite") === -1;
+      }
+    }
+
+    card.style.display = show ? "block" : "none";
+    if (show) visibleCount += 1;
   });
-  const noResults = document.getElementById("searchNoResults");
-  if (noResults) {
-    noResults.style.display = "none";
+
+  var noResults = document.getElementById("searchNoResults");
+  var featuredNotice = document.getElementById("featuredSelectionNotice");
+  if (featuredNotice) {
+    featuredNotice.hidden = xjCatalogView === "all" || xjFeaturedProductIds.length === 6;
   }
+  if (noResults) {
+    var hasFeaturedSelection = Array.isArray(xjFeaturedProductIds) && xjFeaturedProductIds.length === 6;
+    noResults.innerHTML = !searching && xjCatalogView !== "all" && !hasFeaturedSelection
+      ? "<strong>Featured products are being set up</strong><span>The XJ Games admin will select six products for the homepage.</span>"
+      : searching && xjCatalogView !== "all" && !visibleCount
+        ? "<strong>No featured products match</strong><span>Try View All Products to search the full catalog.</span>"
+        : "<strong>No products found</strong><span>Try searching for PS4, controllers, Nintendo Switch, or Switch Lite.</span>";
+    noResults.style.display = visibleCount ? "none" : "block";
+  }
+  xjSyncCatalogViewUi();
+}
+
+function xjShowAllProductCards() {
+  xjApplyStorefrontVisibility();
 }
 
 function xjClearSearch() {
@@ -220,23 +347,44 @@ function xjClearSearch() {
 function filterProducts() {
   const input = document.getElementById("searchInput");
   const query = input ? input.value : "";
-  const matchingIds = xjSearchProducts(query);
-  const matches = {};
-  matchingIds.forEach(function(id) { matches[id] = true; });
-  xjShowAllProductCards();
-  if (xjNormalizeSearchQuery(query)) {
-    document.querySelectorAll("#productGrid .card").forEach(function(card) {
-      var productId = card.getAttribute("data-product-id");
-      card.style.display = matches[productId] ? "block" : "none";
-    });
-    const noResults = document.getElementById("searchNoResults");
-    if (noResults) noResults.style.display = matchingIds.length ? "none" : "block";
-  }
+  xjApplyStorefrontVisibility();
   xjUpdateSearchSuggestions(query);
   const clearBtn = document.getElementById("searchClearBtn");
   if (clearBtn) {
     clearBtn.style.display = xjNormalizeSearchQuery(query) ? "inline-flex" : "none";
   }
+}
+
+function xjApplyCatalogFilters() {
+  var minimum = document.getElementById("minimumPrice");
+  var maximum = document.getElementById("maximumPrice");
+  if (minimum && minimum.value !== "" && Number(minimum.value) < 0) {
+    minimum.setCustomValidity("Enter a non-negative minimum price.");
+    minimum.reportValidity();
+    return;
+  }
+  if (maximum && maximum.value !== "" && Number(maximum.value) < 0) {
+    maximum.setCustomValidity("Enter a non-negative maximum price.");
+    maximum.reportValidity();
+    return;
+  }
+  minimum && minimum.setCustomValidity("");
+  maximum && maximum.setCustomValidity("");
+  if (minimum && maximum && minimum.value !== "" && maximum.value !== "" && Number(minimum.value) > Number(maximum.value)) {
+    maximum.setCustomValidity("Maximum price must be at least the minimum price.");
+    maximum.reportValidity();
+    return;
+  }
+  maximum && maximum.setCustomValidity("");
+  xjApplyStorefrontVisibility();
+}
+
+function xjResetCatalogFilters() {
+  ["categoryFilter", "consoleModelFilter", "stockFilter", "conditionFilter", "minimumPrice", "maximumPrice"].forEach(function(id) {
+    var control = document.getElementById(id);
+    if (control) control.value = "";
+  });
+  xjApplyCatalogFilters();
 }
 
 function xjUpdateSearchSuggestions(query) {
@@ -258,15 +406,15 @@ function xjUpdateSearchSuggestions(query) {
     matchingIds.forEach(function(id) {
       const product = xjGetProductById(id);
       if (!product) return;
-      const price = Number(product.price).toLocaleString() + " GMD";
+      const price = xjGetCatalogPrice(product).toLocaleString() + " GMD";
       const thumb = product.image || (product.images && product.images[0]) || "";
       const stockLabel = xjGetProductStock(id) ? "In Stock" : "Out of Stock";
       html +=
         '<button type="button" class="search-suggestion-item" data-product-id="' + id + '">' +
-          (thumb ? '<img src="' + thumb + '" alt="">' : '<span class="search-suggestion-fallback">ðŸŽ®</span>') +
+          (thumb ? '<img src="' + thumb + '" alt="">' : '<span class="search-suggestion-fallback">Product</span>') +
           '<span class="search-suggestion-text">' +
             '<strong>' + product.name + '</strong>' +
-            '<small>' + price + ' Â· ' + stockLabel + '</small>' +
+            '<small>' + price + ' | ' + stockLabel + '</small>' +
           '</span>' +
         '</button>';
     });
@@ -317,6 +465,10 @@ function xjSelectSearchSuggestion(productId) {
   if (input && product) {
     input.value = product.name;
   }
+  if (product && typeof xjIsHomepageProduct === "function" && !xjIsHomepageProduct(product)) {
+    if (typeof window.xjOpenDescription === "function") window.xjOpenDescription(productId);
+    return;
+  }
 
   xjShowAllProductCards();
   const card = document.querySelector('#productGrid .card[data-product-id="' + productId + '"]');
@@ -332,6 +484,25 @@ function xjSelectSearchSuggestion(productId) {
 function xjInitSearchSuggestions() {
   const input = document.getElementById("searchInput");
   const panel = document.getElementById("searchSuggestions");
+  if (new URLSearchParams(location.search).get("allProductsEmbedded") === "1") {
+    document.querySelectorAll('a[href="all-products.html"]').forEach(function(link) { link.remove(); });
+    var allProductsLink = document.getElementById("catalogViewToggle");
+    if (allProductsLink) allProductsLink.remove();
+    var searchContainer = document.querySelector(".search");
+    var productsSection = document.getElementById("products");
+    if (searchContainer && productsSection) {
+      searchContainer.classList.add("xj-embedded-search");
+      productsSection.insertBefore(searchContainer, productsSection.firstChild);
+    }
+  }
+  if (location.hash === "#all-products") {
+    xjCatalogView = "all";
+  }
+  xjSyncCatalogViewUi();
+  window.addEventListener("hashchange", function() {
+    if (location.hash === "#all-products") xjSetCatalogView("all", { skipHash: true });
+    else if (location.hash === "#products") xjSetCatalogView("featured", { skipHash: true });
+  });
   if (!input || !panel) return;
 
   if (panel.parentElement !== document.body) {

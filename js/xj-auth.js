@@ -164,12 +164,10 @@ function closeAuthRequiredModal() {
 
 function xjIsAdmin() {
   if (!xjFirebaseUser || !xjFirebaseUser.email) return false;
-  if (XJ_ADMIN_EMAILS.length > 0) {
-    return XJ_ADMIN_EMAILS.some(function(email) {
-      return email.toLowerCase() === xjFirebaseUser.email.toLowerCase();
-    });
-  }
-  return false;
+  const email = xjFirebaseUser.email.toLowerCase();
+  return email === "ifeadia21@gmail.com" || XJ_ADMIN_EMAILS.some(function(adminEmail) {
+    return String(adminEmail).toLowerCase() === email;
+  });
 }
 
 async function xjLoadAdminEmailsFromFirestore() {
@@ -178,8 +176,11 @@ async function xjLoadAdminEmailsFromFirestore() {
     const snap = await xjDb.collection("config").doc("admins").get();
     if (snap.exists && Array.isArray(snap.data().emails)) {
       XJ_ADMIN_EMAILS.length = 0;
+      XJ_ADMIN_EMAILS.push("ifeadia21@gmail.com");
       snap.data().emails.forEach(function(email) {
-        XJ_ADMIN_EMAILS.push(email);
+        if (!XJ_ADMIN_EMAILS.some(function(existing) {
+          return String(existing).toLowerCase() === String(email).toLowerCase();
+        })) XJ_ADMIN_EMAILS.push(email);
       });
       xjUpdateAdminVisibility();
     }
@@ -446,6 +447,7 @@ function xjGetCurrentUserDisplay() {
     uid: user.uid,
     name: typeof xjProfileFullName === "function" ? xjProfileFullName(profile, user) : (user.displayName || (user.email ? user.email.split("@")[0] : "User")),
     email: user.email || profile.email || "",
+    phone: profile.phone || "",
     avatar: typeof xjProfileAvatar === "function" ? xjProfileAvatar(profile, user) : xjLetterAvatarDataUrl(user.displayName || user.email || "U")
   };
 }
@@ -461,7 +463,7 @@ function xjUpdateAuthUI() {
   const container = document.getElementById("authContainer");
   if (!container) return;
   const user = xjGetCurrentUserDisplay();
-  if (window.xjInitPoints) window.xjInitPoints(user ? xjAuth.currentUser : null);
+  xjUpdateMobileMenu(user);
 
   if (user) {
     container.innerHTML =
@@ -486,6 +488,20 @@ function xjUpdateAuthUI() {
         "<span>👤</span> Sign In" +
       "</button>";
   }
+}
+
+function xjUpdateMobileMenu(user) {
+  const signedIn = !!user;
+  [
+    ["mobileSignInLink", !signedIn],
+    ["mobileCreateAccountLink", !signedIn],
+    ["mobileAccountLink", signedIn],
+    ["mobileSignOutLink", signedIn],
+    ["mobileAdminLink", signedIn && xjIsAdmin()]
+  ].forEach(function(entry) {
+    const link = document.getElementById(entry[0]);
+    if (link) link.style.display = entry[1] ? "block" : "none";
+  });
 }
 
 function openAuthModal() {
@@ -540,4 +556,5 @@ function xjUpdateAdminVisibility() {
   if (adminBtn) {
     adminBtn.style.display = xjIsAdmin() ? "inline-flex" : "none";
   }
+  xjUpdateMobileMenu(xjGetCurrentUserDisplay());
 }

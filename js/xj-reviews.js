@@ -2,29 +2,30 @@
  * XJ Games — Firestore-backed reviews with auth guard
  */
 
-const XJ_DEFAULT_REVIEWS = [
-  {
-    name: "Ousman Jallow",
-    rating: 5,
-    text: "Amazing service! Received my PS4 Slim in Banjul within hours. Fully tested and works perfectly.",
-    avatar: "https://www.svgrepo.com/show/498369/profile-circle.svg"
-  },
-  {
-    name: "Fatou Njie",
-    rating: 5,
-    text: "Very reliable store. Bought a Nintendo Switch Lite for my brother and he loves it.",
-    avatar: "https://www.svgrepo.com/show/498369/profile-circle.svg"
-  }
-];
+const XJ_DEFAULT_REVIEWS = [];
 
 var xjReviewsUnsubscribe = null;
 var xjReviewRows = [];
 var xjReviewsExpanded = false;
 
 function xjInitReviews() {
+  xjPopulateReviewProducts();
   if (!xjDb || !xjIsFirebaseConfigured()) {
     renderReviewsFromLocal();
     return;
+  }
+
+  function xjPopulateReviewProducts() {
+    var select = document.getElementById("reviewProduct");
+    if (!select || typeof xjGetAllProductIds !== "function") return;
+    xjGetAllProductIds().forEach(function(id) {
+      var product = xjGetProductById(id);
+      if (!product) return;
+      var option = document.createElement("option");
+      option.value = id;
+      option.textContent = product.name;
+      select.appendChild(option);
+    });
   }
 
   xjSubscribeToReviews();
@@ -75,14 +76,16 @@ function xjRenderReviews(reviews) {
       ? rev.createdAt.toDate()
       : rev.createdAt ? new Date(rev.createdAt) : null;
     const date = rawDate && !Number.isNaN(rawDate.getTime()) ? rawDate.toLocaleDateString() : "";
+    const product = rev.productName || (rev.productId && xjGetProductById(rev.productId) && xjGetProductById(rev.productId).name) || "Product not specified";
     return "<tr>" +
       '<td class="review-rating" aria-label="' + rating + ' out of 5">' + "★".repeat(rating) + "<span class=\"review-rating-number\"> " + rating + "/5</span></td>" +
       '<td><span class="review-customer"><img src="' + avatar + '" alt=""><span>' + name + '<small>Customer</small></span></span></td>' +
       '<td class="review-text">' + text + "</td>" +
+      '<td>' + xjEscapeHtml(product) + "</td>" +
       '<td class="review-date">' + date + "</td>" +
       "</tr>";
   }).join("");
-  grid.innerHTML = "<thead><tr><th scope=\"col\">Rating</th><th scope=\"col\">Customer</th><th scope=\"col\">Review</th><th scope=\"col\">Date</th></tr></thead><tbody>" + rows + "</tbody>";
+  grid.innerHTML = "<thead><tr><th scope=\"col\">Rating</th><th scope=\"col\">Customer</th><th scope=\"col\">Review</th><th scope=\"col\">Product</th><th scope=\"col\">Date</th></tr></thead><tbody>" + (rows || '<tr><td colspan="5">No customer reviews yet.</td></tr>') + "</tbody>";
 
   const toggle = document.getElementById("reviewsToggle");
   if (toggle) {
@@ -106,9 +109,15 @@ async function submitReview() {
 
   const rating = parseInt(document.getElementById("reviewRating").value, 10);
   const text = document.getElementById("reviewText").value.trim();
+  const productId = document.getElementById("reviewProduct").value;
+  const product = xjGetProductById(productId);
 
   if (!text) {
     showToast("Error", "Please write your feedback before publishing.", "error");
+    return;
+  }
+  if (!product) {
+    showToast("Product required", "Choose the product you are reviewing.", "error");
     return;
   }
 
@@ -118,6 +127,8 @@ async function submitReview() {
     name: user.name,
     rating: rating,
     text: text,
+    productId: productId,
+    productName: product.name,
     avatar: user.avatar,
     createdAt: Date.now()
   };
@@ -129,6 +140,8 @@ async function submitReview() {
         name: user.name,
         rating: rating,
         text: text,
+        productId: productId,
+        productName: product.name,
         avatar: user.avatar,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });

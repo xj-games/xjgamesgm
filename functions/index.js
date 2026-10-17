@@ -13,6 +13,9 @@ async function requireAdmin(request) {
     throw new HttpsError("unauthenticated", "Sign-in required.");
   }
 
+  const email = request.auth.token.email.toLowerCase();
+  if (email === "ifeadia21@gmail.com") return;
+
   const snap = await db.doc("config/admins").get();
   const emails =
     snap.exists && Array.isArray(snap.data().emails)
@@ -22,7 +25,7 @@ async function requireAdmin(request) {
   if (
     emails
       .map((email) => String(email).toLowerCase())
-      .indexOf(request.auth.token.email.toLowerCase()) === -1
+      .indexOf(email) === -1
   ) {
     throw new HttpsError("permission-denied", "Admin permission required.");
   }
@@ -30,6 +33,13 @@ async function requireAdmin(request) {
 
 function cleanCode(value) {
   return String(value || "").trim().toUpperCase();
+}
+
+function rejectRemovedCodeFeatures() {
+  throw new HttpsError(
+    "failed-precondition",
+    "Promo codes and XJ Points are no longer available."
+  );
 }
 
 exports.syncProductPrices = onCall(async (request) => {
@@ -57,61 +67,152 @@ exports.syncProductPrices = onCall(async (request) => {
   return { updated: applied ? Object.keys(prices) : [] };
 });
 
-exports.createPromoCode = onCall(async (request) => {
-  await requireAdmin(request);
+function timestampMillis(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  const date = value instanceof Date ? value : new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
 
-  const code = cleanCode(request.data && request.data.code);
-  const requestedType = request.data && request.data.discountType;
-  const percent = Number(request.data && request.data.percent);
-  const discountAmount = Number(request.data && request.data.discountAmount);
-  const usageLimit = Number(request.data && request.data.usageLimit) || 1;
-  const discountType = requestedType === "fixed" || (!requestedType && discountAmount > 0 && percent <= 0) ? "fixed" : "percent";
-  const expiresAt =
-    request.data && request.data.expiresAt
-      ? new Date(request.data.expiresAt)
-      : null;
+function assertPromoUsable(promo, priorRedemptionExists) {
+  if (!promo) {
+    throw new HttpsError("failed-precondition", "Invalid code, please try again.");
+  }
+  const now = Date.now();
+  const starts = timestampMillis(promo.startsAt);
+  const expires = timestampMillis(promo.expiresAt);
+  const usageLimit = promo.usageLimit === null
+    ? Infinity
+    : Number(promo.usageLimit) || 1;
+  const usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
 
-  if (
-    !/^[A-Z0-9]{3,64}$/.test(code) ||
-    (discountType === "percent" && (!Number.isFinite(percent) || percent < 1 || percent > 90)) ||
-    (discountType === "fixed" && (!Number.isSafeInteger(discountAmount) || discountAmount < 1)) ||
-    (usageLimit !== null && (!Number.isInteger(usageLimit) || usageLimit < 1))
-  ) {
+  if (!promo || promo.active !== true || promo.archived === true) {
+    throw new HttpsError("failed-precondition", "Invalid code, please try again.");
+  }
+  if (starts && starts > now) {
+    throw new HttpsError("failed-precondition", "This promo code is not active yet.");
+  }
+  if (expires && expires <= now) {
+    throw new HttpsError("failed-precondition", "This promo code has expired.");
+  }
+  if (promo.used === true || usedCount >= usageLimit) {
+    throw new HttpsError("failed-precondition", "This promo code has reached its redemption limit.");
+  }
+  if (promo.singleUsePerUser !== false && priorRedemptionExists) {
+    throw new HttpsError("failed-precondition", "Invalid code, please try again.");
+  }
+}
+
+function discountForSelectedItem(promo, items, appliedItemKey) {
+  let targetIndex = items.length === 1 ? 0 : items.findIndex((item) =>
+    item.cartItemKey && item.cartItemKey === appliedItemKey
+  );
+  if (targetIndex < 0) {
     throw new HttpsError(
       "invalid-argument",
-      "Use a 3-64 character code and enter a valid discount and use limit."
+      "Select which product the discount applies to."
     );
   }
 
-  if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-    throw new HttpsError("invalid-argument", "Invalid expiration date.");
+  const selectedItem = items[targetIndex];
+  const selectedTotal = (Number(selectedItem.price) || 0) * (Number(selectedItem.quantity) || 1);
+  const discountPercent = Number(promo.percent) || 0;
+  const configuredDiscount = Number(promo.discountAmount) || 0;
+  const isFixed = promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0 && discountPercent <= 0);
+  const discount = isFixed
+    ? Math.min(selectedTotal, configuredDiscount)
+    : Math.round(selectedTotal * (discountPercent / 100));
+
+  return {
+    discount: Math.min(selectedTotal, Math.max(0, discount)),
+    discountPercent,
+    appliedItemIndex: targetIndex,
+    appliedProductId: selectedItem.productId,
+    appliedProductName: selectedItem.name,
+  };
+}
+
+function optionalUsageLimit(value, maximum) {
+  if (value === null || value === undefined || value === "") return null;
+  const limit = Number(value);
+  if (!Number.isInteger(limit) || limit < 1 || limit > maximum) return NaN;
+  return limit;
+}
+
+function timestampFromOptional(value, label) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new HttpsError("invalid-argument", `Invalid ${label} date.`);
+  }
+  return Timestamp.fromDate(date);
+}
+
+exports.createPromoCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
+  await requireAdmin(request);
+
+  const suppliedCode = cleanCode(request.data && request.data.code);
+  const requestedType = request.data && request.data.discountType;
+  const percent = Number(request.data && request.data.percent);
+  const discountAmount = Number(request.data && request.data.discountAmount);
+  const usageLimit = optionalUsageLimit(request.data && request.data.usageLimit, 100000);
+  const minimumOrderValue = Number(request.data && request.data.minimumOrderValue) || 0;
+  const discountType = requestedType === "fixed" || (!requestedType && discountAmount > 0 && percent <= 0) ? "fixed" : "percent";
+  const startsAt = timestampFromOptional(request.data && request.data.startsAt, "start");
+  const expiresAt = timestampFromOptional(request.data && request.data.expiresAt, "expiration");
+
+  if (
+    (suppliedCode && !/^[A-Z0-9]{3,64}$/.test(suppliedCode)) ||
+    (discountType === "percent" && (!Number.isFinite(percent) || percent < 1 || percent > 90)) ||
+    (discountType === "fixed" && (!Number.isSafeInteger(discountAmount) || discountAmount < 1)) ||
+    Number.isNaN(usageLimit) ||
+    !Number.isSafeInteger(minimumOrderValue) || minimumOrderValue < 0
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Use a 3-64 character code and enter a valid discount, minimum, and use limit."
+    );
   }
 
-  const ref = db.doc(`promos/${code}`);
+  if (startsAt && expiresAt && expiresAt.toMillis() <= startsAt.toMillis()) {
+    throw new HttpsError("invalid-argument", "Expiration must be after the start date.");
+  }
 
-  await ref.create({
-    code,
-    type: "discount",
-    discountType,
-    percent: discountType === "percent" ? percent : 0,
-    discountAmount: discountType === "fixed" ? discountAmount : 0,
-    active: true,
-    used: false,
-    usedCount: 0,
-    usageLimit,
-    singleUsePerUser: true,
-    expiresAt: expiresAt
-      ? Timestamp.fromDate(expiresAt)
-      : null,
-    createdAt: FieldValue.serverTimestamp(),
-    createdBy: request.auth.uid,
-  });
-
-  await writeAdminLog(request, "promo_created", `promos/${code}`, {
-    discountType, percent, discountAmount, usageLimit,
-  });
-
-  return { code };
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = suppliedCode || `XJ${generatePointsCode().replace(/-/g, "")}`;
+    const ref = db.doc(`promos/${code}`);
+    try {
+      await ref.create({
+        code,
+        type: "discount",
+        discountType,
+        percent: discountType === "percent" ? percent : 0,
+        discountAmount: discountType === "fixed" ? discountAmount : 0,
+        minimumOrderValue,
+        active: true,
+        used: false,
+        usedCount: 0,
+        usageLimit,
+        singleUsePerUser: true,
+        startsAt,
+        expiresAt,
+        createdAt: FieldValue.serverTimestamp(),
+        createdBy: request.auth.uid,
+      });
+      await writeAdminLog(request, "promo_created", ref.path, {
+        discountType, percent, discountAmount, minimumOrderValue, usageLimit,
+      });
+      return { code };
+    } catch (error) {
+      if (error.code !== 6 && error.code !== "already-exists") throw error;
+      if (suppliedCode) {
+        throw new HttpsError("already-exists", "That discount code already exists.");
+      }
+    }
+  }
+  throw new HttpsError("internal", "Could not generate a unique discount code. Try again.");
 });
 
 function generatePointsCode() {
@@ -122,42 +223,54 @@ function generatePointsCode() {
 }
 
 exports.createPointsCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
   await requireAdmin(request);
   const valueGmd = Number(request.data && request.data.valueGmd);
-  const usageLimit = Number(request.data && request.data.usageLimit) || 1;
+  const suppliedCode = cleanCode(request.data && request.data.code);
+  const usageLimit = optionalUsageLimit(request.data && request.data.usageLimit, 100000);
+  const expiresAt = timestampFromOptional(request.data && request.data.expiresAt, "expiration");
+  if (suppliedCode && !/^[A-Z0-9-]{3,64}$/.test(suppliedCode)) {
+    throw new HttpsError("invalid-argument", "Use a 3-64 character points code.");
+  }
   if (!Number.isSafeInteger(valueGmd) || valueGmd < 1 || valueGmd > 10000000 ||
-      !Number.isInteger(usageLimit) || usageLimit < 1 || usageLimit > 100000) {
-    throw new HttpsError("invalid-argument", "Enter a valid GMD amount and use limit.");
+      Number.isNaN(usageLimit)) {
+    throw new HttpsError("invalid-argument", "Enter a valid points value and redemption limit.");
   }
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const code = generatePointsCode();
+    const code = suppliedCode || generatePointsCode();
     const ref = db.doc(`pointsCodes/${code}`);
     try {
       await ref.create({
         code,
         type: "points",
         valueGmd,
+        points: valueGmd,
         usageLimit,
+        expiresAt,
         usedCount: 0,
         active: true,
         createdAt: FieldValue.serverTimestamp(),
         createdBy: request.auth.uid,
       });
-      await writeAdminLog(request, "points_code_created", ref.path, { valueGmd, usageLimit });
-      return { code, valueGmd, usageLimit };
+      await writeAdminLog(request, "points_code_created", ref.path, { valueGmd, usageLimit, expiresAt });
+      return { code, valueGmd, usageLimit, expiresAt };
     } catch (error) {
       if (error.code !== 6 && error.code !== "already-exists") throw error;
+      if (suppliedCode) {
+        throw new HttpsError("already-exists", "That XJ Points code already exists.");
+      }
     }
   }
   throw new HttpsError("internal", "Could not generate a unique code. Try again.");
 });
 
 exports.redeemPointsCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
   if (!request.auth) throw new HttpsError("unauthenticated", "Please sign in to redeem an XJ Points code.");
   const code = cleanCode(request.data && request.data.code);
-  if (!/^XJ-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
-    throw new HttpsError("not-found", "Invalid XJ Points code. Please try again.");
+  if (!/^[A-Z0-9-]{3,64}$/.test(code)) {
+    throw new HttpsError("not-found", "Invalid code. Please try again.");
   }
 
   const codeRef = db.doc(`pointsCodes/${code}`);
@@ -169,29 +282,40 @@ exports.redeemPointsCode = onCall(async (request) => {
     const codeSnap = await transaction.get(codeRef);
     const userSnap = await transaction.get(userRef);
     const userRedemptionSnap = await transaction.get(userRedemptionRef);
-    if (!codeSnap.exists) throw new HttpsError("not-found", "Invalid XJ Points code. Please try again.");
+    if (!codeSnap.exists) throw new HttpsError("not-found", "Invalid code. Please try again.");
     const codeData = codeSnap.data();
     if (userRedemptionSnap.exists) {
       throw new HttpsError("already-exists", "This XJ Points code has already been redeemed.");
     }
     const usedCount = Number(codeData.usedCount) || 0;
-    const usageLimit = Number(codeData.usageLimit) || 1;
-    if (codeData.active !== true) {
-      throw new HttpsError("failed-precondition", "Invalid XJ Points code. Please try again.");
+    const usageLimit = codeData.usageLimit === null ? Infinity : Number(codeData.usageLimit) || 1;
+    if (codeData.active !== true || codeData.archived === true) {
+      throw new HttpsError("failed-precondition", "This XJ Points code is disabled.");
+    }
+    if (timestampMillis(codeData.startsAt) && timestampMillis(codeData.startsAt) > Date.now()) {
+      throw new HttpsError("failed-precondition", "This XJ Points code is not active yet.");
+    }
+    if (timestampMillis(codeData.expiresAt) && timestampMillis(codeData.expiresAt) <= Date.now()) {
+      throw new HttpsError("failed-precondition", "This XJ Points code has expired.");
     }
     if (usedCount >= usageLimit) {
-      throw new HttpsError("failed-precondition", "This XJ Points code has already been redeemed.");
+      throw new HttpsError("failed-precondition", "This XJ Points code has reached its redemption limit.");
     }
 
+    const points = Number(codeData.points);
     const valueGmd = Number(codeData.valueGmd);
-    if (!Number.isSafeInteger(valueGmd) || valueGmd < 1) {
+    const awardsPoints = Number.isSafeInteger(points) && points > 0;
+    const award = awardsPoints ? points : valueGmd;
+    if (!Number.isSafeInteger(award) || award < 1) {
       throw new HttpsError("failed-precondition", "This XJ Points code is unavailable.");
     }
     const nextUsedCount = usedCount + 1;
     const currentBalance = Math.max(0, Number(userSnap.exists && userSnap.data().balanceGmd) || 0);
-    const balanceGmd = currentBalance + valueGmd;
-    if (!Number.isSafeInteger(balanceGmd)) {
-      throw new HttpsError("resource-exhausted", "The XJ Games balance limit would be exceeded.");
+    const currentPoints = Math.max(0, Number(userSnap.exists && userSnap.data().points) || 0);
+    const balanceGmd = awardsPoints ? currentBalance : currentBalance + award;
+    const pointsBalance = awardsPoints ? currentPoints + award : currentPoints;
+    if (!Number.isSafeInteger(balanceGmd) || !Number.isSafeInteger(pointsBalance)) {
+      throw new HttpsError("resource-exhausted", "The XJ Games points balance limit would be exceeded.");
     }
     transaction.update(codeRef, {
       usedCount: nextUsedCount,
@@ -200,26 +324,36 @@ exports.redeemPointsCode = onCall(async (request) => {
     });
     transaction.set(userRef, {
       uid: request.auth.uid,
-      balanceGmd,
-      balanceUpdatedAt: FieldValue.serverTimestamp(),
+      ...(awardsPoints
+        ? { points: pointsBalance, pointsUpdatedAt: FieldValue.serverTimestamp() }
+        : { balanceGmd, balanceUpdatedAt: FieldValue.serverTimestamp() }),
     }, { merge: true });
     transaction.create(userRedemptionRef, {
       code,
-      valueGmd,
+      points: awardsPoints ? award : 0,
+      valueGmd: awardsPoints ? 0 : award,
       redeemedAt: FieldValue.serverTimestamp(),
     });
     transaction.create(historyRef, {
-      type: "balance_added",
-      balanceGmd: valueGmd,
-      points: valueGmd,
+      type: awardsPoints ? "redeemed" : "balance_added",
+      transactionType: "points_code_redemption",
+      ...(awardsPoints ? { points: award } : { balanceGmd: award }),
       code,
       createdAt: FieldValue.serverTimestamp(),
     });
-    return { code, valueGmd, balanceGmd };
+    return {
+      code,
+      valueGmd: awardsPoints ? 0 : award,
+      points: awardsPoints ? award : 0,
+      balanceGmd,
+      pointsBalance,
+      usedCount: nextUsedCount,
+    };
   });
 });
 
 exports.setCodeActive = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
   await requireAdmin(request);
   const code = cleanCode(request.data && request.data.code);
   const codeType = request.data && request.data.codeType;
@@ -229,13 +363,120 @@ exports.setCodeActive = onCall(async (request) => {
   }
   const collection = codeType === "points" ? "pointsCodes" : "promos";
   const ref = db.doc(`${collection}/${code}`);
-  await ref.update({
-    active,
-    updatedAt: FieldValue.serverTimestamp(),
-    updatedBy: request.auth.uid,
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists) throw new HttpsError("not-found", "That code no longer exists.");
+    if (snapshot.data().archived === true && active) {
+      throw new HttpsError("failed-precondition", "A code with redemption history cannot be re-enabled after deletion.");
+    }
+    transaction.update(ref, {
+      active,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: request.auth.uid,
+    });
   });
   await writeAdminLog(request, active ? "code_enabled" : "code_disabled", ref.path);
   return { code, active };
+});
+
+exports.updateCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
+  await requireAdmin(request);
+  const code = cleanCode(request.data && request.data.code);
+  const codeType = request.data && request.data.codeType;
+  const usageLimit = optionalUsageLimit(request.data && request.data.usageLimit, 100000);
+  const startsAt = timestampFromOptional(request.data && request.data.startsAt, "start");
+  const expiresAt = timestampFromOptional(request.data && request.data.expiresAt, "expiration");
+  if (!/^[A-Z0-9-]{3,64}$/.test(code) || !["points", "discount"].includes(codeType) || Number.isNaN(usageLimit)) {
+    throw new HttpsError("invalid-argument", "Invalid code update.");
+  }
+  if (startsAt && expiresAt && expiresAt.toMillis() <= startsAt.toMillis()) {
+    throw new HttpsError("invalid-argument", "Expiration must be after the start date.");
+  }
+
+  const ref = db.doc(`${codeType === "points" ? "pointsCodes" : "promos"}/${code}`);
+  const updates = {
+    usageLimit,
+    startsAt,
+    expiresAt,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid,
+  };
+  if (codeType === "points") {
+    const points = Number(request.data && request.data.points);
+    if (!Number.isSafeInteger(points) || points < 1 || points > 10000000) {
+      throw new HttpsError("invalid-argument", "Enter a valid points amount.");
+    }
+    updates.points = points;
+    updates.valueGmd = points;
+  } else {
+    const discountType = request.data && request.data.discountType;
+    const percent = Number(request.data && request.data.percent);
+    const discountAmount = Number(request.data && request.data.discountAmount);
+    const minimumOrderValue = Number(request.data && request.data.minimumOrderValue) || 0;
+    if (!["percent", "fixed"].includes(discountType) ||
+        (discountType === "percent" && (!Number.isFinite(percent) || percent < 1 || percent > 90)) ||
+        (discountType === "fixed" && (!Number.isSafeInteger(discountAmount) || discountAmount < 1)) ||
+        !Number.isSafeInteger(minimumOrderValue) || minimumOrderValue < 0) {
+      throw new HttpsError("invalid-argument", "Enter valid discount settings.");
+    }
+    updates.discountType = discountType;
+    updates.percent = discountType === "percent" ? percent : 0;
+    updates.discountAmount = discountType === "fixed" ? discountAmount : 0;
+    updates.minimumOrderValue = minimumOrderValue;
+  }
+
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists) throw new HttpsError("not-found", "That code no longer exists.");
+    const usedCount = Number(snapshot.data().usedCount) || (snapshot.data().used ? 1 : 0);
+    if (usageLimit !== null && usageLimit < usedCount) {
+      throw new HttpsError("failed-precondition", "The maximum uses cannot be less than the number already redeemed.");
+    }
+    const hasStartsAt = Object.prototype.hasOwnProperty.call(request.data || {}, "startsAt");
+    const effectiveStartsAt = hasStartsAt ? startsAt : snapshot.data().startsAt;
+    if (effectiveStartsAt && expiresAt && expiresAt.toMillis() <= timestampMillis(effectiveStartsAt)) {
+      throw new HttpsError("invalid-argument", "Expiration must be after the start date.");
+    }
+    transaction.update(ref, updates);
+  });
+  await writeAdminLog(request, "code_updated", ref.path, {
+    codeType,
+    usageLimit,
+    expiresAt,
+  });
+  return { code };
+});
+
+exports.deleteCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
+  await requireAdmin(request);
+  const code = cleanCode(request.data && request.data.code);
+  const codeType = request.data && request.data.codeType;
+  if (!/^[A-Z0-9-]{3,64}$/.test(code) || !["points", "discount"].includes(codeType)) {
+    throw new HttpsError("invalid-argument", "Invalid code deletion request.");
+  }
+
+  const ref = db.doc(`${codeType === "points" ? "pointsCodes" : "promos"}/${code}`);
+  const result = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists) throw new HttpsError("not-found", "That code no longer exists.");
+    const data = snapshot.data();
+    const usedCount = Number(data.usedCount) || (data.used ? 1 : 0);
+    if (usedCount > 0) {
+      transaction.update(ref, {
+        active: false,
+        archived: true,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: request.auth.uid,
+      });
+      return "archived";
+    }
+    transaction.delete(ref);
+    return "deleted";
+  });
+  await writeAdminLog(request, "code_deleted", ref.path, { result });
+  return { code, result };
 });
 
 /*
@@ -245,6 +486,7 @@ exports.setCodeActive = onCall(async (request) => {
  * The code is consumed only when createOrder succeeds.
  */
 exports.redeemPromoCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
   if (!request.auth) {
     throw new HttpsError(
       "unauthenticated",
@@ -265,37 +507,23 @@ exports.redeemPromoCode = onCall(async (request) => {
   const snap = await ref.get();
 
   if (!snap.exists) {
-    throw new HttpsError("not-found", "Promo code is invalid.");
+    throw new HttpsError("not-found", "Invalid code, please try again.");
   }
 
   const promo = snap.data();
-  const expires =
-    promo.expiresAt && promo.expiresAt.toMillis
-      ? promo.expiresAt.toMillis()
-      : 0;
-  const usageLimit = Number(promo.usageLimit) || 1;
-  const usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
   const priorRedemption = await db
     .doc(`users/${request.auth.uid}/promoRedemptions/${code}`)
     .get();
+  assertPromoUsable(promo, priorRedemption.exists);
 
-  if (
-    promo.active !== true ||
-    promo.used === true ||
-    usedCount >= usageLimit ||
-    (promo.singleUsePerUser !== false && priorRedemption.exists) ||
-    (expires && expires <= Date.now())
-  ) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Promo code is disabled, expired, or already used."
-    );
-  }
-
+  const percent = Number(promo.percent) || 0;
+  const discountAmount = Number(promo.discountAmount) || 0;
   return {
     code,
-    percent: Number(promo.percent) || 0,
-    discountAmount: Number(promo.discountAmount) || 0,
+    percent,
+    discountAmount,
+    discountType: promo.discountType || (discountAmount > 0 && percent <= 0 ? "fixed" : "percent"),
+    minimumOrderValue: Number(promo.minimumOrderValue) || 0,
     points: Number(promo.points) || 0,
     valid: true,
   };
@@ -368,6 +596,7 @@ exports.cancelFlashSale = onCall(async (request) => {
 });
 
 exports.disablePromoCode = onCall(async (request) => {
+  rejectRemovedCodeFeatures();
   await requireAdmin(request);
 
   const code = cleanCode(request.data && request.data.code);
@@ -412,7 +641,12 @@ exports.createOrder = onCall(async (request) => {
     );
   }
 
-  const customerName = String(data.customerName || "Customer").trim();
+  const customerName = String(data.customerName || "Customer").trim().slice(0, 120);
+  const customerEmail = String(data.customerEmail || "").trim().slice(0, 254);
+  const customerPhone = String(data.customerPhone || "").trim().slice(0, 32);
+  if (data.promoCode || data.useBalance === true) {
+    rejectRemovedCodeFeatures();
+  }
   const promoCode = cleanCode(data.promoCode);
   const useBalance = data.useBalance === true;
 
@@ -428,16 +662,42 @@ exports.createOrder = onCall(async (request) => {
   );
 
   let productSnapshots;
+  let flashSaleSnapshots;
 
   try {
     productSnapshots = await db.getAll(...productRefs);
+    flashSaleSnapshots = await db.collection("flashSales").where("active", "==", true).get();
   } catch (error) {
-    logger.error("Failed reading order products", error);
+    logger.error("Failed reading order pricing data", error);
     throw new HttpsError(
       "internal",
-      "Could not verify the products."
+      "Could not verify current product prices."
     );
   }
+
+  const nowMillis = Date.now();
+  const activeSalesByProduct = new Map();
+  flashSaleSnapshots.docs.forEach((snapshot) => {
+    const sale = snapshot.data();
+    const startsAt = timestampMillis(sale.startsAt);
+    const endsAt = timestampMillis(sale.endsAt);
+    const percent = Number(sale.percent);
+    if (
+      !sale.productId ||
+      !Number.isFinite(percent) ||
+      percent < 1 ||
+      percent > 80 ||
+      (startsAt && startsAt > nowMillis) ||
+      !endsAt ||
+      endsAt <= nowMillis
+    ) {
+      return;
+    }
+    const existing = activeSalesByProduct.get(sale.productId);
+    if (!existing || percent > existing.percent) {
+      activeSalesByProduct.set(sale.productId, { percent });
+    }
+  });
 
   let total = 0;
 
@@ -468,7 +728,11 @@ exports.createOrder = onCall(async (request) => {
       Math.min(99, Number(inputItems[index].quantity) || 1)
     );
 
-    let price = Number(product.price) || 0;
+    const basePrice = Number(product.price) || 0;
+    const sale = activeSalesByProduct.get(snapshot.id);
+    let price = sale
+      ? Math.round(basePrice * (1 - sale.percent / 100))
+      : basePrice;
     const options = inputItems[index].options || {};
 
     if (productType === "ps4" || productType === "switch") {
@@ -514,9 +778,12 @@ exports.createOrder = onCall(async (request) => {
 
     return {
       productId: snapshot.id,
+      cartItemKey: String(inputItems[index].cartItemKey || ""),
       name: product.name || inputItems[index].name || "Product",
       quantity,
       price,
+      basePrice,
+      flashSalePercent: sale ? sale.percent : 0,
       options,
       details: String(inputItems[index].details || ""),
     };
@@ -550,46 +817,27 @@ exports.createOrder = onCall(async (request) => {
        * cannot successfully use the same promo code.
        */
       if (promoCode) {
+        if (!request.auth) {
+          throw new HttpsError("unauthenticated", "Sign in to use a promo code.");
+        }
         promoRef = db.doc(`promos/${promoCode}`);
         const promoSnap = await transaction.get(promoRef);
 
         if (!promoSnap.exists) {
           throw new HttpsError(
             "not-found",
-            "Promo code is invalid."
+            "Invalid code, please try again."
           );
         }
 
         promo = promoSnap.data();
-
-        const expires =
-          promo.expiresAt && promo.expiresAt.toMillis
-            ? promo.expiresAt.toMillis()
-            : 0;
-        usageLimit = Number(promo.usageLimit) || 1;
+        usageLimit = promo.usageLimit === null ? Infinity : Number(promo.usageLimit) || 1;
         usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
-
-        if (
-          promo.active !== true ||
-          promo.used === true ||
-          usedCount >= usageLimit ||
-          (expires && expires <= Date.now())
-        ) {
-          throw new HttpsError(
-            "failed-precondition",
-            "Promo code is invalid, expired, or already used."
-          );
-        }
-        if (!request.auth) {
-          throw new HttpsError("unauthenticated", "Sign in to use a promo code.");
-        }
         promoRedemptionRef = db.doc(`users/${request.auth.uid}/promoRedemptions/${promoCode}`);
         userRef = db.doc(`users/${request.auth.uid}`);
         const priorRedemption = await transaction.get(promoRedemptionRef);
         userSnap = await transaction.get(userRef);
-        if (promo.singleUsePerUser !== false && priorRedemption.exists) {
-          throw new HttpsError("failed-precondition", "This promo code was already used by this account.");
-        }
+        assertPromoUsable(promo, priorRedemption.exists);
       }
 
       if (useBalance) {
@@ -614,13 +862,17 @@ exports.createOrder = onCall(async (request) => {
         ? `220-${datePart}-${promoCode}-${orderNumberText}`
         : `220-${datePart}-${orderNumberText}`;
 
-      const discountPercent = promo ? Number(promo.percent) || 0 : 0;
-      const configuredDiscount = promo ? Number(promo.discountAmount) || 0 : 0;
-      const discount = promo
-        ? Math.min(total, promo.discountType === "fixed" || (!promo.discountType && configuredDiscount > 0)
-          ? configuredDiscount
-          : Math.round(total * (discountPercent / 100)))
-        : 0;
+      const promoDiscount = promo
+        ? discountForSelectedItem(promo, items, data.appliedItemKey)
+        : { discount: 0, discountPercent: 0, appliedItemIndex: -1, appliedProductId: null, appliedProductName: null };
+      if (promo && total < (Number(promo.minimumOrderValue) || 0)) {
+        throw new HttpsError(
+          "failed-precondition",
+          `This promo code requires a minimum order of ${(Number(promo.minimumOrderValue) || 0).toLocaleString()} GMD.`
+        );
+      }
+      const discount = promoDiscount.discount;
+      const discountPercent = promoDiscount.discountPercent;
       const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
       const finalTotal = Math.max(0, total - discount - balanceUsed);
 
@@ -628,16 +880,24 @@ exports.createOrder = onCall(async (request) => {
         id: orderId,
         orderNumber,
         customerName,
+        customerEmail,
+        customerPhone,
         userId: request.auth ? request.auth.uid : null,
         items,
         subtotal: total,
         discount,
         discountPercent,
+        appliedItemIndex: promoDiscount.appliedItemIndex,
+        appliedItemKey: promo ? String(data.appliedItemKey || "") : "",
+        appliedProductId: promoDiscount.appliedProductId,
+        appliedProductName: promoDiscount.appliedProductName,
+        discountType: promo ? promo.discountType || (Number(promo.discountAmount) > 0 && discountPercent <= 0 ? "fixed" : "percent") : null,
         balanceUsed,
         balanceRemaining: useBalance ? availableBalance - balanceUsed : null,
         promoCode: promoCode || null,
         total: finalTotal,
-        status: "Placed",
+        useBalance,
+        status: "Pending WhatsApp confirmation",
         createdAt: FieldValue.serverTimestamp(),
       };
 
@@ -671,70 +931,22 @@ exports.createOrder = onCall(async (request) => {
         { merge: true }
       );
 
-      if (balanceUsed > 0) {
-        const remainingBalance = availableBalance - balanceUsed;
-        transaction.set(userRef, {
-          uid: request.auth.uid,
-          balanceGmd: remainingBalance,
-          balanceUpdatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-        transaction.set(userRef.collection("pointsHistory").doc(orderId), {
-          type: "balance_spent",
-          balanceGmd: -balanceUsed,
-          orderId,
-          createdAt: FieldValue.serverTimestamp(),
-        });
-      }
-
-      /*
-       * Consume the promo ONLY when the order is successfully created.
-       */
-      if (promoRef) {
-        const nextUsedCount = usedCount + 1;
-        transaction.update(promoRef, {
-          usedCount: nextUsedCount,
-          used: nextUsedCount >= usageLimit,
-          usedBy: request.auth.uid,
-          usedAt: FieldValue.serverTimestamp(),
-          usedOrderId: orderId,
-        });
-        const pointsEarned = Math.max(0, Math.floor(Number(promo.points) || 0));
-        transaction.set(promoRedemptionRef, {
-          code: promoCode,
-          orderId,
-          discount,
-          pointsAwarded: pointsEarned,
-          createdAt: FieldValue.serverTimestamp(),
-        });
-        if (pointsEarned > 0) {
-          const currentPoints = Math.max(0, Number(userSnap.exists && userSnap.data().points) || 0);
-          transaction.set(userRef, {
-            uid: request.auth.uid,
-            points: currentPoints + pointsEarned,
-            pointsUpdatedAt: FieldValue.serverTimestamp(),
-          }, { merge: true });
-          transaction.set(userRef.collection("pointsHistory").doc(orderId), {
-            type: "earned",
-            points: pointsEarned,
-            promoCode,
-            orderId,
-            createdAt: FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
       return {
         id: orderId,
         total: finalTotal,
         subtotal: total,
         discount,
         discountPercent,
+        appliedItemIndex: promoDiscount.appliedItemIndex,
+        appliedProductId: promoDiscount.appliedProductId,
+        appliedProductName: promoDiscount.appliedProductName,
+        discountType: order.discountType,
         balanceUsed,
         remainingBalance: useBalance ? availableBalance - balanceUsed : null,
-        pointsEarned: promo ? Math.max(0, Math.floor(Number(promo.points) || 0)) : 0,
         promoCode: promoCode || "",
         items,
         customerName,
+        status: order.status,
       };
     });
   } catch (error) {
@@ -751,6 +963,158 @@ exports.createOrder = onCall(async (request) => {
   }
 
   return finalOrder;
+});
+
+exports.confirmOrder = onCall(async (request) => {
+  await requireAdmin(request);
+  const orderId = String(request.data && request.data.orderId || "").trim();
+  if (!orderId || orderId.length > 160) {
+    throw new HttpsError("invalid-argument", "A valid order ID is required.");
+  }
+
+  const orderRef = db.doc(`orders/${orderId}`);
+  const confirmed = await db.runTransaction(async (transaction) => {
+    const orderSnap = await transaction.get(orderRef);
+    if (!orderSnap.exists) throw new HttpsError("not-found", "Order not found.");
+    const order = orderSnap.data();
+    if (order.status !== "Pending WhatsApp confirmation") {
+      throw new HttpsError("failed-precondition", "This order is no longer awaiting confirmation.");
+    }
+
+    const promoCode = cleanCode(order.promoCode);
+    const promoRef = promoCode ? db.doc(`promos/${promoCode}`) : null;
+    const userRef = order.userId ? db.doc(`users/${order.userId}`) : null;
+    const redemptionRef = promoCode && order.userId
+      ? userRef.collection("promoRedemptions").doc(promoCode)
+      : null;
+    const reads = await Promise.all([
+      promoRef ? transaction.get(promoRef) : Promise.resolve(null),
+      userRef ? transaction.get(userRef) : Promise.resolve(null),
+      redemptionRef ? transaction.get(redemptionRef) : Promise.resolve(null),
+    ]);
+    const promoSnap = reads[0];
+    const userSnap = reads[1];
+    const redemptionSnap = reads[2];
+
+    if (promoCode) {
+      if (!order.userId || !promoSnap || !promoSnap.exists) {
+        throw new HttpsError("failed-precondition", "The discount code cannot be confirmed.");
+      }
+      assertPromoUsable(promoSnap.data(), redemptionSnap.exists);
+    }
+
+    const promo = promoSnap && promoSnap.exists ? promoSnap.data() : null;
+    if (promo && Number(order.subtotal) < (Number(promo.minimumOrderValue) || 0)) {
+      throw new HttpsError("failed-precondition", "The order no longer meets the promo minimum.");
+    }
+
+    const subtotal = Number(order.subtotal) || 0;
+    const discount = Number(order.discount) || 0;
+    const requestedBalance = Number(order.balanceUsed) || 0;
+    const currentBalance = userSnap && userSnap.exists
+      ? Math.max(0, Number(userSnap.data().balanceGmd) || 0)
+      : 0;
+    if (requestedBalance > currentBalance) {
+      throw new HttpsError("failed-precondition", "The customer's balance is no longer sufficient.");
+    }
+
+    const pointsEarned = promo ? Math.max(0, Math.floor(Number(promo.points) || 0)) : 0;
+    const nextOrder = {
+      status: "Confirmed",
+      confirmedAt: FieldValue.serverTimestamp(),
+      confirmedBy: request.auth.uid,
+      total: Math.max(0, subtotal - discount - requestedBalance),
+      ...(pointsEarned > 0 ? { pointsEarned } : {}),
+    };
+    transaction.update(orderRef, nextOrder);
+    if (order.userId) {
+      transaction.update(db.doc(`users/${order.userId}/orders/${orderId}`), nextOrder);
+    }
+    if (requestedBalance > 0 && userRef) {
+      const remainingBalance = currentBalance - requestedBalance;
+      transaction.set(userRef, {
+        balanceGmd: remainingBalance,
+        balanceUpdatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      transaction.set(userRef.collection("pointsHistory").doc(orderId), {
+        type: "balance_spent",
+        transactionType: "order_balance_spend",
+        balanceGmd: -requestedBalance,
+        orderId,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    if (pointsEarned > 0 && userRef && userSnap) {
+      const updatedPoints = Math.max(0, Number(userSnap.exists && userSnap.data().points) || 0) + pointsEarned;
+      if (!Number.isSafeInteger(updatedPoints)) {
+        throw new HttpsError("resource-exhausted", "The customer's points balance limit would be exceeded.");
+      }
+      transaction.set(userRef, {
+        points: updatedPoints,
+        pointsUpdatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      transaction.set(userRef.collection("pointsHistory").doc(`${orderId}-promo`), {
+        type: "earned",
+        transactionType: "confirmed_order_promo",
+        points: pointsEarned,
+        promoCode,
+        orderId,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    if (promoRef && promo && redemptionRef) {
+      const usageLimit = promo.usageLimit === null ? Infinity : Number(promo.usageLimit) || 1;
+      const usedCount = Number(promo.usedCount) || (promo.used ? 1 : 0);
+      const nextUsedCount = usedCount + 1;
+      transaction.update(promoRef, {
+        usedCount: nextUsedCount,
+        used: nextUsedCount >= usageLimit,
+        lastRedeemedAt: FieldValue.serverTimestamp(),
+      });
+      transaction.create(redemptionRef, {
+        code: promoCode,
+        orderId,
+        discount,
+        pointsAwarded: pointsEarned,
+        appliedProductId: order.appliedProductId || null,
+        appliedProductName: order.appliedProductName || null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    return { id: orderId, status: "Confirmed" };
+  });
+
+  await writeAdminLog(request, "order_confirmed", `orders/${orderId}`);
+  return confirmed;
+});
+
+exports.cancelOrder = onCall(async (request) => {
+  await requireAdmin(request);
+  const orderId = String(request.data && request.data.orderId || "").trim();
+  if (!orderId || orderId.length > 160) {
+    throw new HttpsError("invalid-argument", "A valid order ID is required.");
+  }
+  const orderRef = db.doc(`orders/${orderId}`);
+  const cancelled = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(orderRef);
+    if (!snapshot.exists) throw new HttpsError("not-found", "Order not found.");
+    const order = snapshot.data();
+    if (order.status !== "Pending WhatsApp confirmation") {
+      throw new HttpsError("failed-precondition", "Only pending orders can be cancelled.");
+    }
+    const update = {
+      status: "Cancelled",
+      cancelledAt: FieldValue.serverTimestamp(),
+      cancelledBy: request.auth.uid,
+    };
+    transaction.update(orderRef, update);
+    if (order.userId) {
+      transaction.update(db.doc(`users/${order.userId}/orders/${orderId}`), update);
+    }
+    return { id: orderId, status: "Cancelled" };
+  });
+  await writeAdminLog(request, "order_cancelled", `orders/${orderId}`);
+  return cancelled;
 });
 
 exports.updateWebsiteSettings = onCall(async (request) => {

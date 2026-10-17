@@ -9,9 +9,36 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/config/admins)
         && request.auth.token.email != null
-        && request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails;
+        && (request.auth.token.email == 'ifeadia21@gmail.com'
+          || (exists(/databases/$(database)/documents/config/admins)
+            && request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails));
+    }
+
+    function hasSixDistinctFeaturedProductIds(ids) {
+      return ids is list
+        && ids.size() == 6
+        && ids[0] is string
+        && ids[1] is string
+        && ids[2] is string
+        && ids[3] is string
+        && ids[4] is string
+        && ids[5] is string
+        && ids[0] != ids[1]
+        && ids[0] != ids[2]
+        && ids[0] != ids[3]
+        && ids[0] != ids[4]
+        && ids[0] != ids[5]
+        && ids[1] != ids[2]
+        && ids[1] != ids[3]
+        && ids[1] != ids[4]
+        && ids[1] != ids[5]
+        && ids[2] != ids[3]
+        && ids[2] != ids[4]
+        && ids[2] != ids[5]
+        && ids[3] != ids[4]
+        && ids[3] != ids[5]
+        && ids[4] != ids[5];
     }
 
     match /config/admins {
@@ -24,11 +51,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /config/featuredProducts {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['productIds', 'updatedAt'])
+        && hasSixDistinctFeaturedProductIds(request.resource.data.productIds);
+      allow delete: if false;
+    }
+
     // Storefront promotion and operational settings are public, but only admins
     // can change them. This keeps client-side displays tamper-resistant.
     match /config/{document} {
       allow read: if document != 'admins';
-      allow write: if isAdmin();
+      allow write: if isAdmin() && document != 'featuredProducts';
     }
 
     match /products/{productId} {
@@ -68,7 +103,9 @@ service cloud.firestore {
                     && request.resource.data.rating is int
                     && request.resource.data.rating >= 1
                     && request.resource.data.rating <= 5
-                    && request.resource.data.keys().hasOnly(['userId', 'name', 'rating', 'text', 'avatar', 'createdAt']);
+                    && request.resource.data.productId is string
+                    && request.resource.data.productName is string
+                    && request.resource.data.keys().hasOnly(['userId', 'name', 'rating', 'text', 'avatar', 'productId', 'productName', 'createdAt']);
       allow update, delete: if isSignedIn()
                               && resource.data.userId == request.auth.uid;
     }
@@ -76,6 +113,14 @@ service cloud.firestore {
     match /users/{userId}/orders/{orderId} {
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow create, update, delete: if false;
+    }
+
+    match /users/{userId}/wishlist/{productId} {
+      allow read, delete: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.productId == productId
+        && request.resource.data.keys().hasOnly(['productId', 'savedAt']);
     }
 
     match /users/{userId}/pointsHistory/{entryId} {

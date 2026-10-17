@@ -10,6 +10,7 @@ const XJ_DEFAULT_CATEGORY_ORDER = [
   "games"
 ];
 var xjCategoryOrder = XJ_DEFAULT_CATEGORY_ORDER.slice();
+var xjFeaturedProductIds = [];
 
 const XJ_PRODUCT_CATALOG = {
   "ps4-slim": {
@@ -60,7 +61,7 @@ const XJ_PRODUCT_CATALOG = {
     displayCategory: "playstation-consoles",
     categories: ["ps5", "consoles", "playstation"],
     price: 35000,
-    inStock: true,
+    inStock: false,
     type: "ps4",
     extraControllerPrice: 4000,
     hasModal: true,
@@ -115,7 +116,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "nintendo-consoles",
     categories: ["nintendo", "consoles", "switch"],
-    price: 8000,
+    price: 8500,
     inStock: false,
     type: "switch",
     hasModal: true,
@@ -168,7 +169,7 @@ const XJ_PRODUCT_CATALOG = {
     displayCategory: "controllers",
     categories: ["controllers", "ps5", "accessories"],
     price: 4000,
-    inStock: true,
+    inStock: false,
     type: "standalone",
     hasModal: false,
     image: "ps5-controller.png",
@@ -278,10 +279,15 @@ function xjGetPrioritySortedProductIds(ids) {
   });
 }
 
-function xjGetAllProductIds() {
+function xjGetAllProductIds(includeHidden) {
   return Object.keys(XJ_PRODUCT_CATALOG).filter(function(id) {
-    return !xjIsProductHidden(id);
+    return includeHidden === true || !xjIsProductHidden(id);
   });
+}
+
+function xjIsHomepageProduct(product) {
+  if (!product || xjIsProductHidden(product.id)) return false;
+  return xjFeaturedProductIds.indexOf(product.id) !== -1;
 }
 
 function xjSlugifyProductName(name) {
@@ -292,10 +298,31 @@ function xjSlugifyProductName(name) {
     .slice(0, 48) || "product";
 }
 
-function xjSanitizeImageFileName(name) {
-  var base = String(name || "").trim().replace(/\\/g, "/").split("/").pop();
-  if (!base || !/^[A-Za-z0-9._-]+\.(png|jpe?g|webp|gif|svg)$/i.test(base)) {
+function xjSanitizeProductMediaReference(value, extensionPattern, allowHttp) {
+  var reference = String(value || "").trim();
+  if (/^https?:\/\//i.test(reference)) {
+    try {
+      var url = new URL(reference);
+      var allowedProtocol = url.protocol === "https:" || (allowHttp && url.protocol === "http:");
+      return allowedProtocol && url.hostname && !url.username && !url.password ? reference : "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  var parts = reference.split("/");
+  if (!reference || parts.some(function(part) {
+    return !/^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(part);
+  }) || !extensionPattern.test(reference)) {
     return "";
   }
-  return base;
+  return reference;
+}
+
+function xjSanitizeImageReference(value) {
+  return xjSanitizeProductMediaReference(value, /\.(png|jpe?g|webp|gif|svg)$/i, true);
+}
+
+function xjSanitizeVideoReference(value) {
+  return xjSanitizeProductMediaReference(value, /\.(mp4|webm)$/i, false);
 }
