@@ -72,18 +72,21 @@ function xjComputeSearchScore(productId, query) {
     }
   }
 
-  // "Switch" alone â†’ Nintendo Switch, not Switch Lite
+  // "Switch" alone → Nintendo Switch, not Switch Lite
   if (normalized === "switch") {
     if (productId === "nintendo-switch") {
       score += 120;
+    } else if (productId === "nintendo-switch-oled") {
+      score += 90;
     } else if (productId === "nintendo-switch-lite") {
       score -= 80;
     }
   }
 
-  // "Nintendo" alone â†’ both Switch products, Switch full console slightly higher
+  // "Nintendo" alone → Switch family, full console slightly higher
   if (normalized === "nintendo") {
     if (productId === "nintendo-switch") score += 40;
+    if (productId === "nintendo-switch-oled") score += 35;
     if (productId === "nintendo-switch-lite") score += 30;
   }
 
@@ -91,9 +94,18 @@ function xjComputeSearchScore(productId, query) {
   if (normalized.includes("lite")) {
     if (productId === "nintendo-switch-lite") {
       score += 100;
-    } else if (productId === "nintendo-switch") {
+    } else if (productId === "nintendo-switch" || productId === "nintendo-switch-oled") {
       score -= 60;
     }
+  }
+
+  if (normalized.includes("oled")) {
+    if (productId === "nintendo-switch-oled") score += 120;
+    else if (productId === "nintendo-switch" || productId === "nintendo-switch-lite") score -= 40;
+  }
+
+  if (/ps4/.test(normalized) && /pro/.test(normalized) && !/controller|gamepad/.test(normalized)) {
+    if (productId === "ps4-pro") score += 100;
   }
 
   // Controller searches â†’ both PS4 and PS5 controllers
@@ -406,8 +418,9 @@ function xjSelectSearchSuggestion(productId) {
 function xjInitSearchSuggestions() {
   const input = document.getElementById("searchInput");
   const panel = document.getElementById("searchSuggestions");
-  if (location.hash === "#all-products") {
+  if (/allProductsEmbedded=1/.test(location.search) || location.hash === "#all-products") {
     xjCatalogView = "all";
+    document.documentElement.classList.add("xj-all-products-embed");
   }
   xjSyncCatalogViewUi();
   window.addEventListener("hashchange", function() {

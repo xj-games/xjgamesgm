@@ -53,6 +53,25 @@ const XJ_PRODUCT_CATALOG = {
       "sony ps4", "ps", "ps4 fat", "playstation", "sony playstation 4"
     ]
   },
+  "ps4-pro": {
+    id: "ps4-pro",
+    name: "PlayStation 4 Pro",
+    slug: "playstation 4 pro",
+    category: "consoles",
+    displayCategory: "playstation-consoles",
+    categories: ["ps4", "consoles", "playstation"],
+    price: 12000,
+    inStock: true,
+    type: "ps4",
+    extraControllerPrice: 1500,
+    hasModal: true,
+    image: "ps4-pro.png",
+    description: "Enhanced 4K gaming and smoother frame rates in a more powerful PlayStation 4 Pro console.",
+    aliases: [
+      "ps4", "ps 4", "playstation 4", "playstation 4 pro", "play station 4 pro",
+      "sony ps4 pro", "ps", "ps4 pro", "playstation", "sony playstation 4 pro"
+    ]
+  },
   "ps5": {
     id: "ps5",
     name: "PlayStation 5",
@@ -141,6 +160,24 @@ const XJ_PRODUCT_CATALOG = {
     description: "Dedicated specifically to handheld play. Lightweight, compact, and perfect for gaming comfortably wherever you are.",
     aliases: [
       "nintendo switch lite", "switch lite", "nintendo lite", "switch lite console"
+    ]
+  },
+  "nintendo-switch-oled": {
+    id: "nintendo-switch-oled",
+    name: "Nintendo Switch OLED",
+    slug: "nintendo switch oled",
+    category: "consoles",
+    displayCategory: "nintendo-consoles",
+    categories: ["nintendo", "consoles", "switch", "switch-oled"],
+    price: 10000,
+    inStock: true,
+    type: "switch",
+    hasModal: true,
+    image: "oled.png",
+    description: "Nintendo Switch OLED with a vivid 7-inch screen, enhanced audio, and a wide adjustable stand for tabletop play.",
+    aliases: [
+      "nintendo switch oled", "switch oled", "oled switch", "nintendo oled",
+      "oled", "switch oled console"
     ]
   },
   "ps4-controller": {
@@ -279,9 +316,9 @@ function xjGetPrioritySortedProductIds(ids) {
   });
 }
 
-function xjGetAllProductIds() {
+function xjGetAllProductIds(includeHidden) {
   return Object.keys(XJ_PRODUCT_CATALOG).filter(function(id) {
-    return !xjIsProductHidden(id);
+    return includeHidden || !xjIsProductHidden(id);
   });
 }
 
@@ -293,6 +330,7 @@ var XJ_HOMEPAGE_PRODUCT_IDS = {
   "ps3": true,
   "nintendo-switch": true,
   "nintendo-switch-lite": true,
+  "nintendo-switch-oled": true,
   "ps4-controller": true,
   "ps5-controller": true
 };
@@ -330,8 +368,9 @@ function xjIsAllowedHomepageProduct(product) {
 }
 
 function xjIsHomepageProduct(product) {
-  if (!xjIsAllowedHomepageProduct(product)) return false;
-  return xjFeaturedProductIds.length !== 6 || xjFeaturedProductIds.indexOf(product.id) !== -1;
+  if (!product || xjIsProductHidden(product.id)) return false;
+  if (product.showOnHomepage || product.isCustom) return true;
+  return xjIsAllowedHomepageProduct(product);
 }
 
 function xjSlugifyProductName(name) {
@@ -343,9 +382,43 @@ function xjSlugifyProductName(name) {
 }
 
 function xjSanitizeImageFileName(name) {
-  var base = String(name || "").trim().replace(/\\/g, "/").split("/").pop();
-  if (!base || !/^[A-Za-z0-9._-]+\.(png|jpe?g|webp|gif|svg)$/i.test(base)) {
+  var cleaned = String(name || "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!cleaned || cleaned.indexOf("..") !== -1) return "";
+  if (!/^[A-Za-z0-9._/-]+\.(png|jpe?g|webp|gif|svg)$/i.test(cleaned)) {
     return "";
   }
-  return base;
+  return cleaned;
+}
+
+function xjSanitizeImageReference(value) {
+  var raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https:\/\//i.test(raw)) {
+    try {
+      var url = new URL(raw);
+      if (url.protocol !== "https:") return "";
+      if (!/\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(url.pathname)) return "";
+      return raw;
+    } catch (error) {
+      return "";
+    }
+  }
+  return xjSanitizeImageFileName(raw);
+}
+
+function xjSanitizeVideoReference(value) {
+  var raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https:\/\//i.test(raw)) {
+    try {
+      var url = new URL(raw);
+      return url.protocol === "https:" ? raw : "";
+    } catch (error) {
+      return "";
+    }
+  }
+  var cleaned = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+  if (cleaned.indexOf("..") !== -1) return "";
+  if (!/^[A-Za-z0-9._/-]+\.(mp4|webm|ogg)$/i.test(cleaned)) return "";
+  return cleaned;
 }

@@ -312,3 +312,174 @@ body:has(> header) > header a { color: var(--xj-cyan); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* XJ Games — clean homepage featured-product selector */
+.admin-featured-selection {
+  margin: 20px 0 24px;
+  padding: clamp(16px, 2.5vw, 24px);
+  border: 1px solid var(--xj-border-strong, rgba(80, 165, 220, .28));
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(17, 29, 46, .98), rgba(10, 18, 30, .98));
+  color: var(--xj-text, #edf3fa);
+}
+.admin-featured-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.admin-featured-heading h4 {
+  margin: 0 0 7px;
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+.admin-featured-heading .admin-help {
+  max-width: 650px;
+  margin: 0;
+  font-size: 13px;
+}
+.admin-featured-count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(0, 191, 255, .28);
+  border-radius: 999px;
+  background: rgba(0, 191, 255, .09);
+  color: #8fe5ff;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.admin-featured-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 440px;
+  overflow: auto;
+  padding: 3px 5px 3px 2px;
+  margin: 0 0 16px;
+  overscroll-behavior: contain;
+}
+.admin-featured-option {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 68px;
+  padding: 12px 14px;
+  border: 1px solid rgba(150, 178, 210, .15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .025);
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.admin-featured-option:hover {
+  border-color: rgba(0, 191, 255, .4);
+  background: rgba(0, 191, 255, .055);
+}
+.admin-featured-option.is-selected {
+  border-color: rgba(0, 191, 255, .52);
+  background: rgba(0, 191, 255, .085);
+}
+.admin-featured-option:focus-within {
+  outline: 2px solid rgba(0, 191, 255, .55);
+  outline-offset: 2px;
+}
+.admin-featured-checkbox {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #00bfff;
+  cursor: pointer;
+}
+.admin-featured-checkbox:disabled {
+  cursor: not-allowed;
+}
+.admin-featured-option-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.admin-featured-option-copy strong {
+  overflow-wrap: anywhere;
+  color: #edf3fa;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.admin-featured-option-copy small {
+  color: #91a5bd;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.admin-featured-checkmark {
+  display: inline-flex;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(145, 165, 189, .25);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+.admin-featured-option.is-selected .admin-featured-checkmark {
+  border-color: #00bfff;
+  background: #00bfff;
+  color: #07111c;
+}
+.admin-featured-option input:disabled:not(:checked) ~ .admin-featured-option-copy {
+  opacity: .5;
+}
+.admin-featured-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid rgba(150, 178, 210, .12);
+}
+.admin-featured-footer .admin-help {
+  flex: 1 1 220px;
+  margin: 0;
+  font-size: 12px;
+}
+.admin-featured-save {
+  min-width: 190px;
+  min-height: 42px;
+  border-radius: 10px;
+  font-weight: 750;
+}
+.admin-featured-save:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+.admin-featured-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed rgba(150, 178, 210, .22);
+  border-radius: 12px;
+  color: #91a5bd;
+  font-size: 13px;
+}
+@media (max-width: 680px) {
+  .admin-featured-heading { flex-direction: column; align-items: stretch; }
+  .admin-featured-count { align-self: flex-start; }
+  .admin-featured-list { grid-template-columns: minmax(0, 1fr); max-height: 380px; }
+  .admin-featured-option { min-height: 62px; padding: 11px 12px; }
+  .admin-featured-footer { align-items: stretch; }
+  .admin-featured-save { width: 100%; min-width: 0; }
+}

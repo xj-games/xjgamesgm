@@ -66,10 +66,12 @@ const catalog = searchContext.XJ_PRODUCT_CATALOG_FOR_TEST;
 const requiredHomepageIds = [
   'ps4-slim',
   'ps4-fat',
+  'ps4-pro',
   'ps2',
   'ps3',
   'nintendo-switch',
   'nintendo-switch-lite',
+  'nintendo-switch-oled',
   'ps4-controller',
   'ps5-controller'
 ];
@@ -102,13 +104,13 @@ if (!requiredHomepageIds.every(function(id) { return defaultHomepageIds.indexOf(
   console.log('PASS: curated homepage products exclude non-featured consoles and games');
 }
 
-searchContext.xjFeaturedProductIds = ['ps4-slim', 'ps4-fat', 'ps2', 'ps3', 'nintendo-switch', 'ps4-controller'];
-if (!searchContext.xjIsHomepageProduct(catalog['ps4-slim']) ||
-    searchContext.xjIsHomepageProduct(catalog['nintendo-switch-lite'])) {
-  console.error('FAIL: saved homepage selection was not respected');
+if (!searchContext.xjIsHomepageProduct(catalog['nintendo-switch-lite']) ||
+    !searchContext.xjIsHomepageProduct(catalog['nintendo-switch-oled']) ||
+    searchContext.xjIsHomepageProduct(catalog['ps5'])) {
+  console.error('FAIL: homepage should show Switch family and hide PS5');
   failed++;
 } else {
-  console.log('PASS: saved homepage selection limits featured products');
+  console.log('PASS: homepage shows curated consoles/controllers and hides PS5');
 }
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
