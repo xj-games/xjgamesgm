@@ -2643,7 +2643,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 </div>
 <p style="font-size:12px; color:#666; margin-top:20px;">&copy; 2026 XJ Games. All rights reserved.</p>
 </footer>
-```html
+html
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -3440,7 +3440,7 @@ item.quantity = Number(item.quantity) > 0
 ? Number(item.quantity)
 : 1;
 
-```
+
 item.finalPrice = Number(item.finalPrice) || 0;
 
 subtotal += item.finalPrice * item.quantity;
@@ -3459,7 +3459,7 @@ if (item.delivery === 'Yes') {
     item.deliveryFee = 0;
   }
 }
-```
+
 
 });
 
@@ -3475,12 +3475,12 @@ cartItemsContainer.innerHTML =
 '<div class="empty-cart">Your cart is empty</div>';
 }
 
-```
+
 if (cartSubtotal) cartSubtotal.textContent = '0 GMD';
 if (cartTotalPrice) cartTotalPrice.innerText = '0 GMD';
 
 return;
-```
+
 
 }
 
@@ -3490,7 +3490,7 @@ cart.forEach(function(item, index) {
 let detailsHTML =
 `<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Option: ${item.consoleType || ''}</p>`;
 
-```
+
 if (item.type === 'ps4') {
   detailsHTML +=
     `<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Controllers: ${item.psControllers || ''}</p>`;
@@ -3534,7 +3534,7 @@ html += `
     </p>
   </div>
 `;
-```
+
 
 });
 
