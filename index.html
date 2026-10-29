@@ -348,7 +348,7 @@ padding:6px 10px;
 border-radius:30px;
 font-size:11px;
 cursor:pointer;
-display:none;
+display:inline-flex;
 align-items:center;
 gap:4px;
 white-space:nowrap;
@@ -657,10 +657,58 @@ details.admin-add-form summary{cursor:pointer;color:#00bfff;font-weight:700;padd
 .admin-category-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .admin-category-row:last-child{border-bottom:0}
 .admin-category-row .admin-action-btn{min-width:58px;padding:7px 10px}
+
+/* Featured selection admin list */
+.admin-featured-selection{
+background:rgba(16,32,51,0.85);
+border:1px solid rgba(82,197,232,0.3);
+border-radius:14px;
+padding:16px;
+margin-bottom:18px;
+}
+.admin-featured-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+gap:10px;
+margin:12px 0;
+max-height:260px;
+overflow-y:auto;
+padding-right:6px;
+}
+.admin-featured-item{
+display:flex;
+align-items:center;
+gap:10px;
+background:#070B16;
+border:1px solid rgba(255,255,255,0.1);
+border-radius:10px;
+padding:8px 12px;
+cursor:pointer;
+transition:border-color 0.2s;
+}
+.admin-featured-item:hover{
+border-color:#00bfff;
+}
+.admin-featured-item input[type="checkbox"]{
+accent-color:#00bfff;
+width:18px;
+height:18px;
+cursor:pointer;
+}
+.admin-featured-item span{
+font-size:12px;
+color:#fff;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
 @media (max-width: 700px) {
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
+  .card-actions > button:first-child{font-size:12px;padding:12px 10px}
+  .product-menu{min-width:210px}
 }
 
 .cart{
@@ -1620,38 +1668,6 @@ to { transform: translateX(120%); opacity: 0; }
 .catalog-intro{text-align:center;color:#9bb3c8;margin:-18px auto 18px;max-width:640px;font-size:14px}
 .catalog-all-link{display:inline-flex;align-items:center;justify-content:center;padding:13px 24px;border-radius:10px;border:1px solid rgba(82,197,232,.4);background:#102033;color:#8de5ff;text-decoration:none;font-weight:800}
 .catalog-view-controls button{background:linear-gradient(110deg,#00bfff,#087da4);border:1px solid #79eaff;color:#06111a;border-radius:10px;padding:13px 24px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 24px rgba(0,191,255,.24);transition:transform .2s,box-shadow .2s}
-.product-qty,.cart-qty,.modal-qty{
-display:inline-flex;
-align-items:center;
-gap:6px;
-margin:0 0 12px;
-padding:4px;
-background:#0d1a28;
-border:1px solid rgba(82,197,232,.28);
-border-radius:12px;
-}
-.qty-btn{
-width:34px;
-height:34px;
-border:0;
-border-radius:9px;
-background:linear-gradient(180deg,#1d6fa3,#15557e);
-color:#fff;
-font-size:18px;
-font-weight:700;
-cursor:pointer;
-line-height:1;
-}
-.product-qty-input,.modal-qty-input{
-width:48px;
-height:34px;
-border:0!important;
-border-radius:8px!important;
-background:#07111c!important;
-color:#8de5ff!important;
-text-align:center;
-font-weight:700;
-}
 .cart-fulfillment{margin:12px 0 4px;padding:12px;background:#0b1624;border:1px solid rgba(82,197,232,.2);border-radius:12px}
 .cart-fulfillment h4{margin:0 0 8px;color:#8de5ff;font-size:13px}
 .fulfillment-pills{display:flex;gap:8px;margin-bottom:8px}
@@ -1917,6 +1933,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     </div>
   </div>
 </nav>
+
 <div class="mobile-nav-menu" id="mobileNavMenu" aria-hidden="true">
   <a href="#" onclick="closeMobileMenu()">Home</a>
   <a href="#products" onclick="closeMobileMenu()">Products</a>
@@ -1924,6 +1941,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <a href="#about" onclick="closeMobileMenu()">About</a>
   <a href="#reviews" onclick="closeMobileMenu()">Reviews</a>
   <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+  <a href="#" onclick="closeMobileMenu(); openAdminPanel();" style="color:#00bfff; font-weight:bold;">⚙ Admin Panel</a>
   <a href="#" onclick="closeMobileMenu(); openAuthModal();">Account / Sign in</a>
   <a href="#" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
 </div>
@@ -1988,7 +2006,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <label>Category <select id="categoryFilter"><option value="">All categories</option><option value="playstation-consoles">PlayStation</option><option value="nintendo-consoles">Nintendo</option><option value="controllers">Controllers</option><option value="accessories">Accessories</option><option value="games">Games</option></select></label>
   <label>Availability <select id="stockFilter"><option value="">All stock</option><option value="in">In stock</option><option value="out">Out of stock</option></select></label>
 </div>
-<!-- Stock: change the span text to "● Out of Stock" or add class "out-of-stock". The page turns the badge red and switches the button to WhatsApp notify. -->
+
 <div class="product-grid" id="productGrid">
 <div id="searchNoResults" class="search-no-results">
   <strong>No products found</strong>
@@ -2001,11 +2019,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 4 Slim</h3>
   <p class="desc">Experience sleek, compact gaming power with HDR visuals and an expansive library of incredible blockbuster titles.</p>
   <p class="price">9,500 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 4 Slim', 9500, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2024,11 +2037,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 4 Fat</h3>
   <p class="desc">The original powerhouse that started a generation. Robust, extremely reliable, and ready for all your favorite games.</p>
   <p class="price">9,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 4 Fat', 9000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2047,11 +2055,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 4 Pro</h3>
   <p class="desc">Enhanced 4K gaming and smoother frame rates in a more powerful PlayStation 4 Pro console.</p>
   <p class="price">12,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 4 Pro', 12000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2070,11 +2073,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 5</h3>
   <p class="desc">Next-generation 4K gaming with ultra-fast loading, stunning graphics, and DualSense immersive gameplay.</p>
   <p class="price">35,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 5', 35000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2093,11 +2091,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 3</h3>
   <p class="desc">A classic PlayStation 3 console packed with exclusive titles, Blu-ray playback, and reliable performance.</p>
   <p class="price">6,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 3', 6000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2116,11 +2109,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 2</h3>
   <p class="desc">The legendary PlayStation 2 — the best-selling console of all time, ready for retro classics and family favorites.</p>
   <p class="price">3,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('PlayStation 2', 3000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2139,11 +2127,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>Nintendo Switch</h3>
   <p class="desc">Play at home on the TV or on the go. The ultimate hybrid console designed for versatile, family-friendly fun anywhere.</p>
   <p class="price">8,500 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8500, 'switch', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2162,11 +2145,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>Nintendo Switch Lite</h3>
   <p class="desc">Dedicated specifically to handheld play. Lightweight, compact, and perfect for gaming comfortably wherever you are.</p>
   <p class="price">7,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="directAddToCart('Nintendo Switch Lite', 7000, this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2185,11 +2163,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>Nintendo Switch OLED</h3>
   <p class="desc">Nintendo Switch OLED with a vivid 7-inch screen, enhanced audio, and a wide adjustable stand for tabletop play.</p>
   <p class="price">10,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="openCustomizationModal('Nintendo Switch OLED', 10000, 'switch', this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2208,11 +2181,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PS4 Controller</h3>
   <p class="desc">Original DualShock 4 wireless controller featuring enhanced ergonomic grips, precision analog sticks, and integrated light bar.</p>
   <p class="price">1,500 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="directAddToCart('PS4 Controller', 1500, this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2231,11 +2199,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PS5 Controller</h3>
   <p class="desc">Next-gen DualSense wireless controller with adaptive triggers, haptic feedback, and a built-in microphone for immersive PlayStation 5 gaming.</p>
   <p class="price">4,000 GMD</p>
-  <div class="product-qty" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
-    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
-    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
-  </div>
   <div class="card-actions">
     <button type="button" onclick="directAddToCart('PS5 Controller', 4000, this)">Add to Cart</button>
     <div class="product-menu-wrap">
@@ -2398,12 +2361,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:4px; font-size:20px;" id="customModalProductTitle">Customize Order</h3>
     <p style="font-size:16px; color:#00ff88; font-weight:bold; margin-bottom:20px;" id="customModalLivePrice"></p>
+    
     <div style="margin-bottom:18px;">
       <label style="font-size:13px; font-weight:600; color:white; display:block; margin-bottom:8px;">Quantity *</label>
-      <div class="modal-qty">
-        <button type="button" class="qty-btn" onclick="xjChangeModalQty(-1)">−</button>
-        <input id="customQuantityInput" class="modal-qty-input" type="number" min="1" max="99" value="1" oninput="updateModalPrice()">
-        <button type="button" class="qty-btn" onclick="xjChangeModalQty(1)">+</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="admin-action-btn" style="width:36px; height:36px; font-size:18px;" onclick="xjChangeModalQty(-1)">−</button>
+        <input id="customQuantityInput" type="number" min="1" max="99" value="1" oninput="updateModalPrice()" style="width:60px; text-align:center; font-weight:bold;">
+        <button type="button" class="admin-action-btn" style="width:36px; height:36px; font-size:18px;" onclick="xjChangeModalQty(1)">+</button>
       </div>
     </div>
 
@@ -2572,7 +2536,8 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <div class="modal-card" style="text-align:left; max-width:760px; max-height:88vh; overflow:auto;">
     <span onclick="closeAdminPanel()" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
-    <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
+    <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, select homepage featured items, or edit products on the live store.</p>
+    
     <details class="admin-add-form" style="margin-bottom:14px;"><summary>Flash sales &amp; backup</summary>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
@@ -2710,6 +2675,7 @@ let currentCustomProduct = {
   delivery: 'No', 
   address: '', 
   calculatedTotal: 0,
+  quantity: 1,
   
   // PS4 only
   psControllers: 1, 
@@ -2964,7 +2930,7 @@ function showToast(title, body, type = 'success') {
   }, 4000);
 }
 
-// ================= DIRECT ADD TO CART (Switch Lite, PS4 Controller) =================
+// ================= DIRECT ADD TO CART =================
 function directAddToCart(name, price) {
   if (!xjRequireAuth("You need to sign in or create an account to add products to your cart.")) return;
   const productId = xjGetProductIdByName(name);
@@ -2981,6 +2947,15 @@ function directAddToCart(name, price) {
     delivery: 'No'
   });
   showToast('Added to Cart', `${name} added successfully!`);
+}
+
+function xjChangeModalQty(delta) {
+  const input = document.getElementById('customQuantityInput');
+  if (!input) return;
+  let val = parseInt(input.value, 10) || 1;
+  val = Math.max(1, Math.min(99, val + delta));
+  input.value = val;
+  updateModalPrice();
 }
 
 // ================= LIVE PRICING LOGIC =================
@@ -3001,7 +2976,7 @@ function updateModalPrice() {
     const extraControllerPrice = currentCustomProduct.extraControllerPrice || 1500;
     if (currentCustomProduct.psControllers === 2) finalPrice += extraControllerPrice;
     
-    // PS4 games (not available for PS5)
+    // PS4 games
     if (currentCustomProduct.productId !== 'ps5') {
       const gamesText = document.getElementById('customGamesInput').value.trim();
       if (gamesText) {
@@ -3010,16 +2985,16 @@ function updateModalPrice() {
       }
     }
   } else if (currentCustomProduct.type === 'switch') {
-    // Nintendo Controller
     if (currentCustomProduct.switchController === 'Yes') finalPrice += 1500;
-    // Nintendo Switch Dock
     if (currentCustomProduct.switchDock === 'Yes') finalPrice += 1000;
-    // Joy-Con Grip
     if (currentCustomProduct.switchGrip === 'Yes') finalPrice += 1000;
   }
 
-  currentCustomProduct.calculatedTotal = finalPrice;
-  document.getElementById('customModalLivePrice').innerText = `Total Price: ${finalPrice.toLocaleString()} GMD`;
+  const input = document.getElementById('customQuantityInput');
+  const qty = input ? parseInt(input.value, 10) || 1 : 1;
+  currentCustomProduct.quantity = qty;
+  currentCustomProduct.calculatedTotal = finalPrice * qty;
+  document.getElementById('customModalLivePrice').innerText = `Total Price: ${currentCustomProduct.calculatedTotal.toLocaleString()} GMD`;
 }
 
 // ================= MODAL INTERACTIONS =================
@@ -3037,6 +3012,7 @@ function openCustomizationModal(name, basePrice, type) {
     consoleType: 'Console Only', 
     delivery: 'No', 
     address: '', 
+    quantity: 1,
     psControllers: 1, 
     games: '',
     switchController: 'No',
@@ -3048,9 +3024,10 @@ function openCustomizationModal(name, basePrice, type) {
   document.getElementById('customModalProductTitle').innerText = name;
   document.getElementById('customGamesInput').value = '';
   document.getElementById('customAddressInput').value = '';
+  document.getElementById('customQuantityInput').value = 1;
   document.getElementById('addressFieldContainer').style.display = 'none';
 
-    const extraBtn = document.getElementById('psExtraControllerBtn');
+  const extraBtn = document.getElementById('psExtraControllerBtn');
   if (extraBtn) {
     extraBtn.textContent = '2 Controllers (+' + currentCustomProduct.extraControllerPrice.toLocaleString() + ')';
   }
@@ -3063,7 +3040,6 @@ function openCustomizationModal(name, basePrice, type) {
     document.getElementById('customGamesInput').value = '';
   }
 
-  // Set description for "Full Set" based on console type
   const descElement = document.getElementById('fullSetDescription');
   if (type === 'ps4') {
     document.getElementById('ps4Options').style.display = 'block';
@@ -3081,7 +3057,6 @@ function openCustomizationModal(name, basePrice, type) {
     descElement.innerHTML = 'Full Set includes:<br>• Charger<br>• Clean packaging';
   }
 
-  // Reset UI Pills dynamically
   resetPills('.console-btn', 'Console Only');
   resetPills('.delivery-btn', 'No');
   
@@ -3111,7 +3086,6 @@ function closeCustomizationModal() {
   document.getElementById('customizationModal').classList.remove('active');
 }
 
-// Shared Options
 function selectConsoleOption(btn, type) {
   currentCustomProduct.consoleType = type;
   togglePillState(btn);
@@ -3124,14 +3098,12 @@ function selectDeliveryOption(btn, opt) {
   updateModalPrice();
 }
 
-// PS4 Options
 function selectPSControllerOption(btn, count) {
   currentCustomProduct.psControllers = count;
   togglePillState(btn);
   updateModalPrice();
 }
 
-// Switch Options
 function selectSwitchControllerOption(btn, opt) {
   currentCustomProduct.switchController = opt;
   togglePillState(btn);
@@ -3148,7 +3120,6 @@ function selectSwitchGripOption(btn, opt) {
   updateModalPrice();
 }
 
-// Utility to switch active UI class inside a pill group
 function togglePillState(activeBtn) {
   const parent = activeBtn.parentElement;
   parent.querySelectorAll('.option-pill').forEach(b => b.classList.remove('active'));
@@ -3175,10 +3146,13 @@ function confirmCustomizedAddToCart() {
     }
   }
 
+  const input = document.getElementById('customQuantityInput');
+  const qty = input ? parseInt(input.value, 10) || 1 : 1;
+
   xjAddCartItem({
     ...currentCustomProduct,
-    finalPrice: currentCustomProduct.calculatedTotal,
-    quantity: 1
+    finalPrice: currentCustomProduct.calculatedTotal / qty,
+    quantity: qty
   });
 
   closeCustomizationModal();
@@ -3257,7 +3231,6 @@ function updateCartUI() {
   cart.forEach((item, index) => {
     total += item.finalPrice * item.quantity;
     
-    // Construct variations text dynamically based on product type
     let detailsHTML = `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Option: ${item.consoleType}</p>`;
     
     if (item.type === 'ps4') {
@@ -3276,9 +3249,9 @@ function updateCartUI() {
         <span onclick="removeFromCart(${index})" style="position:absolute; top:10px; right:12px; color:#ff3040; cursor:pointer; font-weight:bold;">&times;</span>
         <h4 style="font-size:15px; font-family:Orbitron; margin-bottom:4px;">${item.name}</h4>
         <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
-          <button type="button" onclick="changeCartQuantity(${index}, -1)" style="padding:2px 9px;">-</button>
+          <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, -1)" style="padding:2px 9px;">-</button>
           <span>Qty: ${item.quantity}</span>
-          <button type="button" onclick="changeCartQuantity(${index}, 1)" style="padding:2px 9px;">+</button>
+          <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, 1)" style="padding:2px 9px;">+</button>
         </div>
         ${item.type === 'standalone' ? `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Standard Edition</p>` : detailsHTML}
         <p style="font-size:14px; font-weight:bold; color:#00bfff; margin-top:8px;">${(item.finalPrice * item.quantity).toLocaleString()} GMD</p>
@@ -3372,7 +3345,7 @@ function closeMobileMenu() {
     menu.classList.remove('open');
     menu.setAttribute('aria-hidden', 'true');
   }
-  if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  if (toggle) toggle.setAttribute('aria-expanded', false);
 }
 
 window.addEventListener('resize', xjUpdateHeaderLayout);
