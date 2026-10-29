@@ -2960,42 +2960,88 @@ function xjChangeModalQty(delta) {
 }
 
 // ================= LIVE PRICING LOGIC =================
+
 function updateModalPrice() {
-  let finalPrice = currentCustomProduct.basePrice;
+  if (!currentCustomProduct) return;
+
+  // Start with the product's base price.
+  let finalPrice = Number(currentCustomProduct.basePrice) || 0;
 
   // Shared: Full Set
   if (currentCustomProduct.consoleType === 'Full Set') {
     finalPrice += 500;
   }
-  // Shared: Delivery
-  if (currentCustomProduct.delivery === 'Yes') {
-    finalPrice += 300;
-  }
 
-  // Type specific calculation
+  // IMPORTANT:
+  // Delivery is NOT added to the product price here.
+  // The cart calculates the delivery fee separately
+  // using the customer's delivery address.
+
+  // Type-specific price calculations
   if (currentCustomProduct.type === 'ps4') {
-    const extraControllerPrice = currentCustomProduct.extraControllerPrice || 1500;
-    if (currentCustomProduct.psControllers === 2) finalPrice += extraControllerPrice;
-    
+    const extraControllerPrice =
+      Number(currentCustomProduct.extraControllerPrice) || 1500;
+
+    // Extra controller
+    if (Number(currentCustomProduct.psControllers) === 2) {
+      finalPrice += extraControllerPrice;
+    }
+
     // PS4 games
     if (currentCustomProduct.productId !== 'ps5') {
-      const gamesText = document.getElementById('customGamesInput').value.trim();
+      const gamesInput = document.getElementById('customGamesInput');
+      const gamesText = gamesInput ? gamesInput.value.trim() : '';
+
       if (gamesText) {
-        const gamesList = gamesText.split(',').map(g => g.trim()).filter(g => g.length > 0);
+        const gamesList = gamesText
+          .split(',')
+          .map(function(game) {
+            return game.trim();
+          })
+          .filter(function(game) {
+            return game.length > 0;
+          });
+
         finalPrice += gamesList.length * 1500;
       }
     }
   } else if (currentCustomProduct.type === 'switch') {
-    if (currentCustomProduct.switchController === 'Yes') finalPrice += 1500;
-    if (currentCustomProduct.switchDock === 'Yes') finalPrice += 1000;
-    if (currentCustomProduct.switchGrip === 'Yes') finalPrice += 1000;
+
+    // Nintendo Switch accessories
+    if (currentCustomProduct.switchController === 'Yes') {
+      finalPrice += 1500;
+    }
+
+    if (currentCustomProduct.switchDock === 'Yes') {
+      finalPrice += 1000;
+    }
+
+    if (currentCustomProduct.switchGrip === 'Yes') {
+      finalPrice += 1000;
+    }
   }
 
+  // Quantity
   const input = document.getElementById('customQuantityInput');
-  const qty = input ? parseInt(input.value, 10) || 1 : 1;
+
+  let qty = input ? parseInt(input.value, 10) : 1;
+
+  if (!Number.isFinite(qty) || qty < 1) {
+    qty = 1;
+  }
+
   currentCustomProduct.quantity = qty;
   currentCustomProduct.calculatedTotal = finalPrice * qty;
-  document.getElementById('customModalLivePrice').innerText = `Total Price: ${currentCustomProduct.calculatedTotal.toLocaleString()} GMD`;
+
+  // Display the customised product total.
+  const livePrice = document.getElementById('customModalLivePrice');
+
+  if (livePrice) {
+    livePrice.innerText =
+      'Total Price: ' +
+      currentCustomProduct.calculatedTotal.toLocaleString() +
+      ' GMD';
+  }
 }
 
 // ================= MODAL INTERACTIONS =================
@@ -3159,7 +3205,177 @@ function confirmCustomizedAddToCart() {
   closeCustomizationModal();
   showToast('Added to Cart', `${currentCustomProduct.name} added successfully!`);
 }
+// ================= CART DELIVERY / PICKUP =================
 
+/* ================= XJ GAMES AUTOMATIC DELIVERY PRICING ================= */
+
+var XJ_DELIVERY_PRICES = [
+  {
+    locations: [
+      "fajara", "cape point", "pipeline", "jeshwang"
+    ],
+    price: 150
+  },
+  {
+    locations: [
+      "old jeshwang", "jimpex industry", "westfield",
+      "baboon faty", "kotu", "manjai", "kololi",
+      "churchill town main road", "senegambia"
+    ],
+    price: 200
+  },
+  {
+    locations: [
+      "kerr sering", "bijilo", "bakoteh", "sanchaba sulay",
+      "bundung", "tallinding", "brusubi 1", "brusubi 2",
+      "wullingkama"
+    ],
+    price: 250
+  },
+  {
+    locations: [
+      "turntable"
+    ],
+    price: 275
+  },
+  {
+    locations: [
+      "coastal road", "yarambamba", "paradise estate",
+      "paradise est", "brufut", "ghanatown",
+      "ghana town", "sukuta deep", "airport junction"
+    ],
+    price: 325
+  },
+  {
+    locations: [
+      "lamin", "abuko", "tanji", "new yundum",
+      "banjullinding", "gh town", "batokunku"
+    ],
+    price: 400
+  },
+  {
+    locations: ["banjul"],
+    price: 400
+  }
+];
+
+function xjNormalizeDeliveryAddress(address) {
+  return String(address || "")
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function xjGetDeliveryPrice(address) {
+  var normalized = xjNormalizeDeliveryAddress(address);
+
+  if (!normalized) {
+    return {
+      found: false,
+      price: 0,
+      message: "Enter your delivery location."
+    };
+  }
+
+  // Match a complete location phrase, not a partial word.
+  for (var i = 0; i < XJ_DELIVERY_PRICES.length; i++) {
+    var group = XJ_DELIVERY_PRICES[i];
+
+    for (var j = 0; j < group.locations.length; j++) {
+      var location = xjNormalizeDeliveryAddress(group.locations[j]);
+      var escaped = location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      var pattern = new RegExp("(^| )" + escaped + "( |$)");
+
+      if (pattern.test(normalized)) {
+        return {
+          found: true,
+          price: group.price,
+          location: group.locations[j],
+          message: ""
+        };
+      }
+    }
+  }
+
+  return {
+    found: false,
+    price: 0,
+    message: "We couldn't identify this delivery area. Please contact XJ Games on WhatsApp to confirm the delivery fee."
+  };
+}
+
+window.xjSetCartFulfillment = function (mode) {
+  var wantsDelivery = mode === "Yes";
+  var pickupBtn = document.getElementById("cartPickupBtn");
+  var deliveryBtn = document.getElementById("cartDeliveryBtn");
+  var locationInput = document.getElementById("cartDeliveryLocation");
+
+  if (pickupBtn) {
+    pickupBtn.classList.toggle("active", !wantsDelivery);
+  }
+
+  if (deliveryBtn) {
+    deliveryBtn.classList.toggle("active", wantsDelivery);
+  }
+
+  if (locationInput) {
+    locationInput.style.display = wantsDelivery ? "block" : "none";
+  }
+
+  if (!Array.isArray(cart)) return;
+
+  if (!wantsDelivery) {
+    cart.forEach(function (item) {
+      item.delivery = "No";
+      item.address = "";
+      item.deliveryFee = 0;
+    });
+  } else {
+    var address = locationInput
+      ? locationInput.value.trim()
+      : "";
+
+    var result = xjGetDeliveryPrice(address);
+
+    cart.forEach(function (item) {
+      item.delivery = "Yes";
+      item.address = address;
+      item.deliveryFee = result.found ? result.price : 0;
+    });
+
+    if (!result.found && address) {
+      showToast("Delivery fee", result.message, "error");
+    }
+  }
+
+  saveCart();
+};
+
+// Recalculate the fee whenever the address changes.
+document.addEventListener("DOMContentLoaded", function () {
+  var locationInput = document.getElementById("cartDeliveryLocation");
+
+  if (!locationInput || locationInput.dataset.xjPricingBound) return;
+
+  locationInput.addEventListener("input", function () {
+    if (!Array.isArray(cart)) return;
+
+    var address = locationInput.value.trim();
+    var result = xjGetDeliveryPrice(address);
+
+    cart.forEach(function (item) {
+      if (item.delivery === "Yes") {
+        item.address = address;
+        item.deliveryFee = result.found ? result.price : 0;
+      }
+    });
+
+    saveCart();
+  });
+
+  locationInput.dataset.xjPricingBound = "true";
+});
 // ================= CART MANAGEMENT =================
 function xjCartItemKey(item) {
   return [
@@ -3209,60 +3425,144 @@ function saveCart() {
 }
 
 function updateCartUI() {
-  const cartCount = document.getElementById('cartCount');
-  const cartItemsContainer = document.getElementById('cartItems');
-  const cartTotalPrice = document.getElementById('cartTotalPrice');
+const cartCount = document.getElementById('cartCount');
+const cartItemsContainer = document.getElementById('cartItems');
+const cartTotalPrice = document.getElementById('cartTotalPrice');
+const cartSubtotal = document.getElementById('cartSubtotal');
 
-  cart.forEach(function(item) {
-    item.quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
-    item.finalPrice = Number(item.finalPrice) || 0;
-  });
-  cartCount.innerText = cart.reduce(function(total, item) { return total + item.quantity; }, 0);
+let subtotal = 0;
+let deliveryFee = 0;
+let deliveryPending = false;
+let deliveryAddress = '';
 
-  if (cart.length === 0) {
-    cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
-    document.getElementById('cartSubtotal').textContent = '0 GMD';
-    cartTotalPrice.innerText = '0 GMD';
-    return;
+cart.forEach(function(item) {
+item.quantity = Number(item.quantity) > 0
+? Number(item.quantity)
+: 1;
+
+```
+item.finalPrice = Number(item.finalPrice) || 0;
+
+subtotal += item.finalPrice * item.quantity;
+
+if (item.delivery === 'Yes') {
+  const address = String(item.address || '').trim();
+  const result = xjGetDeliveryPrice(address);
+
+  deliveryAddress = address;
+
+  if (result.found) {
+    deliveryFee = Math.max(deliveryFee, result.price);
+    item.deliveryFee = result.price;
+  } else {
+    deliveryPending = true;
+    item.deliveryFee = 0;
   }
+}
+```
 
-  let html = '';
-  let total = 0;
+});
 
-  cart.forEach((item, index) => {
-    total += item.finalPrice * item.quantity;
-    
-    let detailsHTML = `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Option: ${item.consoleType}</p>`;
-    
-    if (item.type === 'ps4') {
-      detailsHTML += `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Controllers: ${item.psControllers}</p>`;
-      if(item.games) detailsHTML += `<p style="font-size:12px; color:#00ff88;">Games: ${item.games}</p>`;
-    } else if (item.type === 'switch') {
-      detailsHTML += `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Nintendo Controller: ${item.switchController} | Dock: ${item.switchDock} | Grip: ${item.switchGrip}</p>`;
-    }
+if (cartCount) {
+cartCount.innerText = cart.reduce(function(total, item) {
+return total + item.quantity;
+}, 0);
+}
 
-    if (item.delivery === 'Yes') {
-      detailsHTML += `<p style="font-size:12px; color:#00bfff;">Delivery to: ${item.address} (+300)</p>`;
-    }
+if (cart.length === 0) {
+if (cartItemsContainer) {
+cartItemsContainer.innerHTML =
+'<div class="empty-cart">Your cart is empty</div>';
+}
 
-    html += `
-      <div style="background:#070B16; padding:15px; border-radius:12px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.08); position:relative;">
-        <span onclick="removeFromCart(${index})" style="position:absolute; top:10px; right:12px; color:#ff3040; cursor:pointer; font-weight:bold;">&times;</span>
-        <h4 style="font-size:15px; font-family:Orbitron; margin-bottom:4px;">${item.name}</h4>
-        <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
-          <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, -1)" style="padding:2px 9px;">-</button>
-          <span>Qty: ${item.quantity}</span>
-          <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, 1)" style="padding:2px 9px;">+</button>
-        </div>
-        ${item.type === 'standalone' ? `<p style="font-size:12px; color:#aaa; margin-bottom:2px;">Standard Edition</p>` : detailsHTML}
-        <p style="font-size:14px; font-weight:bold; color:#00bfff; margin-top:8px;">${(item.finalPrice * item.quantity).toLocaleString()} GMD</p>
-      </div>
+```
+if (cartSubtotal) cartSubtotal.textContent = '0 GMD';
+if (cartTotalPrice) cartTotalPrice.innerText = '0 GMD';
+
+return;
+```
+
+}
+
+let html = '';
+
+cart.forEach(function(item, index) {
+let detailsHTML =
+`<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Option: ${item.consoleType || ''}</p>`;
+
+```
+if (item.type === 'ps4') {
+  detailsHTML +=
+    `<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Controllers: ${item.psControllers || ''}</p>`;
+
+  if (item.games) {
+    detailsHTML +=
+      `<p style="font-size:12px;color:#00ff88;">Games: ${item.games}</p>`;
+  }
+} else if (item.type === 'switch') {
+  detailsHTML +=
+    `<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Nintendo Controller: ${item.switchController || ''} | Dock: ${item.switchDock || ''} | Grip: ${item.switchGrip || ''}</p>`;
+}
+
+if (item.delivery === 'Yes') {
+  detailsHTML +=
+    `<p style="font-size:12px;color:#00bfff;">Delivery to: ${item.address || 'Location needed'}</p>`;
+}
+
+const lineTotal = item.finalPrice * item.quantity;
+
+html += `
+  <div style="background:#070B16;padding:15px;border-radius:12px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.08);position:relative;">
+    <span onclick="removeFromCart(${index})" style="position:absolute;top:10px;right:12px;color:#ff3040;cursor:pointer;font-weight:bold;">&times;</span>
+
+    <h4 style="font-size:15px;font-family:Orbitron;margin-bottom:4px;">
+      ${item.name}
+    </h4>
+
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0;">
+      <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, -1)" style="padding:2px 9px;">-</button>
+      <span>Qty: ${item.quantity}</span>
+      <button type="button" class="admin-action-btn" onclick="changeCartQuantity(${index}, 1)" style="padding:2px 9px;">+</button>
+    </div>
+
+    ${item.type === 'standalone'
+      ? '<p style="font-size:12px;color:#aaa;margin-bottom:2px;">Standard Edition</p>'
+      : detailsHTML}
+
+    <p style="font-size:14px;font-weight:bold;color:#00bfff;margin-top:8px;">
+      ${lineTotal.toLocaleString()} GMD
+    </p>
+  </div>
+`;
+```
+
+});
+
+if (cart.some(function(item) {
+return item.delivery === 'Yes';
+})) {
+html += `       <div style="padding:12px;margin-top:8px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;">         <p style="color:#aaa;margin-bottom:4px;">Delivery address: ${deliveryAddress || 'Not entered'}</p>         <p style="color:#00bfff;font-weight:bold;">
+          Delivery fee: ${
+            deliveryPending
+              ? 'To be confirmed'
+              : deliveryFee.toLocaleString() + ' GMD'
+          }         </p>       </div>
     `;
-  });
+}
 
+if (cartItemsContainer) {
   cartItemsContainer.innerHTML = html;
-  document.getElementById('cartSubtotal').textContent = total.toLocaleString() + ' GMD';
-  cartTotalPrice.textContent = total.toLocaleString() + ' GMD';
+}
+
+if (cartSubtotal) {
+  cartSubtotal.textContent = subtotal.toLocaleString() + ' GMD';
+}
+
+if (cartTotalPrice) {
+  cartTotalPrice.textContent = deliveryPending
+    ? subtotal.toLocaleString() + ' GMD + delivery fee to be confirmed'
+    : (subtotal + deliveryFee).toLocaleString() + ' GMD';
+}
 }
 
 function xjRepriceCartFromCatalog(productId) {
@@ -3275,7 +3575,6 @@ function xjRepriceCartFromCatalog(productId) {
     var finalPrice = basePrice;
     if (item.type === 'ps4' || item.type === 'switch') {
       if (item.consoleType === 'Full Set') finalPrice += 500;
-      if (item.delivery === 'Yes') finalPrice += 300;
       if (item.type === 'ps4') {
         if (Number(item.psControllers) === 2) finalPrice += Number(product.extraControllerPrice) || 1500;
         if (id !== 'ps5' && item.games) finalPrice += String(item.games).split(',').map(function(game) { return game.trim(); }).filter(Boolean).length * 1500;
