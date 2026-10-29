@@ -1,5 +1,7 @@
+```javascript
 /**
- * XJ Games — Firebase client configuration (project: xj-games-7b410)
+ * XJ Games — Firebase client configuration
+ * Project: xj-games-7b410
  */
 const XJ_FIREBASE_CONFIG = {
   apiKey: "AIzaSyBJ9cjQvVemEOU-P152b2d7khhpMWyg5JM",
@@ -22,3 +24,4 @@ function xjIsFirebaseConfigured() {
     XJ_FIREBASE_CONFIG.projectId !== "YOUR_PROJECT_ID"
   );
 }
+```
