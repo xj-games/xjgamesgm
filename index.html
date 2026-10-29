@@ -394,16 +394,20 @@ font-weight:bold;
 .admin-toggle{
 display:flex;
 align-items:center;
-gap:8px;
-font-size:12px;
-color:#aaa;
+gap:10px;
+font-size:13px;
+color:#d7e6f5;
 cursor:pointer;
+background:linear-gradient(180deg,#15263a,#101b2c);
+border:1px solid rgba(82,197,232,.28);
+border-radius:12px;
+padding:10px 12px;
 }
 
 .admin-toggle input{
 accent-color:#00bfff;
-width:16px;
-height:16px;
+width:18px;
+height:18px;
 cursor:pointer;
 }
 
@@ -653,16 +657,10 @@ details.admin-add-form summary{cursor:pointer;color:#00bfff;font-weight:700;padd
 .admin-category-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .admin-category-row:last-child{border-bottom:0}
 .admin-category-row .admin-action-btn{min-width:58px;padding:7px 10px}
-.redeem-strip{display:flex;align-items:center;justify-content:center;gap:8px;padding:7px 4%;background:linear-gradient(90deg,rgba(0,170,255,.12),rgba(255,48,64,.1));border-bottom:1px solid rgba(255,255,255,.06)}
-.redeem-strip strong{color:#00bfff;font-size:12px;white-space:nowrap}
-.redeem-strip input{width:150px;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:#070b16;color:#fff;text-transform:uppercase;outline:none}
-
 @media (max-width: 700px) {
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
-  .redeem-strip{justify-content:flex-start;overflow:hidden;flex-wrap:wrap}
-  .redeem-strip input{width:125px}
 }
 
 .cart{
@@ -679,30 +677,6 @@ position:relative;
 flex-shrink:0;
 }
 
-.points-nav-btn{
-display:none;
-align-items:center;
-gap:6px;
-padding:7px 11px;
-border:1px solid rgba(0,255,136,.38);
-border-radius:20px;
-background:rgba(0,255,136,.08);
-color:#00ff88;
-font-size:12px;
-font-weight:700;
-white-space:nowrap;
-cursor:pointer;
-}
-.points-summary{display:flex;align-items:baseline;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.points-summary strong{font:700 28px Orbitron;color:#00ff88}
-.points-history{list-style:none;padding:0;margin:12px 0 0}
-.points-history li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:#bbb}
-.points-redeem{display:flex;gap:8px;margin-top:10px}
-.points-redeem input{flex:1;min-width:0;padding:10px;background:#070b16;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px}
-.points-code-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:#ccc}
-.points-code-row button{padding:6px 9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:#111827;color:#fff;cursor:pointer}
-.cart-balance-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#00ff88;margin:10px 0}
-.cart-balance-toggle input{accent-color:#00ff88;width:16px;height:16px}
 .cart-totals{font-size:13px;line-height:1.8;margin-top:8px}
 .cart-totals div{display:flex;justify-content:space-between;gap:10px}
 .cart-totals .cart-final-total{font-size:15px;font-weight:700;color:#00bfff;border-top:1px solid rgba(255,255,255,.1);padding-top:7px;margin-top:5px}
@@ -1399,14 +1373,14 @@ cursor: pointer;
 /* MODAL ANIMATION SYSTEMS */
 .modal-overlay {
 display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
+position: fixed !important;
+inset: 0 !important;
+width: auto !important;
+height: auto !important;
 background: rgba(0,0,0,0.75);
 backdrop-filter: blur(8px);
-z-index: 40000;
+z-index: 2147483647 !important;
+isolation: isolate;
 justify-content: center;
 align-items: center;
 opacity: 0;
@@ -1635,15 +1609,67 @@ to { transform: translateX(120%); opacity: 0; }
   .account-hero{ flex-direction:column; align-items:flex-start; }
   .admin-inventory-row{ flex-direction:column; align-items:flex-start; gap:10px; }
   .admin-row-actions{ width:100%; justify-content:space-between; }
-  .redeem-strip{justify-content:flex-start;overflow:hidden;flex-wrap:wrap}
-  .redeem-strip input{width:125px}
   .card-actions > button:first-child{font-size:12px;padding:12px 10px}
   .product-menu{min-width:210px}
 }
 
-.catalog-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto 20px}
-.catalog-view-controls{display:flex;justify-content:center;margin:0 auto 16px}
+.catalog-tools{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px auto 20px}
+.catalog-tools label{display:flex;align-items:center;gap:8px;background:#122033;border:1px solid rgba(82,197,232,.22);border-radius:12px;padding:8px 12px;color:#cfe8f5;font-size:12px;font-weight:600}
+.catalog-tools select{min-width:150px}
+.catalog-view-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 auto 16px}
+.catalog-intro{text-align:center;color:#9bb3c8;margin:-18px auto 18px;max-width:640px;font-size:14px}
+.catalog-all-link{display:inline-flex;align-items:center;justify-content:center;padding:13px 24px;border-radius:10px;border:1px solid rgba(82,197,232,.4);background:#102033;color:#8de5ff;text-decoration:none;font-weight:800}
 .catalog-view-controls button{background:linear-gradient(110deg,#00bfff,#087da4);border:1px solid #79eaff;color:#06111a;border-radius:10px;padding:13px 24px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 24px rgba(0,191,255,.24);transition:transform .2s,box-shadow .2s}
+.product-qty,.cart-qty,.modal-qty{
+display:inline-flex;
+align-items:center;
+gap:6px;
+margin:0 0 12px;
+padding:4px;
+background:#0d1a28;
+border:1px solid rgba(82,197,232,.28);
+border-radius:12px;
+}
+.qty-btn{
+width:34px;
+height:34px;
+border:0;
+border-radius:9px;
+background:linear-gradient(180deg,#1d6fa3,#15557e);
+color:#fff;
+font-size:18px;
+font-weight:700;
+cursor:pointer;
+line-height:1;
+}
+.product-qty-input,.modal-qty-input{
+width:48px;
+height:34px;
+border:0!important;
+border-radius:8px!important;
+background:#07111c!important;
+color:#8de5ff!important;
+text-align:center;
+font-weight:700;
+}
+.cart-fulfillment{margin:12px 0 4px;padding:12px;background:#0b1624;border:1px solid rgba(82,197,232,.2);border-radius:12px}
+.cart-fulfillment h4{margin:0 0 8px;color:#8de5ff;font-size:13px}
+.fulfillment-pills{display:flex;gap:8px;margin-bottom:8px}
+.fulfillment-pills button{flex:1;border:1px solid rgba(82,197,232,.28);background:#132333;color:#d7e6f5;border-radius:10px;padding:10px 8px;cursor:pointer;font-weight:700}
+.fulfillment-pills button.active{background:linear-gradient(100deg,#1d8ec8,#25d366);color:#06111a;border-color:#79eaff}
+.admin-featured-selection,.admin-category-order,.admin-add-form{background:#102033;border:1px solid rgba(82,197,232,.2);border-radius:14px;padding:14px;margin:12px 0}
+.admin-add-form label{display:block;margin:10px 0 4px;color:#9fd4ea;font-size:12px;font-weight:700}
+html.xj-all-products-embed .hero,
+html.xj-all-products-embed .social-spotlight,
+html.xj-all-products-embed #about,
+html.xj-all-products-embed #how-to-order,
+html.xj-all-products-embed #delivery-information,
+html.xj-all-products-embed #reviews,
+html.xj-all-products-embed #recommendation-form,
+html.xj-all-products-embed #contact,
+html.xj-all-products-embed #recommendations,
+html.xj-all-products-embed footer{display:none!important}
+html.xj-all-products-embed .products{padding-top:24px}
 .catalog-view-controls button:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,191,255,.34)}
 .catalog-view-controls button:focus-visible,.hero-all-products:focus-visible,.how-order-hero-btn:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .hero-all-products{border:1px solid #79eaff;background:linear-gradient(110deg,#00bfff,#087da4);color:#06111a;box-shadow:0 8px 24px rgba(0,191,255,.24);font-weight:800}
@@ -1664,10 +1690,6 @@ to { transform: translateX(120%); opacity: 0; }
 .delivery-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin:18px 0}
 .delivery-zones div{display:flex;flex-direction:column;gap:6px;padding:14px;background:#0d1522;border:1px solid var(--xj-border);border-radius:10px;color:#c4cfdd}
 .delivery-zones strong{color:var(--xj-cyan)}
-.promo-item-choices{display:grid;gap:9px;margin:14px 0}
-.promo-item-choice{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#0b1320;color:#eaf1f8;cursor:pointer}
-.promo-item-choice:focus-within{border-color:#00bfff;background:rgba(0,191,255,.1)}
-.promo-item-choice input{margin-top:4px;accent-color:#00bfff}
 .catalog-tools select,.xj-list-row button{background:#111827;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:8px}
 .xj-panel{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 .xj-panel.active{display:flex}.xj-panel-card{background:#111827;border:1px solid #00bfff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:85vh;overflow:auto}
@@ -1703,12 +1725,7 @@ nav{background:rgba(8,13,23,.96);border-bottom-color:var(--xj-border);backdrop-f
 .brand-bar{min-height:52px;padding:8px 4%;gap:10px;border-bottom-color:rgba(179,198,222,.08)}
 .brand-bar .logo{font-size:15px;white-space:nowrap}
 .brand-bar .logo img{box-shadow:0 0 0 2px rgba(82,197,232,.2)}
-.points-nav-btn{border-color:rgba(83,211,161,.28);background:rgba(83,211,161,.08);color:#8be3bc;border-radius:9px}
-.points-nav-btn:hover{background:rgba(83,211,161,.14);border-color:rgba(83,211,161,.48)}
-.redeem-strip{gap:10px;padding:9px 4%;background:rgba(16,24,39,.8);border-bottom-color:var(--xj-border)}
-.redeem-strip strong{color:#c9d5e4;font-size:12px}
-.redeem-strip input,.search input{color:var(--xj-text)}
-.redeem-strip input{border-color:var(--xj-border-strong);background:var(--xj-bg);border-radius:8px}
+.search input{color:var(--xj-text)}
 .scrollable-nav-container{background:rgba(10,16,27,.8)}
 .scrollable-nav-inner{gap:16px}
 .nav-links-list a{color:#c6d0df}
@@ -1788,19 +1805,11 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 .admin-category-order{background:rgba(13,21,34,.7);border-color:var(--xj-border);border-radius:11px}
 .admin-toolbar{gap:7px}
 .admin-help{color:#8f9bae}
-.points-code-row{border-bottom-color:var(--xj-border);color:#c4cfdd}
-.points-code-row button{background:#162235;border-color:var(--xj-border);border-radius:7px}
-.points-code-row button:hover{border-color:rgba(82,197,232,.5);color:#9ce4f5}
-.points-summary{border-bottom-color:var(--xj-border)}
-.points-summary strong{color:var(--xj-green)}
-.points-history li{border-bottom-color:var(--xj-border);color:#bdc8d6}
-.points-redeem input{background:#0b1320!important}
 .cart-panel{background:#0d1522;box-shadow:-16px 0 44px rgba(0,0,0,.38)}
 .cart-header,.cart-footer{border-color:var(--xj-border)}
 .cart-header{padding:20px 22px}
 .cart-header h2{font-size:18px}
 .cart-footer{padding:16px 20px 20px}
-.cart-balance-toggle{color:#9ce2bf}
 .cart-totals{color:#c4cfdd}
 .cart-totals .cart-final-total{color:#83d9f0;border-top-color:var(--xj-border)}
 .modal-overlay,.xj-panel{background:rgba(3,7,13,.78);backdrop-filter:blur(10px)}
@@ -1822,12 +1831,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   .brand-bar #authContainer{max-width:25vw}
   .brand-bar #authContainer .user-profile{gap:4px;padding-right:6px}
   .brand-bar #authContainer .user-profile span:not(.xj-account-caret){max-width:48px;font-size:10px}
-  .points-nav-btn{padding:6px 7px;gap:3px;font-size:10px;border-radius:8px}
   .mobile-menu-toggle{width:36px;height:36px;flex-basis:36px;border-radius:9px}
-  .redeem-strip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;padding:8px 12px}
-  .redeem-strip strong{grid-column:1/-1}
-  .redeem-strip input{width:100%;padding:8px}
-  .redeem-strip .admin-action-btn{min-height:34px;padding:6px 10px}
   .mobile-nav-menu{top:102px}
   .hero{padding:126px 6% 48px;gap:24px}
   .rightHero img{width:min(68vw,250px)}
@@ -1855,8 +1859,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   .admin-add-form > div{display:flex;flex-wrap:wrap;gap:8px}
   .admin-add-form > div input,.admin-add-form > div select{flex:1 1 135px;min-width:0}
   .admin-add-form > div button{flex:1 1 100%;white-space:normal}
-  .points-code-row{align-items:flex-start}
-  .points-code-row>span:first-child{overflow-wrap:anywhere}
   .cart-panel{width:100%;max-width:460px;right:-100%}
   .cart-panel.active{right:0;width:100%;max-width:460px}
   .cart-header{padding:16px 18px}
@@ -1886,13 +1888,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       XJ Games
     </a>
     <div id="authContainer" style="display:inline-block;"></div>
-    <button type="button" class="points-nav-btn" id="pointsNavButton" onclick="xjOpenPoints()" aria-label="View XJ Games balance">Balance: <span id="pointsNavBalance">0</span> GMD</button>
     <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()" aria-label="Open navigation menu" aria-expanded="false">☰</button>
-  </div>
-  <div class="redeem-strip">
-    <strong>Have a promo code?</strong>
-    <input id="topPromoCode" type="text" maxlength="64" placeholder="XJ25OFF" aria-label="Promo code">
-    <button type="button" class="admin-action-btn" onclick="xjRedeemTopPromo()">Redeem</button>
   </div>
 
   <div class="scrollable-nav-container">
@@ -1905,6 +1901,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       <ul class="nav-links-list">
         <li><a href="#">Home</a></li>
         <li><a href="#products">Products</a></li>
+        <li><a href="all-products.html">Shop All</a></li>
         <li><a href="#about">About</a></li>
         <li><a href="#reviews">Reviews</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -1923,6 +1920,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <div class="mobile-nav-menu" id="mobileNavMenu" aria-hidden="true">
   <a href="#" onclick="closeMobileMenu()">Home</a>
   <a href="#products" onclick="closeMobileMenu()">Products</a>
+  <a href="all-products.html" onclick="closeMobileMenu()">Shop All Products</a>
   <a href="#about" onclick="closeMobileMenu()">About</a>
   <a href="#reviews" onclick="closeMobileMenu()">Reviews</a>
   <a href="#contact" onclick="closeMobileMenu()">Contact</a>
@@ -1981,7 +1979,11 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <!-- ================= PRODUCTS ================= -->
 <section id="products" class="products">
 <h2 id="productsSectionTitle" class="section-title">Featured Products</h2>
-<div class="catalog-view-controls"><button type="button" id="catalogViewToggle" onclick="xjToggleCatalogView()" aria-pressed="false">View All Products</button></div>
+<p class="catalog-intro">PlayStation consoles, Nintendo Switch, and PlayStation controllers. Other items stay in Shop All Products.</p>
+<div class="catalog-view-controls">
+  <button type="button" id="catalogViewToggle" onclick="xjToggleCatalogView()" aria-pressed="false">View All Products</button>
+  <a class="catalog-all-link" href="all-products.html">Shop All Products</a>
+</div>
 <div class="catalog-tools" aria-label="Product filters">
   <label>Category <select id="categoryFilter"><option value="">All categories</option><option value="playstation-consoles">PlayStation</option><option value="nintendo-consoles">Nintendo</option><option value="controllers">Controllers</option><option value="accessories">Accessories</option><option value="games">Games</option></select></label>
   <label>Availability <select id="stockFilter"><option value="">All stock</option><option value="in">In stock</option><option value="out">Out of stock</option></select></label>
@@ -1999,8 +2001,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 4 Slim</h3>
   <p class="desc">Experience sleek, compact gaming power with HDR visuals and an expansive library of incredible blockbuster titles.</p>
   <p class="price">9,500 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 4 Slim', 9500, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Slim', 9500, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2017,13 +2024,41 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 4 Fat</h3>
   <p class="desc">The original powerhouse that started a generation. Robust, extremely reliable, and ready for all your favorite games.</p>
   <p class="price">9,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 4 Fat', 9000, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Fat', 9000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('ps4-fat')">View Description</button>
         <button type="button" onclick="xjOpenReducePrice('ps4-fat')">Reduce price</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" data-product-id="ps4-pro" data-name="playstation 4 pro" data-category="ps4,consoles">
+  <span class="stock">● In Stock</span>
+  <img src="ps4-pro.png" alt="PlayStation 4 Pro" onerror="this.src='xj-games-logo.png'">
+  <h3>PlayStation 4 Pro</h3>
+  <p class="desc">Enhanced 4K gaming and smoother frame rates in a more powerful PlayStation 4 Pro console.</p>
+  <p class="price">12,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
+  <div class="card-actions">
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Pro', 12000, 'ps4', this)">Add to Cart</button>
+    <div class="product-menu-wrap">
+      <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
+      <div class="product-menu">
+        <button type="button" onclick="xjOpenDescription('ps4-pro')">View Description</button>
+        <button type="button" onclick="xjOpenReducePrice('ps4-pro')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -2035,8 +2070,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 5</h3>
   <p class="desc">Next-generation 4K gaming with ultra-fast loading, stunning graphics, and DualSense immersive gameplay.</p>
   <p class="price">35,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 5', 35000, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 5', 35000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2053,8 +2093,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 3</h3>
   <p class="desc">A classic PlayStation 3 console packed with exclusive titles, Blu-ray playback, and reliable performance.</p>
   <p class="price">6,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 3', 6000, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 3', 6000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2071,8 +2116,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PlayStation 2</h3>
   <p class="desc">The legendary PlayStation 2 — the best-selling console of all time, ready for retro classics and family favorites.</p>
   <p class="price">3,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 2', 3000, 'ps4')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 2', 3000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2089,8 +2139,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>Nintendo Switch</h3>
   <p class="desc">Play at home on the TV or on the go. The ultimate hybrid console designed for versatile, family-friendly fun anywhere.</p>
   <p class="price">8,500 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8500, 'switch')">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('Nintendo Switch', 8500, 'switch', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2107,13 +2162,41 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>Nintendo Switch Lite</h3>
   <p class="desc">Dedicated specifically to handheld play. Lightweight, compact, and perfect for gaming comfortably wherever you are.</p>
   <p class="price">7,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="directAddToCart('Nintendo Switch Lite', 7000)">Add to Cart</button>
+    <button type="button" onclick="directAddToCart('Nintendo Switch Lite', 7000, this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
         <button type="button" onclick="xjOpenDescription('nintendo-switch-lite')">View Description</button>
         <button type="button" onclick="xjOpenReducePrice('nintendo-switch-lite')">Reduce price</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" data-product-id="nintendo-switch-oled" data-name="nintendo switch oled" data-category="nintendo,consoles,switch-oled">
+  <span class="stock">● In Stock</span>
+  <img src="oled.png" alt="Nintendo Switch OLED">
+  <h3>Nintendo Switch OLED</h3>
+  <p class="desc">Nintendo Switch OLED with a vivid 7-inch screen, enhanced audio, and a wide adjustable stand for tabletop play.</p>
+  <p class="price">10,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
+  <div class="card-actions">
+    <button type="button" onclick="openCustomizationModal('Nintendo Switch OLED', 10000, 'switch', this)">Add to Cart</button>
+    <div class="product-menu-wrap">
+      <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
+      <div class="product-menu">
+        <button type="button" onclick="xjOpenDescription('nintendo-switch-oled')">View Description</button>
+        <button type="button" onclick="xjOpenReducePrice('nintendo-switch-oled')">Reduce price</button>
       </div>
     </div>
   </div>
@@ -2125,8 +2208,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PS4 Controller</h3>
   <p class="desc">Original DualShock 4 wireless controller featuring enhanced ergonomic grips, precision analog sticks, and integrated light bar.</p>
   <p class="price">1,500 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="directAddToCart('PS4 Controller', 1500)">Add to Cart</button>
+    <button type="button" onclick="directAddToCart('PS4 Controller', 1500, this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2143,8 +2231,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <h3>PS5 Controller</h3>
   <p class="desc">Next-gen DualSense wireless controller with adaptive triggers, haptic feedback, and a built-in microphone for immersive PlayStation 5 gaming.</p>
   <p class="price">4,000 GMD</p>
+  <div class="product-qty" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>
+    <input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">
+    <button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>
+  </div>
   <div class="card-actions">
-    <button type="button" onclick="directAddToCart('PS5 Controller', 4000)">Add to Cart</button>
+    <button type="button" onclick="directAddToCart('PS5 Controller', 4000, this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
@@ -2282,32 +2375,19 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     <div class="empty-cart">Your cart is empty</div>
   </div>
   <div class="cart-footer">
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input id="cartPromoCode" type="text" maxlength="64" placeholder="Discount code" style="flex:1;padding:9px;border-radius:8px;background:#070B16;color:#fff;border:1px solid rgba(255,255,255,.15);">
-      <button type="button" class="admin-action-btn" onclick="xjRedeemPromo()">Apply</button>
-    </div>
-    <p id="cartPromoMessage" style="font-size:12px;color:#00ff88;margin:0 0 8px;"></p>
-    <button type="button" onclick="xjRemovePromo()" style="display:block;background:none;border:0;color:#aaa;font-size:12px;padding:0;margin:-2px 0 8px;cursor:pointer;">Remove promo code</button>
-    <label class="cart-balance-toggle"><input id="useXjBalance" type="checkbox" onchange="updateCartUI()"><span>Use XJ Games balance</span></label>
-    <p id="cartBalanceMessage" style="font-size:11px;color:#aaa;margin:0 0 8px;"></p>
     <div class="cart-totals" id="cartTotals">
       <div><span>Subtotal</span><span id="cartSubtotal">0 GMD</span></div>
-      <div id="cartDiscountRow" style="display:none"><span>Discount</span><span id="cartDiscount">-0 GMD</span></div>
-      <div id="cartBalanceRow" style="display:none"><span>XJ Games Balance</span><span id="cartBalanceApplied">-0 GMD</span></div>
       <div class="cart-final-total"><span>Final Amount</span><span id="cartTotalPrice">0 GMD</span></div>
     </div>
-    <button type="button" onclick="checkoutCart()" class="checkout-btn">Checkout Order</button>
-  </div>
-</div>
-
-<div id="promoItemModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="promoItemTitle" onclick="if(event.target===this)xjClosePromoItemPicker()">
-  <div class="modal-card" style="text-align:left;max-width:520px">
-    <button type="button" onclick="xjClosePromoItemPicker()" aria-label="Close discount selection" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
-    <h3 id="promoItemTitle" style="color:#00bfff;font-family:Orbitron;margin:0 30px 8px 0;font-size:19px">Choose one item</h3>
-    <p id="promoItemPrompt" style="color:#bbb;font-size:13px"></p>
-    <div id="promoItemChoices" class="promo-item-choices"></div>
-    <p id="promoItemError" role="alert" style="color:#ff8a94;font-size:12px;min-height:16px"></p>
-    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjApplyPromoItemChoice()">Apply discount to selected item</button>
+    <div class="cart-fulfillment">
+      <h4>Delivery / Pickup</h4>
+      <div class="fulfillment-pills">
+        <button type="button" id="cartPickupBtn" class="active" onclick="xjSetCartFulfillment('No')">Pickup</button>
+        <button type="button" id="cartDeliveryBtn" onclick="xjSetCartFulfillment('Yes')">Delivery (+300 each)</button>
+      </div>
+      <input type="text" id="cartDeliveryLocation" placeholder="Location if delivery" style="display:none;width:100%;margin-top:6px;">
+    </div>
+    <button type="button" onclick="checkoutCart()" class="checkout-btn">Checkout on WhatsApp</button>
   </div>
 </div>
 
@@ -2318,6 +2398,14 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:4px; font-size:20px;" id="customModalProductTitle">Customize Order</h3>
     <p style="font-size:16px; color:#00ff88; font-weight:bold; margin-bottom:20px;" id="customModalLivePrice"></p>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:13px; font-weight:600; color:white; display:block; margin-bottom:8px;">Quantity *</label>
+      <div class="modal-qty">
+        <button type="button" class="qty-btn" onclick="xjChangeModalQty(-1)">−</button>
+        <input id="customQuantityInput" class="modal-qty-input" type="number" min="1" max="99" value="1" oninput="updateModalPrice()">
+        <button type="button" class="qty-btn" onclick="xjChangeModalQty(1)">+</button>
+      </div>
+    </div>
 
     <!-- Console Type (Shared between PS4 & Switch) -->
     <div style="margin-bottom:20px;">
@@ -2485,17 +2573,7 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     <span onclick="closeAdminPanel()" style="position:absolute; top:15px; right:20px; font-size:24px; cursor:pointer; color:#aaa; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">&times;</span>
     <h3 style="color:#00bfff; font-family:Orbitron; margin-bottom:8px; font-size:20px;">Store Admin</h3>
     <p style="font-size:12px; color:#888; margin-bottom:16px;">Manage stock, add products, or remove products from the live store.</p>
-    <details class="admin-add-form" style="margin-bottom:14px;"><summary>Promotions &amp; backup</summary>
-      <h4 style="margin:8px 0;color:#00ff88">XJ Points Codes</h4>
-      <label>Balance value (GMD)</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="pointsCodeValue" type="number" min="1" step="1" placeholder="e.g. 1000"><input id="pointsCodeUses" type="number" min="1" step="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminCreatePointsCode()">Generate points code</button></div>
-      <div id="adminPointsCodeList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Points codes will appear here.</div>
-      <h4 style="margin:8px 0;color:#00bfff">Discount Codes</h4>
-      <label>Code</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input id="promoCode" maxlength="64" placeholder="e.g. XJ10OFF">
-        <select id="promoDiscountType" onchange="xjSetPromoDiscountType()"><option value="percent">Percentage</option><option value="fixed">Fixed GMD</option></select>
-        <input id="promoPercent" class="promo-percent-field" type="number" min="1" max="90" placeholder="Percent">
-        <input id="promoAmount" class="promo-amount-field" type="number" min="1" placeholder="GMD off" style="display:none">
-        <input id="promoStartsAt" type="datetime-local" title="Start date (optional)"><input id="promoExpiresAt" type="datetime-local" title="Expiry (optional)"><input id="promoUsageLimit" type="number" min="1" value="1" placeholder="Maximum uses"><button type="button" class="admin-action-btn" onclick="xjAdminAddPromo()">Create discount code</button></div>
-      <div id="adminPromoList" style="margin:8px 0 16px;font-size:12px;color:#aaa;">Discount codes will appear here.</div>
+    <details class="admin-add-form" style="margin-bottom:14px;"><summary>Flash sales &amp; backup</summary>
       <label>Flash sale</label><div style="display:flex;gap:6px;flex-wrap:wrap"><select id="flashProduct"></select><input id="flashPercent" type="number" min="1" max="80" placeholder="%"><input id="flashHours" type="number" min="1" placeholder="hours"><button type="button" class="admin-action-btn" onclick="xjAdminAddFlashSale()">Save</button></div>
       <div style="display:flex;gap:6px;margin-top:10px"><input id="backupId" placeholder="Backup ID"><button type="button" class="admin-action-btn" onclick="xjAdminRestoreBackup()">Restore server backup</button></div>
     </details>
@@ -2507,7 +2585,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
     <details class="admin-add-form" style="margin-bottom:14px;"><summary>Website controls</summary>
       <label class="admin-toggle"><input id="maintenanceMode" type="checkbox"> Maintenance mode</label>
       <label class="admin-toggle"><input id="orderingEnabled" type="checkbox" checked> Ordering enabled</label>
-      <label class="admin-toggle"><input id="promotionsEnabled" type="checkbox" checked> Promotions enabled</label>
       <input id="maintenanceMessage" placeholder="Maintenance message">
       <button type="button" class="admin-action-btn" onclick="xjAdminUpdateSettings()">Save website settings</button>
     </details>
@@ -2583,25 +2660,6 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   </div>
 </div>
 
-<div id="pointsModal" class="modal-overlay" onclick="if(event.target===this)xjClosePoints()">
-  <div class="modal-card" style="text-align:left;max-width:520px">
-    <button type="button" onclick="xjClosePoints()" aria-label="Close points" style="position:absolute;top:12px;right:18px;background:none;border:0;color:#aaa;font-size:24px;cursor:pointer">&times;</button>
-    <h3 style="color:#00ff88;font-family:Orbitron;margin-bottom:8px">Points &amp; Rewards</h3>
-    <div id="pointsSignedOut" style="display:none;color:#bbb;font-size:13px;padding:14px 0">Please sign in to redeem an XJ Points code and view your XJ Games balance.</div>
-    <div id="pointsSignedIn">
-      <div class="points-summary"><span>XJ Games Balance</span><strong><span id="pointsModalBalance">0</span> <small style="font:500 12px Poppins;color:#aaa">GMD</small></strong></div>
-      <h4 style="margin-top:18px">Available rewards</h4>
-      <p id="pointsRewards" style="font-size:12px;color:#aaa;margin-top:7px">No rewards are currently available.</p>
-      <h4 style="margin-top:18px">Redeem XJ Points Code</h4>
-      <div class="points-redeem"><input id="pointsCodeInput" type="text" maxlength="32" placeholder="Enter your XJ Points code" autocomplete="off"><button type="button" class="admin-action-btn" onclick="xjRedeemPointsCode()">Redeem</button></div>
-      <p id="pointsCodeMessage" style="min-height:18px;font-size:12px;margin-top:6px;color:#aaa"></p>
-      <h4 style="margin-top:18px">Points history</h4>
-      <ul id="pointsHistory" class="points-history"><li>No points activity yet.</li></ul>
-    </div>
-    <button type="button" class="checkout-btn" style="width:100%;border:0" onclick="xjClosePoints()">Close</button>
-  </div>
-</div>
-
 <!-- ================= FOOTER ================= -->
 <footer id="footer-socials">
 <h2>XJ GAMES</h2>
@@ -2626,13 +2684,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 <script src="js/firebase-config.js?v=20260822d"></script>
-<script src="js/xj-catalog.js?v=20261017a"></script>
-<script src="js/xj-search.js?v=20261017a"></script>
+<script src="js/xj-catalog.js?v=20261029a"></script>
+<script src="js/xj-search.js?v=20261029a"></script>
 <script src="js/xj-auth.js?v=20261002b"></script>
 <script src="js/xj-profile.js?v=20261002b"></script>
-<script src="js/xj-inventory.js?v=20261017a"></script>
+<script src="js/xj-inventory.js?v=20261029a"></script>
 <script src="js/xj-reviews.js?v=20261002a"></script>
-<script src="js/xj-commerce.js?v=20261017a"></script>
+<script src="js/xj-commerce.js?v=20261029a"></script>
 
 <script>
 let cart = JSON.parse(localStorage.getItem('xj_cart')) || [];
@@ -2695,7 +2753,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function xjEligibleForReduce(p) {
     return !!(p && p.id);
   }
-  function xjProductPrice(id, fallback) { const p = xjReduceStateFor(id); return p.unlocked ? Math.max(0, Number(fallback) - 500) : Number(fallback); }
+  function xjProductPrice(id, fallback) {
+    const regularPrice = Number(fallback) || 0;
+    const currentPrice = window.xjGetFlashSalePrice
+      ? window.xjGetFlashSalePrice(id, regularPrice)
+      : regularPrice;
+    return xjReduceStateFor(id).unlocked ? Math.max(0, currentPrice - 500) : currentPrice;
+  }
   function xjProductActionHtml(id, action, label) {
     const p = xjProductFromCard(id), eligible = xjEligibleForReduce(p), state = xjReduceStateFor(id);
     if (state.used && !state.unlocked) return '';
@@ -2792,9 +2856,18 @@ document.addEventListener('DOMContentLoaded', () => {
     xjRefreshProductPrices();
   }
   function xjRefreshProductPrices() {
-    document.querySelectorAll('#productGrid .card[data-product-id]').forEach(function(card) {
-      const p = xjProductFromCard(card.getAttribute('data-product-id')), el = card.querySelector('.price');
-      if (p && el && xjReduceStateFor(p.id).unlocked) el.innerHTML = '<s style="color:#888;font-size:12px">' + Number(p.price).toLocaleString() + ' GMD</s> <strong>' + xjProductPrice(p.id, p.price).toLocaleString() + ' GMD</strong>';
+    document.querySelectorAll('#productGrid .card[data-product-id], #recommendationItems .card[data-product-id]').forEach(function(card) {
+      const id = card.getAttribute('data-product-id');
+      const p = xjProductFromCard(id), el = card.querySelector('.price');
+      if (!p || !el) return;
+      const regularPrice = Number(p.price) || 0;
+      const currentPrice = xjProductPrice(id, regularPrice);
+      const flashSale = window.xjGetActiveFlashSale && window.xjGetActiveFlashSale(id);
+      if (flashSale || xjReduceStateFor(id).unlocked) {
+        el.innerHTML = '<s style="color:#888;font-size:12px">' + regularPrice.toLocaleString() + ' GMD</s> <strong>' + currentPrice.toLocaleString() + ' GMD</strong>';
+      } else {
+        el.textContent = currentPrice.toLocaleString() + ' GMD';
+      }
     });
   }
   window.xjProductPrice = xjProductPrice;
@@ -3158,12 +3231,6 @@ function sendRecommendation() {
 function saveCart() {
   localStorage.setItem('xj_cart', JSON.stringify(cart));
   updateCartUI();
-  var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-  if (promo && cart.length && !cart.some(function(item) {
-    return typeof xjCartItemKey === "function" && xjCartItemKey(item) === promo.appliedItemKey;
-  }) && window.xjOpenPromoItemPicker) {
-    window.xjOpenPromoItemPicker();
-  }
 }
 
 function updateCartUI() {
@@ -3180,14 +3247,7 @@ function updateCartUI() {
   if (cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
     document.getElementById('cartSubtotal').textContent = '0 GMD';
-    document.getElementById('cartDiscountRow').style.display = 'none';
-    document.getElementById('cartBalanceRow').style.display = 'none';
     cartTotalPrice.innerText = '0 GMD';
-    const emptyCartPromo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-    document.getElementById('cartPromoMessage').textContent = emptyCartPromo
-      ? 'Code ' + emptyCartPromo.code + ' verified. Add items, then choose one product for the discount.'
-      : '';
-    document.getElementById('cartBalanceMessage').textContent = '';
     return;
   }
 
@@ -3227,34 +3287,8 @@ function updateCartUI() {
   });
 
   cartItemsContainer.innerHTML = html;
-  const promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-  const promoDetails = window.xjGetPromoDiscountDetails
-    ? window.xjGetPromoDiscountDetails(promo, cart)
-    : { amount: 0, item: null };
-  const discount = promoDetails.amount;
-  const signedIn = !!(window.xjAuth && xjAuth.currentUser);
-  const availableBalance = signedIn ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
-  const useBalance = !!(document.getElementById('useXjBalance') && document.getElementById('useXjBalance').checked && signedIn);
-  const balanceUsed = useBalance ? Math.min(Math.max(0, total - discount), availableBalance) : 0;
-  const finalTotal = Math.max(0, total - discount - balanceUsed);
   document.getElementById('cartSubtotal').textContent = total.toLocaleString() + ' GMD';
-  document.getElementById('cartDiscountRow').style.display = discount ? 'flex' : 'none';
-  document.getElementById('cartDiscount').textContent = '-' + discount.toLocaleString() + ' GMD';
-  document.getElementById('cartBalanceRow').style.display = balanceUsed ? 'flex' : 'none';
-  document.getElementById('cartBalanceApplied').textContent = '-' + balanceUsed.toLocaleString() + ' GMD';
-  document.getElementById('cartBalanceMessage').textContent = !signedIn && document.getElementById('useXjBalance').checked
-    ? 'Please sign in to use your XJ Games balance.'
-    : signedIn ? 'Available XJ Games balance: ' + availableBalance.toLocaleString() + ' GMD' + (useBalance ? ' · Remaining after order: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD' : '') : '';
-  const promoMessage = document.getElementById('cartPromoMessage');
-  if (promoMessage) {
-    promoMessage.textContent = !promo
-      ? ''
-      : promoDetails.item
-        ? 'Discount code ' + promo.code + ' applied to ' + promoDetails.item.name + ': -' + discount.toLocaleString() +
-          ' GMD. Discounted unit price: ' + Math.max(0, Number(promoDetails.item.finalPrice) - discount).toLocaleString() + ' GMD.'
-        : 'Choose one cart item to apply discount code ' + promo.code + '.';
-  }
-  cartTotalPrice.textContent = finalTotal.toLocaleString() + ' GMD';
+  cartTotalPrice.textContent = total.toLocaleString() + ' GMD';
 }
 
 function xjRepriceCartFromCatalog(productId) {
@@ -3373,7 +3407,7 @@ function xjOpenWhatsAppCheckout(message, openedWindow) {
   return opened;
 }
 
-function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
+function xjBuildLocalCheckoutMessage(customer) {
   var customerName = customer && customer.name ? customer.name : 'Customer';
   var lines = [
     'XJ GAMES ORDER',
@@ -3384,7 +3418,7 @@ function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
   if (customer && customer.phone) lines.push('Phone: ' + customer.phone);
   lines.push('', 'Products:');
   var subtotal = 0;
-  cart.forEach(function(item, index) {
+  cart.forEach(function(item) {
     var quantity = item.quantity || 1;
     var unitPrice = Number(item.finalPrice) || 0;
     var lineTotal = unitPrice * quantity;
@@ -3402,30 +3436,7 @@ function xjBuildLocalCheckoutMessage(customer, promo, useBalance) {
     return item.delivery === 'Yes' && item.address;
   }).map(function(item) { return item.address; })));
   if (locations.length) lines.push('Location: ' + locations.join(', '));
-  var promoDetails = window.xjGetPromoDiscountDetails
-    ? window.xjGetPromoDiscountDetails(promo, cart)
-    : { amount: 0, item: null, percent: 0 };
-  var discount = promoDetails.amount;
-  var availableBalance = (window.xjIsAuthenticated && xjIsAuthenticated()) ? Math.max(0, Number(window.xjCurrentBalanceGmd) || 0) : 0;
-  var balanceUsed = useBalance ? Math.min(Math.max(0, subtotal - discount), availableBalance) : 0;
-  var finalTotal = Math.max(0, subtotal - discount - balanceUsed);
-  if (promo && promoDetails.item) {
-    lines.push(
-      '',
-      'Discount Code: ' + promo.code,
-      'Applied To: ' + promoDetails.item.name,
-      'Discount: ' + (promo.discountType === 'fixed' ? 'Fixed amount' : promoDetails.percent + '%'),
-      'Discount Amount: -GMD ' + discount.toLocaleString(),
-      'Discounted Unit Price: GMD ' + Math.max(0, Number(promoDetails.item.finalPrice) - discount).toLocaleString()
-    );
-  } else if (promo) {
-    lines.push('', 'Discount Code: ' + promo.code, 'No discount applied — select one item in the cart.');
-  }
-  if (balanceUsed) {
-    lines.push('XJ Games Balance: -' + balanceUsed.toLocaleString() + ' GMD');
-    lines.push('Remaining XJ Games Balance: ' + (availableBalance - balanceUsed).toLocaleString() + ' GMD');
-  }
-  lines.push('', 'Final Total: GMD ' + finalTotal.toLocaleString(), '', 'Please confirm my order.');
+  lines.push('', 'Final Total: GMD ' + subtotal.toLocaleString(), '', 'Please confirm my order.');
   return lines.join('\n');
 }
 
@@ -3445,25 +3456,6 @@ async function checkoutCart() {
   }
 
   var customer = xjGetCurrentUserDisplay();
-  var useBalanceEl = document.getElementById('useXjBalance');
-  var useBalance = !!(useBalanceEl && useBalanceEl.checked);
-  if (useBalance && !xjIsAuthenticated()) {
-    showToast('Sign in required', 'Please sign in to use your XJ Games balance.', 'error');
-    return;
-  }
-  var promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-  if (promo) {
-    var promoSelectionExists = cart.some(function(cartItem) {
-      return xjCartItemKey(cartItem) === promo.appliedItemKey;
-    });
-    if (!promoSelectionExists) {
-      if (window.xjOpenPromoItemPicker) window.xjOpenPromoItemPicker();
-      promo = window.xjGetRedeemedPromo ? window.xjGetRedeemedPromo() : null;
-      if (!promo || !cart.some(function(cartItem) {
-        return xjCartItemKey(cartItem) === promo.appliedItemKey;
-      })) return;
-    }
-  }
   var checkoutItems = cart.map(function(cartItem) {
     return {
       productId: cartItem.productId || xjGetProductIdByName(cartItem.name) || cartItem.name,
@@ -3485,37 +3477,8 @@ async function checkoutCart() {
   });
 
   xjCheckoutInProgress = true;
-  var whatsappWindow = null;
-  if (promo) {
-    whatsappWindow = window.open("about:blank", "_blank");
-    if (!whatsappWindow) {
-      xjCheckoutInProgress = false;
-      showToast("WhatsApp checkout", "Allow pop-ups to open the verified order message.", "error");
-      return;
-    }
-    try {
-      var verifiedPromo = await firebase.functions().httpsCallable('redeemPromoCode')({ code: promo.code });
-      promo = Object.assign({}, promo, verifiedPromo.data, { uid: promo.uid, appliedItemKey: promo.appliedItemKey });
-      var currentUser = window.xjAuth && xjAuth.currentUser;
-      if (currentUser) localStorage.setItem('xj_redeemed_promo_' + currentUser.uid, JSON.stringify(promo));
-    } catch (error) {
-      if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
-      xjCheckoutInProgress = false;
-      var invalidPromo = error && ["functions/not-found", "functions/failed-precondition", "functions/invalid-argument"].includes(error.code);
-      if (invalidPromo) {
-        if (window.xjRemovePromo) window.xjRemovePromo();
-        showToast("Promo code", "Invalid code, please try again.", "error");
-      } else {
-        console.error("Promo validation failed before checkout:", error);
-        showToast("WhatsApp checkout", error && error.message ? error.message : "Could not verify the discount code.", "error");
-      }
-      return;
-    }
-  }
-  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer, promo, useBalance), whatsappWindow);
+  xjOpenWhatsAppCheckout(xjBuildLocalCheckoutMessage(customer));
   showToast('Checkout ready', 'Your order is ready to send on WhatsApp.');
-  if (promo && window.xjRemovePromo) window.xjRemovePromo();
-  if (useBalanceEl) useBalanceEl.checked = false;
   cart = [];
   saveCart();
 
@@ -3524,9 +3487,6 @@ async function checkoutCart() {
       await firebase.functions().httpsCallable('createOrder')({
         customerName: customer ? customer.name : '',
         items: checkoutItems,
-        promoCode: promo ? promo.code : '',
-        appliedItemKey: promo ? promo.appliedItemKey : '',
-        useBalance: useBalance,
       });
     }
   } catch (error) {
@@ -3538,5 +3498,26 @@ async function checkoutCart() {
 }
 </script>
 
+<script>
+window.xjSanitizeImageReference = function(url) {
+  if (typeof url !== "string") return "";
+  var trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^(https?:\/\/|\/|product-images\/)/i.test(trimmed) && !/[<>'"]/.test(trimmed)) {
+    return trimmed;
+  }
+  return "";
+};
+
+window.xjSanitizeVideoReference = function(url) {
+  if (typeof url !== "string") return "";
+  var trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^(https?:\/\/|\/)/i.test(trimmed) && !/[<>'"]/.test(trimmed)) {
+    return trimmed;
+  }
+  return "";
+};
+</script>
 </body>
 </html>
