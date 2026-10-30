@@ -719,6 +719,9 @@ align-items:center;
 justify-content:center;
 border-radius:50%;
 background:linear-gradient(135deg,#00aaff,#ff3040);
+border:0;
+padding:0;
+color:white;
 font-size:15px;
 cursor:pointer;
 position:relative;
@@ -1842,12 +1845,13 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
 
 @media(max-width:700px){
   .brand-bar{padding:8px 12px;gap:7px;min-height:50px}
-  .brand-bar .logo{flex:0 0 auto;font-size:13px;gap:5px}
+  .brand-bar .logo{flex:1 1 auto;min-width:0;font-size:13px;gap:5px}
   .brand-bar .logo img{width:25px;height:25px}
-  .brand-bar #authContainer{max-width:25vw}
+  .brand-bar #authContainer{max-width:min(25vw,100px)}
   .brand-bar #authContainer .user-profile{gap:4px;padding-right:6px}
   .brand-bar #authContainer .user-profile span:not(.xj-account-caret){max-width:48px;font-size:10px}
-  .mobile-menu-toggle{width:36px;height:36px;flex-basis:36px;border-radius:9px}
+  .brand-bar .cart{width:40px;height:40px;flex:0 0 40px;font-size:17px}
+  .mobile-menu-toggle{width:36px;height:36px;flex:0 0 36px;border-radius:9px}
   .mobile-nav-menu{top:102px}
   .hero{padding:126px 6% 48px;gap:24px}
   .rightHero img{width:min(68vw,250px)}
@@ -1926,10 +1930,10 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
       <button type="button" class="admin-toggle-btn" id="adminToggleBtn" onclick="openAdminPanel()" title="Manage Inventory">⚙ Admin</button>
       <button type="button" class="admin-toggle-btn" onclick="xjOpenCommercePanel('ordersPanel')">📦 Orders</button>
 
-      <div class="cart" id="cartButton">
+      <button type="button" class="cart" id="cartButton" aria-label="Open shopping cart" title="Open shopping cart">
         🛒
-        <span id="cartCount">0</span>
-      </div>
+        <span id="cartCount" aria-live="polite">0</span>
+      </button>
     </div>
   </div>
 </nav>
@@ -3464,9 +3468,14 @@ if (item.delivery === 'Yes') {
 });
 
 if (cartCount) {
-cartCount.innerText = cart.reduce(function(total, item) {
+const itemCount = cart.reduce(function(total, item) {
 return total + item.quantity;
 }, 0);
+cartCount.innerText = itemCount;
+const cartButton = document.getElementById('cartButton');
+if (cartButton) {
+cartButton.setAttribute('aria-label', 'Open shopping cart, ' + itemCount + (itemCount === 1 ? ' item' : ' items'));
+}
 }
 
 if (cart.length === 0) {
@@ -3610,7 +3619,18 @@ function xjUpdateHeaderLayout() {
   const toggle = document.getElementById('mobileMenuToggle');
   const navList = document.querySelector('.nav-links-list');
   const menu = document.getElementById('mobileNavMenu');
+  const cartButton = document.getElementById('cartButton');
+  const brandBar = document.querySelector('.brand-bar');
+  const navInner = document.querySelector('.scrollable-nav-inner');
   const compactMode = window.innerWidth <= 1400;
+
+  if (cartButton && brandBar && navInner) {
+    if (compactMode) {
+      brandBar.insertBefore(cartButton, toggle || null);
+    } else {
+      navInner.appendChild(cartButton);
+    }
+  }
 
   if (toggle) {
     toggle.style.display = compactMode ? 'flex' : 'none';
