@@ -383,8 +383,8 @@ function xjSlugifyProductName(name) {
 
 function xjSanitizeImageFileName(name) {
   var cleaned = String(name || "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
-  if (!cleaned || cleaned.indexOf("..") !== -1) return "";
-  if (!/^[A-Za-z0-9._/-]+\.(png|jpe?g|webp|gif|svg)$/i.test(cleaned)) {
+  if (!cleaned || cleaned.indexOf("..") !== -1 || /[?#<>'"\u0000-\u001f]/.test(cleaned)) return "";
+  if (!/^[\p{L}\p{N}._/ -]+\.(png|jpe?g|webp|gif|svg)$/iu.test(cleaned)) {
     return "";
   }
   return cleaned;
@@ -393,10 +393,10 @@ function xjSanitizeImageFileName(name) {
 function xjSanitizeImageReference(value) {
   var raw = String(value || "").trim();
   if (!raw) return "";
-  if (/^https:\/\//i.test(raw)) {
+  if (/^https?:\/\//i.test(raw)) {
     try {
       var url = new URL(raw);
-      if (url.protocol !== "https:") return "";
+      if (url.protocol !== "https:" && url.protocol !== "http:") return "";
       if (!/\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(url.pathname)) return "";
       return raw;
     } catch (error) {
@@ -404,6 +404,36 @@ function xjSanitizeImageReference(value) {
     }
   }
   return xjSanitizeImageFileName(raw);
+}
+
+function xjVerifyProductImage(value) {
+  var imagePath = xjSanitizeImageReference(value);
+  if (!imagePath) {
+    return Promise.reject(new Error("Enter a valid image filename or repository-relative path."));
+  }
+
+  return new Promise(function(resolve, reject) {
+    var image = new Image();
+    var timeout = window.setTimeout(function() {
+      image.onload = null;
+      image.onerror = null;
+      reject(new Error('Image file "' + imagePath + '" could not be found. Check the filename and letter case.'));
+    }, 12000);
+
+    image.onload = function() {
+      window.clearTimeout(timeout);
+      resolve(imagePath);
+    };
+    image.onerror = function() {
+      window.clearTimeout(timeout);
+      reject(new Error('Image file "' + imagePath + '" could not be found. Check the filename and letter case.'));
+    };
+    image.src = imagePath;
+    if (image.complete && image.naturalWidth > 0) {
+      window.clearTimeout(timeout);
+      resolve(imagePath);
+    }
+  });
 }
 
 function xjSanitizeVideoReference(value) {

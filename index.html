@@ -2656,11 +2656,11 @@ html
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 
 <script src="js/firebase-config.js?v=20261029b"></script>
-<script src="js/xj-catalog.js?v=20261029a"></script>
+<script src="js/xj-catalog.js?v=20261030b"></script>
 <script src="js/xj-search.js?v=20261029a"></script>
 <script src="js/xj-auth.js?v=20261030a"></script>
 <script src="js/xj-profile.js?v=20261002b"></script>
-<script src="js/xj-inventory.js?v=20261029a"></script>
+<script src="js/xj-inventory.js?v=20261030b"></script>
 <script src="js/xj-reviews.js?v=20261002a"></script>
 <script src="js/xj-commerce.js?v=20261029a"></script>
 
@@ -3794,16 +3794,6 @@ async function checkoutCart() {
 </script>
 
 <script>
-window.xjSanitizeImageReference = function(url) {
-  if (typeof url !== "string") return "";
-  var trimmed = url.trim();
-  if (!trimmed) return "";
-  if (/^(https?:\/\/|\/|product-images\/)/i.test(trimmed) && !/[<>'"]/.test(trimmed)) {
-    return trimmed;
-  }
-  return "";
-};
-
 window.xjSanitizeVideoReference = function(url) {
   if (typeof url !== "string") return "";
   var trimmed = url.trim();

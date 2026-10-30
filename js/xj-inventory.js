@@ -139,6 +139,13 @@ function xjApplyRemoteProduct(productId, data) {
       existingProduct.description = data.description;
     }
     if (typeof data.condition === "string") existingProduct.condition = data.condition;
+    if (data.stockQuantity === null) {
+      existingProduct.stockQuantity = null;
+    } else if (data.stockQuantity !== undefined
+        && Number.isSafeInteger(Number(data.stockQuantity))
+        && Number(data.stockQuantity) >= 0) {
+      existingProduct.stockQuantity = Number(data.stockQuantity);
+    }
     if (Array.isArray(data.images)) {
       existingProduct.images = data.images.filter(function(url) { return typeof url === "string"; });
       existingProduct.image = existingProduct.images[0] || "";
@@ -220,6 +227,12 @@ function xjProductFromRemote(productId, data) {
     images: Array.isArray(data.images) ? data.images : (data.image ? [data.image] : []),
     videoUrls: Array.isArray(data.videoUrls) ? data.videoUrls : [],
     condition: typeof data.condition === "string" ? data.condition : "",
+    stockQuantity: data.stockQuantity !== null
+      && data.stockQuantity !== undefined
+      && Number.isSafeInteger(Number(data.stockQuantity))
+      && Number(data.stockQuantity) >= 0
+      ? Number(data.stockQuantity)
+      : null,
     storageCapacity: data.storageCapacity,
     includedAccessories: data.includedAccessories,
     description: data.description || "",
@@ -541,12 +554,23 @@ html +=
         '<label>Price (GMD)</label>' +
         '<input id="adminProductPrice" type="number" min="1" max="999999" step="1" placeholder="e.g. 15000" required>' +
         '<label>Description</label>' +
-        '<textarea id="adminProductDesc" rows="3" maxlength="280" placeholder="Short product description"></textarea>' +
-        '<label>Condition (leave blank if not verified)</label>' +
+        '<textarea id="adminProductDesc" rows="3" maxlength="280" placeholder="Short product description" required></textarea>' +
+        '<label>Category</label>' +
+        '<select id="adminProductCategory" required>' +
+          '<option value="">Select category</option>' +
+          '<option value="playstation-consoles">PlayStation Consoles</option>' +
+          '<option value="nintendo-consoles">Nintendo Consoles</option>' +
+          '<option value="controllers">Controllers</option>' +
+          '<option value="games">Games / Game Discs</option>' +
+          '<option value="accessories">Other Accessories</option>' +
+        '</select>' +
+        '<label>Condition</label>' +
         '<select id="adminProductCondition"><option value="">Not specified</option>' + xjConditionOptions("") + '</select>' +
-        '<label>Image repository path or image URL</label>' +
-        '<input id="adminProductImage" type="text" maxlength="200" placeholder="e.g. product-images/xbox-series-s.png" required>' +
-        '<p class="admin-help">Add the image file to the website repository and publish it separately, then enter its exact relative path here. Browser uploads to GitHub are not supported.</p>' +
+        '<label>Stock quantity</label>' +
+        '<input id="adminProductQuantity" type="number" min="0" max="999999" step="1" value="1" required>' +
+        '<label>Image filename</label>' +
+        '<input id="adminProductImage" type="text" maxlength="200" placeholder="e.g. last.png" required>' +
+        '<p class="admin-help">Enter the exact image filename from the website root. Existing images are stored beside index.html; this field does not upload files.</p>' +
         '<label>Product type</label>' +
         '<select id="adminProductType">' +
           '<option value="controller">Controller</option>' +
@@ -574,6 +598,7 @@ html +=
           '<button type="button" class="admin-action-btn" onclick="xjAdminSaveProductPrice(\'' + productId + '\')">Save price</button></div>' +
           '<label class="admin-product-description">Description<textarea id="adminDescription-' + xjEscapeHtml(productId) + '" maxlength="2000" rows="3">' + xjEscapeHtml(product.description || "") + '</textarea></label>' +
           '<label class="admin-product-description">Condition<select id="adminCondition-' + xjEscapeHtml(productId) + '"><option value="">Not specified</option>' + xjConditionOptions(product.condition || "") + '</select></label>' +
+          '<label class="admin-product-description">Stock quantity (optional)<input id="adminQuantity-' + xjEscapeHtml(productId) + '" type="number" min="0" max="999999" step="1" value="' + xjEscapeHtml(product.stockQuantity == null ? "" : product.stockQuantity) + '"></label>' +
           '<label class="admin-product-description">Photo repository paths or image URLs (comma-separated)<input id="adminImages-' + xjEscapeHtml(productId) + '" value="' + xjEscapeHtml((product.images || (product.image ? [product.image] : [])).join(", ")) + '" maxlength="2000"></label>' +
           '<label class="admin-product-description">Video repository paths or HTTPS URLs (comma-separated)<input id="adminVideos-' + xjEscapeHtml(productId) + '" value="' + xjEscapeHtml((product.videoUrls || []).join(", ")) + '" maxlength="2000"></label>' +
           '<p class="admin-help">Add media files to the website repository and publish them separately before saving their paths here. Browser uploads to GitHub are not supported. Large videos can significantly increase repository size and bandwidth, so local video hosting is optional.</p>' +
@@ -675,14 +700,26 @@ async function xjAdminSaveProductDetails(productId) {
   var product = XJ_PRODUCT_CATALOG[productId];
   var input = document.getElementById("adminDescription-" + productId);
   var conditionInput = document.getElementById("adminCondition-" + productId);
+  var quantityInput = document.getElementById("adminQuantity-" + productId);
   var imagesInput = document.getElementById("adminImages-" + productId);
   var videosInput = document.getElementById("adminVideos-" + productId);
-  if (!product || !input || !conditionInput || !imagesInput || !videosInput) return;
+  if (!product || !input || !conditionInput || !quantityInput || !imagesInput || !videosInput) return;
   var description = input.value.trim();
-  var images = imagesInput.value.split(",").map(function(value) { return value.trim(); }).filter(Boolean);
+  var rawStockQuantity = quantityInput.value.trim();
+  var stockQuantity = rawStockQuantity ? Number(rawStockQuantity) : null;
+  var rawImages = imagesInput.value.split(",").map(function(value) { return value.trim(); }).filter(Boolean);
+  var images = [];
   var videoUrls = videosInput.value.split(",").map(function(value) { return value.trim(); }).filter(Boolean);
-  if (images.some(function(value) { return !xjSanitizeImageReference(value); })) {
-    showToast("Product media", "Use image URLs or safe repository-relative image paths such as product-images/console.png.", "error");
+  if (rawImages.some(function(value) { return !xjSanitizeImageReference(value); })) {
+    showToast("Product media", "Enter image filenames or safe repository-relative image paths.", "error");
+    return;
+  }
+  try {
+    images = await Promise.all(rawImages.map(function(value) {
+      return xjVerifyProductImage(value);
+    }));
+  } catch (error) {
+    showToast("Image not found", error.message, "error");
     return;
   }
   if (videoUrls.some(function(value) { return !xjSanitizeVideoReference(value); })) {
@@ -693,10 +730,16 @@ async function xjAdminSaveProductDetails(productId) {
     showToast("Description", "Descriptions must be 2,000 characters or fewer.", "error");
     return;
   }
+  if (stockQuantity !== null
+      && (!Number.isSafeInteger(stockQuantity) || stockQuantity < 0 || stockQuantity > 999999)) {
+    showToast("Stock quantity", "Enter a whole-number stock quantity between 0 and 999,999.", "error");
+    return;
+  }
   try {
     await xjDb.collection("products").doc(productId).set({
       description: description,
       condition: conditionInput.value,
+      stockQuantity: stockQuantity,
       images: images,
       image: images[0] || "",
       videoUrls: videoUrls,
@@ -704,6 +747,7 @@ async function xjAdminSaveProductDetails(productId) {
     }, { merge: true });
     product.description = description;
     product.condition = conditionInput.value;
+    product.stockQuantity = stockQuantity;
     product.images = images;
     product.videoUrls = videoUrls;
     product.image = images[0] || "";
@@ -835,13 +879,18 @@ async function xjAdminToggleStock(productId, inStock) {
 
 async function xjAdminAddProduct(event) {
   event.preventDefault();
-  if (!xjIsAdmin()) return;
+  if (!xjIsAdmin() || !xjDb || !window.firebase || !firebase.firestore) {
+    showToast("Product not saved", "Sign in as an administrator and wait for Firebase to connect before adding products.", "error");
+    return;
+  }
 
   var name = document.getElementById("adminProductName").value.trim();
-  var price = parseInt(document.getElementById("adminProductPrice").value, 10);
+  var price = Number(document.getElementById("adminProductPrice").value);
   var description = document.getElementById("adminProductDesc").value.trim();
+  var selectedCategory = document.getElementById("adminProductCategory").value;
   var condition = document.getElementById("adminProductCondition").value;
-  var image = xjSanitizeImageReference(document.getElementById("adminProductImage").value);
+  var image = xjSanitizeImageReference(document.getElementById("adminProductImage").value.trim());
+  var stockQuantity = Number(document.getElementById("adminProductQuantity").value);
   var type = document.getElementById("adminProductType").value;
   var inStock = document.getElementById("adminProductInStock").checked;
 
@@ -849,44 +898,77 @@ async function xjAdminAddProduct(event) {
     showToast("Error", "Please enter a valid product name.", "error");
     return;
   }
-  if (!price || price < 1) {
+  if (!description) {
+    showToast("Error", "Please enter a product description.", "error");
+    return;
+  }
+  if (!Number.isSafeInteger(price) || price < 1 || price > 999999) {
     showToast("Error", "Please enter a valid price.", "error");
     return;
   }
+  if (!selectedCategory) {
+    showToast("Error", "Please select a product category.", "error");
+    return;
+  }
+  if (!Number.isSafeInteger(stockQuantity) || stockQuantity < 0 || stockQuantity > 999999) {
+    showToast("Error", "Enter a whole-number stock quantity between 0 and 999,999.", "error");
+    return;
+  }
+  if (inStock && stockQuantity === 0) {
+    showToast("Error", "Set the stock quantity above zero or mark this product out of stock.", "error");
+    return;
+  }
   if (!image) {
-    showToast("Error", "Use an image URL or a safe repository-relative image path such as product-images/product.png.", "error");
+    showToast("Error", "Enter an image filename or safe relative path ending in .png, .jpg, .webp, .gif, or .svg.", "error");
+    return;
+  }
+  try {
+    image = await xjVerifyProductImage(image);
+  } catch (error) {
+    console.error("Product image validation failed:", error);
+    showToast("Image not found", error.message, "error");
     return;
   }
 
-  var productId = "custom-" + xjSlugifyProductName(name);
-  if (XJ_PRODUCT_CATALOG[productId] && !xjIsProductHidden(productId)) {
-    productId += "-" + Date.now().toString().slice(-4);
+  var baseProductId = "custom-" + xjSlugifyProductName(name);
+  var productId = baseProductId;
+  var productRef = xjDb.collection("products").doc(productId);
+  try {
+    var existingProduct = await productRef.get();
+    if (XJ_PRODUCT_CATALOG[productId] || existingProduct.exists) {
+      productId = baseProductId + "-" + Date.now().toString(36);
+      productRef = xjDb.collection("products").doc(productId);
+      existingProduct = await productRef.get();
+      if (existingProduct.exists || XJ_PRODUCT_CATALOG[productId]) {
+        productId += "-" + Math.random().toString(36).slice(2, 6);
+        productRef = xjDb.collection("products").doc(productId);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check for duplicate product:", error);
+    showToast("Product not saved", "Could not verify the product name is available. Please try again.", "error");
+    return;
   }
 
-  var displayCategory = type === "switch"
-    ? "nintendo-consoles"
-    : type === "ps4"
-      ? "playstation-consoles"
-      : type === "controller"
-        ? "controllers"
-        : type === "game"
-          ? "games"
-          : "accessories";
-  var categories = type === "switch"
-    ? ["nintendo", "consoles", "switch"]
-    : type === "ps4"
-      ? ["playstation", "consoles"]
-      : type === "controller"
-        ? ["controllers", "accessories"]
-        : type === "game"
-          ? ["games"]
-          : ["accessories"];
+  var categoryDetails = {
+    "playstation-consoles": { category: "consoles", categories: ["playstation", "consoles"] },
+    "nintendo-consoles": { category: "consoles", categories: ["nintendo", "consoles", "switch"] },
+    controllers: { category: "accessories", categories: ["controllers", "accessories"] },
+    games: { category: "games", categories: ["games"] },
+    accessories: { category: "accessories", categories: ["accessories"] }
+  }[selectedCategory];
+  if (!categoryDetails) {
+    showToast("Error", "Please select a valid product category.", "error");
+    return;
+  }
+  var displayCategory = selectedCategory;
+  var categories = categoryDetails.categories;
 
   var product = {
     id: productId,
     name: name,
     slug: name.toLowerCase(),
-    category: type === "game" ? "games" : (type === "standalone" || type === "controller" || type === "accessory" ? "accessories" : "consoles"),
+    category: categoryDetails.category,
     displayCategory: displayCategory,
     categories: categories,
     price: price,
@@ -897,55 +979,53 @@ async function xjAdminAddProduct(event) {
     image: image,
     description: description,
     condition: condition,
+    stockQuantity: stockQuantity,
     aliases: [name.toLowerCase()],
     createdAt: Date.now(),
     isCustom: true,
     showOnHomepage: true
   };
 
+  try {
+    await productRef.set({
+      id: productId,
+      name: name,
+      slug: product.slug,
+      category: product.category,
+      displayCategory: displayCategory,
+      categories: categories,
+      price: price,
+      inStock: inStock,
+      stockQuantity: stockQuantity,
+      type: type,
+      extraControllerPrice: product.extraControllerPrice,
+      image: image,
+      description: description,
+      condition: condition,
+      images: [image],
+      videoUrls: [],
+      aliases: product.aliases,
+      createdAt: product.createdAt,
+      isCustom: true,
+      showOnHomepage: true,
+      hidden: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Failed to add product:", error);
+    showToast("Product not saved", "Could not save this product to Firebase. Check your connection and administrator permissions, then try again.", "error");
+    return;
+  }
+
   xjRegisterProduct(product);
   xjSetProductStock(productId, inStock);
   xjInsertProductCard(product);
-
-  if (xjDb) {
-    try {
-      await xjDb.collection("products").doc(productId).set({
-        id: productId,
-        name: name,
-        slug: product.slug,
-        category: product.category,
-        displayCategory: displayCategory,
-        categories: categories,
-        price: price,
-        inStock: inStock,
-        type: type,
-        extraControllerPrice: product.extraControllerPrice,
-        image: image,
-        description: description,
-        condition: condition,
-        images: [image],
-        videoUrls: [],
-        aliases: product.aliases,
-        createdAt: product.createdAt,
-        isCustom: true,
-        showOnHomepage: true,
-        hidden: false,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Failed to add product:", error);
-      showToast("Error", "The product was added on this page, but it could not be saved for other visitors.", "error");
-      return;
-    }
-
-  }
-
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
   if (typeof xjShowAllProductCards === "function") xjShowAllProductCards();
   if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
   if (window.xjRefreshCommerceProducts) window.xjRefreshCommerceProducts();
-  showToast("Product added", name + " is now live on the website. Make sure " + image + " exists in the published website repository.");
+  showToast("Product added", name + " is now live on the website.");
 }
 
 function xjCategoryLabel(category) {

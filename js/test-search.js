@@ -63,6 +63,27 @@ TESTS.forEach(function(test) {
 });
 
 const catalog = searchContext.XJ_PRODUCT_CATALOG_FOR_TEST;
+const validImageReferences = [
+  'Nintendo Switch.png',
+  'product-images/Nintendo Switch.png',
+  'last.png'
+];
+const invalidImageReferences = [
+  '../last.png',
+  'product-images/../../private.png',
+  'last.png?download=1'
+];
+if (!validImageReferences.every(function(path) {
+  return searchContext.xjSanitizeImageReference(path) === path;
+}) || invalidImageReferences.some(function(path) {
+  return !!searchContext.xjSanitizeImageReference(path);
+})) {
+  console.error('FAIL: image filename/path validation should accept spaces and reject unsafe paths');
+  failed++;
+} else {
+  console.log('PASS: image filenames with spaces resolve as safe relative paths');
+}
+
 const requiredHomepageIds = [
   'ps4-slim',
   'ps4-fat',
