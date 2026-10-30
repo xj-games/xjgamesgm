@@ -1,4 +1,3 @@
-```javascript
 /**
  * XJ Games — Firebase client configuration
  * Project: xj-games-7b410
@@ -24,4 +23,3 @@ function xjIsFirebaseConfigured() {
     XJ_FIREBASE_CONFIG.projectId !== "YOUR_PROJECT_ID"
   );
 }
-```
