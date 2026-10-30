@@ -55,9 +55,11 @@ function xjInitInventory() {
 function xjValidateFeaturedProductIds() {
   if (xjInventoryReady) {
     xjFeaturedProductIds = xjFeaturedProductIds.filter(function(id) {
-      return !!XJ_PRODUCT_CATALOG[id]
+      var product = XJ_PRODUCT_CATALOG[id];
+
+      return !!product
         && !xjIsProductHidden(id)
-        && xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
+        && xjIsAllowedHomepageProduct(product);
     });
   }
 }
@@ -223,7 +225,8 @@ function xjProductFromRemote(productId, data) {
     description: data.description || "",
     aliases: Array.isArray(data.aliases) && data.aliases.length ? data.aliases : [name.toLowerCase()],
     createdAt: data.createdAt && typeof data.createdAt.toMillis === "function" ? data.createdAt.toMillis() : Number(data.createdAt) || 0,
-    isCustom: true
+    isCustom: data.isCustom !== false,
+    showOnHomepage: data.showOnHomepage !== false
   };
 }
 
@@ -236,7 +239,15 @@ function xjInsertProductCard(product) {
   setTimeout(function() {
     xjApplyingStock = false;
     var card = document.querySelector('#productGrid .card[data-product-id="' + product.id + '"]');
-    if (card) xjApplyStockState(card);
+    if (card) {
+      var carousel = card.querySelector(".xj-product-carousel");
+      if (carousel && !carousel.querySelector(".xj-carousel-track") && typeof xjBuildProductCarousel === "function") {
+        xjBuildProductCarousel(carousel);
+      }
+      xjApplyStockState(card);
+    }
+    if (window.xjRefreshProductPrices) window.xjRefreshProductPrices();
+    if (window.xjRefreshCommerceProducts) window.xjRefreshCommerceProducts();
   }, 90);
 }
 
@@ -277,8 +288,8 @@ function xjBuildProductCardHtml(product) {
   var safeCats = xjEscapeHtml((product.categories || []).join(","));
   var jsName = String(product.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   var action = product.hasModal
-    ? "openCustomizationModal('" + jsName + "', " + Number(product.price) + ", '" + (product.type === "switch" ? "switch" : "ps4") + "')"
-    : "directAddToCart('" + jsName + "', " + Number(product.price) + ")";
+    ? "openCustomizationModal('" + jsName + "', " + Number(product.price) + ", '" + (product.type === "switch" ? "switch" : "ps4") + "', this)"
+    : "directAddToCart('" + jsName + "', " + Number(product.price) + ", this)";
   var eligible = !!product.id;
 
   return (
@@ -289,10 +300,15 @@ function xjBuildProductCardHtml(product) {
       "<h3>" + safeName + "</h3>" +
       '<p class="desc">' + safeDesc + "</p>" +
       '<p class="price">' + Number(product.price).toLocaleString() + " GMD</p>" +
-      '<div class="card-actions"><button onclick="' + action + '">' + (inStock ? "Add to Cart" : "Notify Me") + '</button>' +
+      '<div class="product-qty" aria-label="Quantity">' +
+        '<button type="button" class="qty-btn" onclick="xjChangeCardQty(this,-1)">−</button>' +
+        '<input class="product-qty-input" type="number" min="1" max="99" value="1" aria-label="Quantity">' +
+        '<button type="button" class="qty-btn" onclick="xjChangeCardQty(this,1)">+</button>' +
+      "</div>" +
+      '<div class="card-actions"><button type="button" onclick="' + action + '">' + (inStock ? "Add to Cart" : "Notify Me") + '</button>' +
       '<div class="product-menu-wrap"><button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>' +
       '<div class="product-menu"><button type="button" onclick="xjOpenDescription(\'' + xjEscapeHtml(product.id) + '\')">View Description</button>' +
-      (eligible ? '<button type="button" onclick="xjOpenReducePrice(\'' + xjEscapeHtml(product.id) + '\')">Share the XJ Games website with 30 people on WhatsApp to reduce the price on this product.</button>' : '') +
+      (eligible ? '<button type="button" onclick="xjOpenReducePrice(\'' + xjEscapeHtml(product.id) + '\')">Reduce price</button>' : '') +
       '</div></div></div>' +
     "</div>"
   );
@@ -359,6 +375,9 @@ function xjApplyStockState(card) {
   }
 
   var inStock = xjGetProductStock(productId);
+
+  var qty = card.querySelector(".product-qty");
+  if (qty) qty.style.display = inStock ? "inline-flex" : "none";
 
   if (!inStock) {
     stockBadge.textContent = "● Out of Stock";
@@ -457,8 +476,12 @@ function xjRenderAdminInventoryPanel() {
   var productIds = xjGetAllProductIds();
   var adminProductIds = xjGetAllProductIds(true);
   var homepageProductIds = productIds.filter(function(id) {
-    return xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
-  });
+  var product = XJ_PRODUCT_CATALOG[id];
+
+  return !!product
+    && !xjIsProductHidden(id)
+    && xjIsAllowedHomepageProduct(product);
+});
   var availableCount = productIds.filter(function(id) { return !!XJ_PRODUCT_CATALOG[id]; }).length;
   var inStockCount = productIds.filter(function(id) { return !!xjGetProductStock(id); }).length;
   html += '<div class="admin-dashboard-summary"><strong>Catalog stock overview:</strong> ' +
@@ -471,21 +494,44 @@ function xjRenderAdminInventoryPanel() {
       '<button type="button" class="admin-action-btn" onclick="xjMoveCategory(' + index + ',-1)">Up</button>' +
       '<button type="button" class="admin-action-btn" onclick="xjMoveCategory(' + index + ',1)">Down</button></div>';
   });
-  html += '</div><p class="admin-help">New products are placed automatically using this category.</p></div>';
-  html += '<section class="admin-featured-selection"><h4>Homepage featured products</h4><p class="admin-help">Select exactly six existing products. No products are selected automatically.</p><div class="admin-featured-list">';
-  if (xjFeaturedProductIds.length !== 6) {
-    html += '<p class="admin-warning">No valid six-product featured selection is currently active. Choose exactly six products and save.</p>';
-  }
-  if (homepageProductIds.length < 6) {
-    html += '<p class="admin-warning">Only ' + homepageProductIds.length + ' eligible homepage products are available. Add eligible products before selecting six homepage features.</p>';
-  }
-  homepageProductIds.forEach(function(productId) {
-    var product = XJ_PRODUCT_CATALOG[productId];
-    if (!product) return;
-    var checked = xjFeaturedProductIds.indexOf(productId) !== -1;
-    html += '<label><input type="checkbox" class="admin-featured-checkbox" value="' + xjEscapeHtml(productId) + '"' + (checked ? " checked" : "") + '> ' + xjEscapeHtml(product.name) + '</label>';
-  });
-  html += '</div><button id="saveFeaturedProducts" type="button" class="admin-action-btn" onclick="xjSaveFeaturedProducts()" disabled>Select exactly six products</button></section>';
+  html += '</div><p class="admin-help">New products are placed automatically using this category. PlayStation, Nintendo, and controller products appear on the homepage. Everything else stays in Shop All Products until you add it as a new live product.</p></div>';
+ var selectedFeaturedCount = homepageProductIds.filter(function(id) {
+  return Array.isArray(xjFeaturedProductIds)
+    && xjFeaturedProductIds.indexOf(id) !== -1;
+}).length;
+
+html +=
+  '<section class="admin-featured-selection">' +
+    '<h4>Homepage Featured Products</h4>' +
+    '<p class="admin-help">Choose between 1 and 12 products to feature on your homepage. Select the products you want customers to see first.</p>' +
+    '<div id="featuredProductsCount" class="admin-help">' +
+      selectedFeaturedCount + ' / 12 selected' +
+    '</div>' +
+    '<div class="admin-featured-list">';
+
+homepageProductIds.forEach(function(id) {
+  var product = XJ_PRODUCT_CATALOG[id];
+  if (!product) return;
+
+  var selected = Array.isArray(xjFeaturedProductIds)
+    && xjFeaturedProductIds.indexOf(id) !== -1;
+
+  html +=
+    '<label class="admin-featured-option">' +
+      '<input type="checkbox" class="admin-featured-checkbox" value="' +
+        xjEscapeHtml(id) + '"' +
+        (selected ? ' checked' : '') +
+        ' onchange="xjUpdateFeaturedSelectionControls()">' +
+      '<span>' + xjEscapeHtml(product.name) + '</span>' +
+    '</label>';
+});
+
+html +=
+    '</div>' +
+    '<button type="button" id="saveFeaturedProducts" class="admin-action-btn" onclick="xjSaveFeaturedProducts()">' +
+      'Save featured products' +
+    '</button>' +
+  '</section>';
 
   if (xjAdminFormOpen) {
     html +=
@@ -549,27 +595,43 @@ function xjRenderAdminInventoryPanel() {
   });
 
   container.innerHTML = html;
-  var featuredCheckboxes = container.querySelectorAll(".admin-featured-checkbox");
-  Array.prototype.forEach.call(featuredCheckboxes, function(checkbox) {
-    checkbox.addEventListener("change", xjUpdateFeaturedSelectionControls);
-  });
-  xjUpdateFeaturedSelectionControls();
+xjUpdateFeaturedSelectionControls();
 }
 
 function xjUpdateFeaturedSelectionControls() {
-  var checkboxes = Array.prototype.slice.call(document.querySelectorAll(".admin-featured-checkbox"));
-  var selectedCount = checkboxes.filter(function(checkbox) { return checkbox.checked; }).length;
-  checkboxes.forEach(function(checkbox) {
-    checkbox.disabled = !checkbox.checked && selectedCount >= 6;
-  });
-  var saveButton = document.getElementById("saveFeaturedProducts");
-  if (!saveButton) return;
-  saveButton.disabled = selectedCount !== 6;
-  saveButton.textContent = selectedCount === 6
-    ? "Save six featured products"
-    : "Select exactly six products (" + selectedCount + "/6)";
-}
+  var checkboxes = Array.prototype.slice.call(
+    document.querySelectorAll(".admin-featured-checkbox")
+  );
 
+  var selectedCount = checkboxes.filter(function(checkbox) {
+    return checkbox.checked;
+  }).length;
+
+  // Prevent selecting more than 12 products.
+  checkboxes.forEach(function(checkbox) {
+    checkbox.disabled = !checkbox.checked && selectedCount >= 12;
+  });
+
+  var saveButton = document.getElementById("saveFeaturedProducts");
+  var countDisplay = document.getElementById("featuredProductsCount");
+
+  if (countDisplay) {
+    countDisplay.textContent = selectedCount + " / 12 selected";
+  }
+
+  if (!saveButton) return;
+
+  saveButton.disabled = selectedCount < 1 || selectedCount > 12;
+
+  if (selectedCount >= 1 && selectedCount <= 12) {
+    saveButton.textContent =
+      "Save " + selectedCount + " featured product" +
+      (selectedCount === 1 ? "" : "s");
+  } else {
+    saveButton.textContent =
+      "Select 1–12 products (" + selectedCount + "/12)";
+  }
+}
 function xjConditionOptions(selected) {
   return ["New", "Fairly Used", "Used — Good Condition", "Refurbished", "Tested & Working"].map(function(condition) {
     return '<option value="' + xjEscapeHtml(condition) + '"' + (selected === condition ? " selected" : "") + ">" + xjEscapeHtml(condition) + "</option>";
@@ -656,37 +718,78 @@ window.xjAdminSaveProductDetails = xjAdminSaveProductDetails;
 
 async function xjSaveFeaturedProducts() {
   if (!xjIsAdmin() || !xjDb) {
-    showToast("Homepage selection", "Sign in as an administrator before saving.", "error");
+    showToast(
+      "Homepage selection",
+      "Sign in as an administrator before saving.",
+      "error"
+    );
     return;
   }
-  var selected = Array.prototype.slice.call(document.querySelectorAll(".admin-featured-checkbox:checked")).map(function(input) {
+
+  var selected = Array.prototype.slice.call(
+    document.querySelectorAll(".admin-featured-checkbox:checked")
+  ).map(function(input) {
     return input.value;
   });
-  if (selected.length !== 6) {
-    showToast("Select six products", "Choose exactly six existing products before saving.", "error");
+
+  if (selected.length < 1 || selected.length > 12) {
+    showToast(
+      "Select homepage products",
+      "Choose between 1 and 12 products before saving.",
+      "error"
+    );
     return;
   }
+
   if (selected.some(function(id) {
     return !XJ_PRODUCT_CATALOG[id]
       || xjIsProductHidden(id)
       || !xjIsAllowedHomepageProduct(XJ_PRODUCT_CATALOG[id]);
   })) {
-    showToast("Homepage selection", "A selected product is no longer available. Refresh the list and choose again.", "error");
+    showToast(
+      "Homepage selection",
+      "A selected product is no longer available. Refresh the list and try again.",
+      "error"
+    );
     return;
   }
+
+  var saveButton = document.getElementById("saveFeaturedProducts");
+
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+  }
+
   try {
     await xjDb.collection("config").doc("featuredProducts").set({
       productIds: selected,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
     xjFeaturedProductIds = selected;
-    xjShowAllProductCards();
-    showToast("Homepage updated", "The six selected products are now featured.");
+
+    if (typeof xjShowAllProductCards === "function") {
+      xjShowAllProductCards();
+    }
+
+    showToast(
+      "Homepage updated",
+      selected.length + " products are now featured."
+    );
   } catch (error) {
     console.error("Failed to save featured products:", error);
-    showToast("Homepage selection", "Could not save the featured selection in Firebase.", "error");
+
+    showToast(
+      "Homepage selection",
+      "Could not save the featured products. Please try again.",
+      "error"
+    );
+  } finally {
+    xjUpdateFeaturedSelectionControls();
   }
 }
+
 window.xjSaveFeaturedProducts = xjSaveFeaturedProducts;
 
 async function xjSyncCanonicalProductPrices() {
@@ -796,7 +899,8 @@ async function xjAdminAddProduct(event) {
     condition: condition,
     aliases: [name.toLowerCase()],
     createdAt: Date.now(),
-    isCustom: true
+    isCustom: true,
+    showOnHomepage: true
   };
 
   xjRegisterProduct(product);
@@ -824,6 +928,7 @@ async function xjAdminAddProduct(event) {
         aliases: product.aliases,
         createdAt: product.createdAt,
         isCustom: true,
+        showOnHomepage: true,
         hidden: false,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -837,8 +942,10 @@ async function xjAdminAddProduct(event) {
 
   xjAdminFormOpen = false;
   xjRenderAdminInventoryPanel();
+  if (typeof xjShowAllProductCards === "function") xjShowAllProductCards();
   if (window.xjRefreshRecommendations) window.xjRefreshRecommendations();
-  showToast("Product added", name + " is now on the website. Make sure " + image + " exists in the published website repository.");
+  if (window.xjRefreshCommerceProducts) window.xjRefreshCommerceProducts();
+  showToast("Product added", name + " is now live on the website. Make sure " + image + " exists in the published website repository.");
 }
 
 function xjCategoryLabel(category) {
