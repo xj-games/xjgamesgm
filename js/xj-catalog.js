@@ -60,7 +60,7 @@ const XJ_PRODUCT_CATALOG = {
     category: "consoles",
     displayCategory: "playstation-consoles",
     categories: ["ps4", "consoles", "playstation"],
-    price: 12000,
+    price: 15000,
     inStock: true,
     type: "ps4",
     extraControllerPrice: 1500,

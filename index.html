@@ -1430,7 +1430,7 @@ width: auto !important;
 height: auto !important;
 background: rgba(0,0,0,0.75);
 backdrop-filter: blur(8px);
-z-index: 2147483647 !important;
+z-index: 2147483646 !important;
 isolation: isolate;
 justify-content: center;
 align-items: center;
@@ -1491,13 +1491,15 @@ box-shadow: 0 0 10px rgba(0, 170, 255, 0.4);
 position: fixed;
 top: 100px;
 right: 25px;
-z-index: 10001;
+z-index: 2147483647 !important;
 display: flex;
 flex-direction: column;
 gap: 15px;
 max-width: 380px;
 width: 90%;
 pointer-events: none;
+isolation: isolate;
+overflow: visible;
 }
 
 .toast {
@@ -2058,9 +2060,9 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <img src="ps4-pro.png" alt="PlayStation 4 Pro" onerror="this.src='xj-games-logo.png'">
   <h3>PlayStation 4 Pro</h3>
   <p class="desc">Enhanced 4K gaming and smoother frame rates in a more powerful PlayStation 4 Pro console.</p>
-  <p class="price">12,000 GMD</p>
+  <p class="price">15,000 GMD</p>
   <div class="card-actions">
-    <button type="button" onclick="openCustomizationModal('PlayStation 4 Pro', 12000, 'ps4', this)">Add to Cart</button>
+    <button type="button" onclick="openCustomizationModal('PlayStation 4 Pro', 15000, 'ps4', this)">Add to Cart</button>
     <div class="product-menu-wrap">
       <button type="button" class="product-menu-toggle" aria-label="More options" onclick="xjToggleProductMenu(this,event)">⋮</button>
       <div class="product-menu">
