@@ -63,6 +63,7 @@ async function xjInitFirebase() {
 
     xjAuth.onAuthStateChanged(function(user) {
       xjFirebaseUser = user || null;
+      xjUpdateMobileMenu(user);
       xjUpdateAdminVisibility();
       if (user) {
         Promise.resolve(xjLoadUserProfile(user)).finally(function() {
@@ -500,7 +501,10 @@ function xjUpdateMobileMenu(user) {
     ["mobileAdminLink", signedIn && xjIsAdmin()]
   ].forEach(function(entry) {
     const link = document.getElementById(entry[0]);
-    if (link) link.style.display = entry[1] ? "block" : "none";
+    if (link) {
+      link.hidden = !entry[1];
+      link.setAttribute("aria-hidden", String(!entry[1]));
+    }
   });
 }
 

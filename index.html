@@ -1948,8 +1948,8 @@ details.admin-add-form summary{color:#dce7f4;padding:3px 0 8px}
   <a href="#reviews" onclick="closeMobileMenu()">Reviews</a>
   <a href="#contact" onclick="closeMobileMenu()">Contact</a>
   <a href="#" onclick="closeMobileMenu(); openAdminPanel();" style="color:#00bfff; font-weight:bold;">⚙ Admin Panel</a>
-  <a href="#" onclick="closeMobileMenu(); openAuthModal();">Account / Sign in</a>
-  <a href="#" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
+  <a href="#" id="mobileSignInLink" hidden aria-hidden="true" onclick="closeMobileMenu(); openAuthModal();">Account / Sign in</a>
+  <a href="#" id="mobileCreateAccountLink" hidden aria-hidden="true" onclick="closeMobileMenu(); openRegisterModal();">Create account</a>
 </div>
 
 <div id="searchSuggestions" class="search-suggestions" aria-hidden="true"></div>
@@ -2658,7 +2658,7 @@ html
 <script src="js/firebase-config.js?v=20261029b"></script>
 <script src="js/xj-catalog.js?v=20261029a"></script>
 <script src="js/xj-search.js?v=20261029a"></script>
-<script src="js/xj-auth.js?v=20261002b"></script>
+<script src="js/xj-auth.js?v=20261030a"></script>
 <script src="js/xj-profile.js?v=20261002b"></script>
 <script src="js/xj-inventory.js?v=20261029a"></script>
 <script src="js/xj-reviews.js?v=20261002a"></script>
